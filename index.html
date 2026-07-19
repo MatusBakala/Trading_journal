@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --bg:#0d1117; --bg2:#151b23; --bg3:#1c2430; --border:#2a3441;
+  --text:#e6edf3; --muted:#8b98a9; --green:#26a69a; --red:#ef5350;
+  --accent:#5b8def; --accent2:#7c5bef;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
+header{display:flex;align-items:center;gap:24px;padding:0 24px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+header h1{font-size:17px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+nav button{background:none;border:none;color:var(--muted);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px;white-space:nowrap}
+nav button:hover{color:var(--text);background:var(--bg3)}
+nav button.active{color:var(--text);background:var(--bg3);font-weight:600}
+.btn{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
+.btn:hover{filter:brightness(1.1)}
+.btn.secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
+.btn.danger{background:var(--red)}
+.btn.small{padding:5px 10px;font-size:12.5px}
+main{max-width:1280px;margin:0 auto;padding:24px}
+.tab{display:none}
+.tab.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.card .lbl{color:var(--muted);font-size:12px;margin-bottom:6px}
+.card .val{font-size:20px;font-weight:700}
+.kpirow{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:12px;margin-bottom:12px}
+.kpi{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:86px}
+.kpi .big{font-size:23px;font-weight:800;margin-top:4px}
+.badge{background:var(--bg3);border-radius:12px;padding:1px 9px;font-size:11.5px;color:var(--muted);font-weight:600}
+.gpills{display:flex;gap:5px;justify-content:center;margin-top:3px}
+.gpill{font-size:11px;padding:1px 8px;border-radius:10px;font-weight:700}
+.gpill.w{background:rgba(38,166,154,.15);color:var(--green)}
+.gpill.b{background:rgba(91,141,239,.15);color:var(--accent)}
+.gpill.l{background:rgba(239,83,80,.15);color:var(--red)}
+.wlbar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:10px;width:100%;background:var(--bg3)}
+.wllabels{display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-top:5px}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px}
+.panel h3{font-size:14px;color:var(--muted);font-weight:600;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+@media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+.pos{color:var(--green)}
+.neg{color:var(--red)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:var(--muted);font-size:12px;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg3)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600}
+.pill.long{background:rgba(38,166,154,.15);color:var(--green)}
+.pill.short{background:rgba(239,83,80,.15);color:var(--red)}
+.tag{display:inline-block;background:var(--bg3);border:1px solid var(--border);padding:1px 8px;border-radius:20px;font-size:11.5px;color:var(--muted);margin-right:4px}
+.tag.g{background:rgba(38,166,154,.12);border-color:rgba(38,166,154,.45);color:var(--green)}
+.tag.r{background:rgba(239,83,80,.12);border-color:rgba(239,83,80,.45);color:var(--red)}
+.tagchip{display:inline-block;background:var(--bg3);border:1px solid var(--border);padding:3px 12px;border-radius:20px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none}
+.tagchip.g:hover{border-color:var(--green);color:var(--text)}
+.tagchip.r:hover{border-color:var(--red);color:var(--text)}
+.tagchip.g.on{background:rgba(38,166,154,.18);border-color:var(--green);color:var(--green);font-weight:600}
+.tagchip.r.on{background:rgba(239,83,80,.18);border-color:var(--red);color:var(--red);font-weight:600}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:8px;font-size:14px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted)}
+/* calendar */
+.calhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.calhead .mname{font-size:17px;font-weight:700;min-width:180px;text-align:center}
+.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calgrid .dow{text-align:center;color:var(--muted);font-size:12px;padding:4px}
+.day{background:var(--bg2);border:1px solid var(--border);border-radius:10px;min-height:78px;padding:7px;cursor:default}
+.day.other{opacity:.28}
+.day .dn{font-size:12px;color:var(--muted)}
+.day.win{background:rgba(38,166,154,.13);border-color:rgba(38,166,154,.4)}
+.day.loss{background:rgba(239,83,80,.12);border-color:rgba(239,83,80,.4)}
+.day .dp{font-weight:700;font-size:13.5px;margin-top:6px}
+.day .dc{font-size:11px;color:var(--muted)}
+.day.has{cursor:pointer}
+.day.has:hover{filter:brightness(1.25)}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:100;overflow-y:auto;padding:30px 16px}
+.overlay.open{display:block}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:14px;max-width:1000px;margin:0 auto;padding:22px}
+.modal h2{font-size:17px;margin-bottom:16px}
+.formgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:800px){.formgrid{grid-template-columns:repeat(2,1fr)}}
+.formgrid input,.formgrid select{width:100%}
+#tChart{height:420px;border:1px solid var(--border);border-radius:10px;margin-top:8px;position:relative}
+#tChartHint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);text-align:center;padding:20px;z-index:5}
+.shots{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.shot{position:relative;width:130px;height:88px;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.shot img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
+.shot button{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.7);color:#fff;border:none;border-radius:6px;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:1}
+.dropzone{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;color:var(--muted);font-size:13px;margin-top:10px}
+.dropzone.drag{border-color:var(--accent);color:var(--text)}
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;z-index:200;align-items:center;justify-content:center;cursor:zoom-out}
+#lightbox.open{display:flex}
+#lightbox img{max-width:95vw;max-height:95vh;border-radius:8px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border);padding:11px 20px;border-radius:10px;z-index:300;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.maprow{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center;margin-bottom:8px}
+.hint{color:var(--muted);font-size:12.5px;line-height:1.55}
+.prevwrap{overflow-x:auto;margin-top:12px}
+canvas{max-width:100%}
+.chartbox{height:260px;position:relative}
+hr.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
+.multrow{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+.srow{display:flex;justify-content:space-between;gap:14px;padding:9px 4px;border-bottom:1px solid var(--border);font-size:13.5px}
+.srow:last-child{border-bottom:none}
+.srow span{color:var(--muted)}
+.srow b{white-space:nowrap}
+code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📈 Trading Journal</h1>
+  <nav>
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="calendar">Kalendár</button>
+    <button data-tab="stats">Štatistiky</button>
+    <button data-tab="trades">Obchody</button>
+    <button data-tab="reports">Reporty</button>
+    <button data-tab="import">Import CSV</button>
+    <button data-tab="data">Dáta grafu</button>
+    <button data-tab="settings">Nastavenia</button>
+  </nav>
+  <select id="accSelect" onchange="switchAccount(this.value)" style="max-width:170px;font-weight:600"></select>
+  <button class="btn" onclick="openTrade(null)">+ Pridať obchod</button>
+  <select id="langSelect" onchange="switchLang(this.value)" title="Jazyk / Language" style="width:70px;font-weight:600">
+    <option value="sk">🌐 SK</option><option value="en">🌐 EN</option>
+  </select>
+</header>
+<main>
+
+<!-- DASHBOARD -->
+<section id="tab-dashboard" class="tab active">
+  <div class="filters">
+    <select id="dashPeriod" onchange="renderDashboard()">
+      <option value="all">Celé obdobie</option>
+      <option value="month">Tento mesiac</option>
+      <option value="30">Posledných 30 dní</option>
+      <option value="90">Posledných 90 dní</option>
+      <option value="year">Tento rok</option>
+    </select>
+  </div>
+  <div class="kpirow" id="kpiCards"></div>
+  <div class="cards" id="kpiCards2"></div>
+  <div class="grid2">
+    <div class="panel"><h3>Equity krivka</h3><div class="chartbox"><canvas id="eqChart"></canvas></div></div>
+    <div class="panel"><h3>Denný P&L</h3><div class="chartbox"><canvas id="dailyChart"></canvas></div></div>
+  </div>
+  <div class="grid3">
+    <div class="panel"><h3>Podľa symbolu</h3><div id="bySymbol"></div></div>
+    <div class="panel"><h3>Podľa dňa v týždni</h3><div id="byDow"></div></div>
+    <div class="panel"><h3>Podľa hodiny vstupu</h3><div id="byHour"></div></div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="tab-stats" class="tab">
+  <div class="filters">
+    <select id="statsPeriod" onchange="renderStats()">
+      <option value="all">Celé obdobie</option>
+      <option value="month">Tento mesiac</option>
+      <option value="30">Posledných 30 dní</option>
+      <option value="90">Posledných 90 dní</option>
+      <option value="year">Tento rok</option>
+    </select>
+  </div>
+  <div class="cards" id="statsMonths"></div>
+  <div class="grid2">
+    <div class="panel" id="statsLeft"></div>
+    <div class="panel" id="statsRight"></div>
+  </div>
+</section>
+
+<!-- CALENDAR -->
+<section id="tab-calendar" class="tab">
+  <div class="calhead">
+    <button class="btn secondary small" onclick="calMove(-1)">‹</button>
+    <div class="mname" id="calMonthName"></div>
+    <button class="btn secondary small" onclick="calMove(1)">›</button>
+    <div id="calTotal" style="margin-left:auto;font-weight:700"></div>
+  </div>
+  <div class="calgrid" id="calGrid"></div>
+  <div class="panel" id="calDayPanel" style="display:none;margin-top:16px"></div>
+</section>
+
+<!-- TRADES -->
+<section id="tab-trades" class="tab">
+  <div class="filters">
+    <select id="fSymbol" onchange="renderTrades()"><option value="">Všetky symboly</option></select>
+    <select id="fDir" onchange="renderTrades()">
+      <option value="">Long + Short</option><option value="1">Long</option><option value="-1">Short</option>
+    </select>
+    <input type="date" id="fFrom" onchange="renderTrades()">
+    <input type="date" id="fTo" onchange="renderTrades()">
+    <input type="text" id="fSearch" placeholder="Hľadať v poznámkach/tagoch..." oninput="renderTrades()" style="flex:1;min-width:160px">
+    <span id="fCount" class="hint"></span>
+  </div>
+  <div class="filters" id="tagBar" style="display:none"></div>
+  <div class="panel" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Tagy</th><th></th></tr></thead>
+      <tbody id="tradesBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- REPORTS -->
+<section id="tab-reports" class="tab">
+  <p class="hint">Táto sekcia zobrazuje len obchody, ku ktorým si napísal poznámku/review (pole „Denník / poznámky k obchodu"). Nemusíš nič ručne pridávať – stačí obchod okomentovať a automaticky sa objaví tu.</p>
+  <br>
+  <div class="filters">
+    <input type="text" id="rSearch" placeholder="Hľadať v poznámkach/tagoch..." oninput="renderReports()" style="flex:1;min-width:160px">
+    <span id="rCount" class="hint"></span>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>P&L</th><th>Tagy</th><th>Poznámka</th></tr></thead>
+      <tbody id="reportsBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- IMPORT -->
+<section id="tab-import" class="tab">
+  <div class="panel">
+    <h3>Import obchodov z CSV</h3>
+    <p class="hint">Nahraj CSV export z tvojej platformy. Appka sa pokúsi automaticky rozpoznať stĺpce – skontroluj mapovanie a potvrď import. Podporované sú čiarky aj bodkočiarky, desatinné bodky aj čiarky, dátumy vo formátoch <code>2026-07-18 14:30</code>, <code>18.07.2026 14:30</code>, <code>07/18/2026 2:30 PM</code> aj unix timestamp.</p>
+    <br>
+    <div class="filters">
+      <label class="f">Importovať do účtu<select id="importAccount"></select></label>
+      <label class="f">CSV súbor<input type="file" id="csvFile" accept=".csv,.txt,.tsv"></label>
+    </div>
+  </div>
+  <div class="panel" id="mapPanel" style="display:none">
+    <h3>Mapovanie stĺpcov</h3>
+    <div id="brokerConvertBox" class="hint" style="display:none;background:#1c2430;border:1px solid #5b8def;border-radius:8px;padding:10px 14px;margin-bottom:14px">
+      ⚡ Toto vyzerá ako export objednávok (Tradovate a pod.) – jeden riadok = jedna objednávka/fill, nie hotový obchod. Vstupy a výstupy treba spárovať.
+      <div style="margin-top:8px">
+        <label style="cursor:pointer;text-decoration:underline" id="cashFileLabel">📎 Priložiť Cash History.csv (voliteľné, doplní poplatky)<input type="file" id="cashFile" accept=".csv,.txt,.tsv" style="display:none"></label>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn" onclick="convertAndRebuild()">Spárovať do obchodov</button>
+        <button class="btn" style="margin-left:6px;background:transparent;border:1px solid #2a3441" onclick="$('brokerConvertBox').style.display='none'">Mapovať ručne</button>
+      </div>
+    </div>
+    <div id="mapRows"></div>
+    <hr class="sep">
+    <h3>Náhľad (prvých 5 riadkov)</h3>
+    <div class="prevwrap" id="csvPreview"></div>
+    <br>
+    <button class="btn" onclick="doImport()">Importovať obchody</button>
+    <span id="importResult" class="hint" style="margin-left:12px"></span>
+  </div>
+</section>
+
+<!-- OHLC DATA -->
+<section id="tab-data" class="tab">
+  <div class="panel">
+    <h3>Stiahnuť sviečky z internetu (Yahoo Finance)</h3>
+    <p class="hint">Automaticky stiahne historické sviečky pre futures (GC → GC=F, NQ → NQ=F, MGC → MGC=F...). Limity dát: 1m sviečky max ~7 dní dozadu, 5m/15m max ~60 dní, 1h ~2 roky, denné neobmedzene. Pri otvorenom obchode to vieš spraviť aj priamo tlačidlom „⟳ Stiahnuť sviečky" nad grafom.</p>
+    <br>
+    <div class="filters">
+      <label class="f">Symbol<input type="text" id="ofSymbol" placeholder="GC, NQ, MGC..." style="width:120px"></label>
+      <label class="f">Timeframe<select id="ofTf">
+        <option value="1m">1 min</option><option value="5m" selected>5 min</option><option value="15m">15 min</option>
+        <option value="1h">1 hod</option><option value="1d">Denný</option>
+      </select></label>
+      <label class="f">Dní dozadu<input type="number" id="ofDays" value="30" min="1" style="width:90px"></label>
+      <button class="btn" style="align-self:flex-end" onclick="fetchOnline()">Stiahnuť</button>
+    </div>
+    <span id="ofResult" class="hint"></span>
+  </div>
+  <div class="panel">
+    <h3>Nahrať OHLC dáta z CSV (napr. export z TradingView)</h3>
+    <p class="hint">Alternatíva s presnými dátami tvojho kontraktu: v TradingView otvor graf → menu grafu → <b>„Export chart data…"</b> → stiahnutý CSV nahraj sem. CSV musí obsahovať stĺpce: čas, open, high, low, close (voliteľne volume).</p>
+    <br>
+    <div class="filters">
+      <label class="f">Symbol<input type="text" id="ohlcSymbol" placeholder="napr. NQ, GC, MGC" style="width:140px"></label>
+      <label class="f">Timeframe<select id="ohlcTf">
+        <option value="1m">1 min</option><option value="5m" selected>5 min</option><option value="15m">15 min</option>
+        <option value="30m">30 min</option><option value="1h">1 hod</option><option value="4h">4 hod</option><option value="1d">Denný</option>
+      </select></label>
+      <label class="f">CSV súbor<input type="file" id="ohlcFile" accept=".csv,.txt"></label>
+      <button class="btn" style="align-self:flex-end" onclick="importOHLC()">Nahrať dáta</button>
+    </div>
+    <span id="ohlcResult" class="hint"></span>
+  </div>
+  <div class="panel">
+    <h3>Nahrané datasety</h3>
+    <div id="ohlcList" class="hint">Zatiaľ žiadne dáta.</div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="tab-settings" class="tab">
+  <div class="panel">
+    <h3>Účty</h3>
+    <p class="hint">Každý obchod patrí do jedného účtu. Aktívny účet prepínaš hore v hlavičke – dashboard, štatistiky, kalendár aj zoznam obchodov sa počítajú len z neho (alebo zvoľ „Všetky účty"). Počiatočný kapitál sa používa pre equity krivku.</p>
+    <br>
+    <div class="multrow" style="font-size:12px;color:var(--muted)"><span style="width:180px">Názov účtu</span><span style="width:140px">Počiat. kapitál</span></div>
+    <div id="accList"></div>
+    <button class="btn secondary small" onclick="addAccRow('',0,null)">+ Pridať účet</button>
+    <button class="btn small" onclick="saveAccounts()">Uložiť účty</button>
+  </div>
+  <div class="panel">
+    <h3>Hodnota bodu (multiplikátor) podľa symbolu</h3>
+    <p class="hint">P&L = (výstup − vstup) × smer × množstvo × multiplikátor − poplatky. Pre futures: NQ=20, MNQ=2, ES=50, MES=5, GC=100 (zlato), MGC=10. Symbol obchodu sa páruje aj podľa prefixu (NQZ5 → NQ).</p>
+    <br>
+    <div id="multList"></div>
+    <button class="btn secondary small" onclick="addMultRow('',1)">+ Pridať symbol</button>
+    <button class="btn small" onclick="saveMults()">Uložiť multiplikátory</button>
+  </div>
+  <div class="panel">
+    <h3>☁️ Cloud sync (Google Drive)</h3>
+    <p class="hint">Appka si vie sama ukladať a načítavať zálohu z tvojho Google Drive (do skrytého priečinka appky, nevidno ho v bežnom Drive). Vďaka tomu sa dáta objavia aj v inom prehliadači či na mobile, bez ručného exportu/importu. Návod na získanie Client ID nájdeš v README/pokynoch od Claude.</p>
+    <br>
+    <div class="filters">
+      <label class="f" style="flex:1;min-width:220px">Google Client ID<input id="gClientId" placeholder="xxxxxxxxxx.apps.googleusercontent.com" value=""></label>
+    </div>
+    <br>
+    <button class="btn" id="gdriveConnectBtn" onclick="gdriveConnect()">🔗 Pripojiť Google Drive</button>
+    <button class="btn secondary" id="gdriveDisconnectBtn" style="display:none" onclick="gdriveDisconnect()">Odpojiť</button>
+    <button class="btn secondary small" onclick="gdriveSyncNow(false)" style="margin-left:6px">⟳ Synchronizovať teraz</button>
+    <div id="gdriveStatus" class="hint" style="margin-top:8px">Nepripojené.</div>
+  </div>
+  <div class="panel">
+    <h3>Manuálna záloha</h3>
+    <button class="btn secondary" onclick="exportBackup()">Exportovať zálohu (JSON)</button>
+    <label class="btn secondary" style="display:inline-block">Obnoviť zo zálohy<input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreBackup(this)"></label>
+    <p class="hint" style="margin-top:8px">Záloha obsahuje obchody, nastavenia a screenshoty. Bez pripojeného Google Drive sú dáta uložené len v tomto prehliadači.</p>
+  </div>
+  <div class="panel">
+    <h3 style="color:var(--red)">Nebezpečná zóna</h3>
+    <button class="btn danger" onclick="wipeAll()">Vymazať všetky dáta</button>
+  </div>
+</section>
+
+</main>
+
+<!-- TRADE MODAL -->
+<div class="overlay" id="tradeOverlay">
+  <div class="modal">
+    <h2 id="tmTitle">Obchod</h2>
+    <div class="formgrid">
+      <label class="f">Symbol *<input id="tSymbol" placeholder="NQ, GC..."></label>
+      <label class="f">Smer<select id="tDir"><option value="1">Long</option><option value="-1">Short</option></select></label>
+      <label class="f">Množstvo (kontrakty)<input id="tQty" type="number" step="any" value="1"></label>
+      <label class="f">Poplatky<input id="tFees" type="number" step="any" value="0"></label>
+      <label class="f">Účet<select id="tAccount"></select></label>
+      <label class="f">Vstupná cena *<input id="tEntry" type="number" step="any"></label>
+      <label class="f">Výstupná cena<input id="tExit" type="number" step="any"></label>
+      <label class="f">Stop loss<input id="tStop" type="number" step="any"></label>
+      <label class="f">Take profit<input id="tTarget" type="number" step="any"></label>
+      <label class="f">Čas vstupu *<input id="tTimeIn" type="datetime-local" step="60"></label>
+      <label class="f">Čas výstupu<input id="tTimeOut" type="datetime-local" step="60"></label>
+      <label class="f">P&L manuálne (prepíše výpočet)<input id="tPnl" type="number" step="any" placeholder="auto"></label>
+    </div>
+    <div style="margin:2px 0 12px">
+      <label class="f" style="color:var(--green)">🟢 Pozitívne tagy – čo bolo dobré (odd. čiarkou)<input id="tTags" placeholder="A+ setup, dodržaný plán, trpezlivosť..."></label>
+      <div id="tagSuggest" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px"></div>
+      <label class="f" style="color:var(--red)">🔴 Negatívne tagy – chyby (odd. čiarkou)<input id="tTagsNeg" placeholder="FOMO, posunutý stop, revenge trading..."></label>
+      <div id="tagSuggestNeg" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    </div>
+    <label class="f">Denník / poznámky k obchodu<textarea id="tNotes" rows="6" placeholder="Setup a dôvod vstupu, manažment pozície, emócie, chyby, čo nabudúce spraviť inak..."></textarea></label>
+    <div style="margin-top:10px;font-weight:700" id="tPnlPreview"></div>
+
+    <hr class="sep">
+    <h3 style="color:var(--muted);font-size:13px">Graf <span id="tChartDsWrap" style="font-weight:400"></span></h3>
+    <div id="tChart"><div id="tChartHint"></div></div>
+
+    <hr class="sep">
+    <h3 style="color:var(--muted);font-size:13px">Screenshoty</h3>
+    <div class="shots" id="shotList"></div>
+    <div class="dropzone" id="dropzone">Pretiahni sem obrázok, vlož zo schránky (Ctrl+V) alebo
+      <label style="color:var(--accent);cursor:pointer;text-decoration:underline">vyber súbor<input type="file" id="shotFile" accept="image/*" multiple style="display:none"></label>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+      <button class="btn danger" id="tDelete" onclick="deleteCurrentTrade()">Vymazať</button>
+      <button class="btn secondary" onclick="closeTrade()">Zavrieť</button>
+      <button class="btn" onclick="saveTrade()">Uložiť obchod</button>
+    </div>
+  </div>
+</div>
+
+<div id="lightbox" onclick="this.classList.remove('open')"><img id="lightboxImg"></div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ================= IndexedDB ================= */
+const DB={db:null};
+function idbOpen(){return new Promise((res,rej)=>{
+  const r=indexedDB.open('tjournal',1);
+  r.onupgradeneeded=e=>{const d=e.target.result;
+    if(!d.objectStoreNames.contains('trades'))d.createObjectStore('trades',{keyPath:'id',autoIncrement:true});
+    if(!d.objectStoreNames.contains('shots')){const s=d.createObjectStore('shots',{keyPath:'id',autoIncrement:true});s.createIndex('tradeId','tradeId');}
+    if(!d.objectStoreNames.contains('ohlc'))d.createObjectStore('ohlc',{keyPath:'key'});
+    if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv',{keyPath:'k'});
+  };
+  r.onsuccess=()=>{DB.db=r.result;res();};
+  r.onerror=()=>rej(r.error);
+});}
+function store(n,m){return DB.db.transaction(n,m||'readonly').objectStore(n);}
+function pReq(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+const idbAll=n=>pReq(store(n).getAll());
+const idbPut=(n,v)=>pReq(store(n,'readwrite').put(v));
+const idbAdd=(n,v)=>pReq(store(n,'readwrite').add(v));
+const idbDel=(n,k)=>pReq(store(n,'readwrite').delete(k));
+const idbGet=(n,k)=>pReq(store(n).get(k));
+const shotsByTrade=id=>pReq(store('shots').index('tradeId').getAll(id));
+function idbClear(n){return pReq(store(n,'readwrite').clear());}
+
+/* ================= State ================= */
+let trades=[];
+let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null};
+let ohlcSets=[];
+let calDate=new Date();
+let eqChartObj=null,dailyChartObj=null;
+let currentTradeId=null,pendingShots=[],removedShotIds=[],modalChart=null;
+
+/* ================= Utils ================= */
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=(typeof tr==='function')?tr(msg):msg;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3200);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fmtMoney(v){const s=(v<0?'-':'')+'$'+Math.abs(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});return s;}
+function moneyCls(v){return v>0?'pos':(v<0?'neg':'');}
+function fmtDT(ts){if(!ts)return'–';const d=new Date(ts*1000);return d.toLocaleDateString('sk-SK')+' '+d.toLocaleTimeString('sk-SK',{hour:'2-digit',minute:'2-digit'});}
+function fmtD(ts){return new Date(ts*1000).toLocaleDateString('sk-SK');}
+function dayKey(ts){const d=new Date(ts*1000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtDur(sec){if(sec==null||isNaN(sec)||sec<0)return'–';if(sec<60)return Math.round(sec)+'s';if(sec<3600)return Math.round(sec/60)+'m';if(sec<86400)return(sec/3600).toFixed(1)+'h';return(sec/86400).toFixed(1)+'d';}
+function num(v){if(v==null)return NaN;let s=String(v).trim().replace(/[\s $]/g,'');if(!s)return NaN;
+  if(/,\d+$/.test(s)&&s.indexOf('.')===-1)s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');
+  const n=parseFloat(s);return isNaN(n)?NaN:n;}
+function parseDT(v){
+  if(v==null)return null;const s=String(v).trim();if(!s)return null;
+  if(/^\d+(\.\d+)?$/.test(s)){const n=parseFloat(s);if(n>1e12)return Math.floor(n/1000);if(n>1e9)return Math.floor(n);}
+  let m=s.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if(m)return Math.floor(new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)).getTime()/1000);
+  m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(m)return Math.floor(new Date(+m[1],+m[2]-1,+m[3]).getTime()/1000);
+  m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m)return Math.floor(new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)).getTime()/1000);
+  m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?)?/);
+  if(m){let h=+(m[4]||0);const ap=(m[7]||'').toUpperCase();if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;
+    return Math.floor(new Date(+m[3],+m[1]-1,+m[2],h,+(m[5]||0),+(m[6]||0)).getTime()/1000);}
+  const d=new Date(s);if(!isNaN(d.getTime()))return Math.floor(d.getTime()/1000);
+  return null;
+}
+function tsToLocalInput(ts){if(!ts)return'';const d=new Date(ts*1000);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'T'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function localInputToTs(v){if(!v)return null;return Math.floor(new Date(v).getTime()/1000);}
+
+function multFor(symbol){
+  const s=String(symbol||'').toUpperCase().trim();
+  const keys=Object.keys(settings.mults).sort((a,b)=>b.length-a.length);
+  for(const k of keys){if(s===k)return settings.mults[k];}
+  for(const k of keys){if(s.startsWith(k))return settings.mults[k];}
+  return 1;
+}
+function computePnl(t){
+  if(t.pnlOverride!=null&&isFinite(t.pnlOverride))return t.pnlOverride;
+  if(!isFinite(t.entry)||!isFinite(t.exit))return 0;
+  return (t.exit-t.entry)*t.dir*(t.qty||1)*multFor(t.symbol)-(t.fees||0);
+}
+function riskR(t){
+  const pnl=computePnl(t);
+  if(t.stop==null||!isFinite(t.stop)||!isFinite(t.entry))return null;
+  const risk=Math.abs(t.entry-t.stop)*(t.qty||1)*multFor(t.symbol);
+  if(risk<=0)return null;
+  return pnl/risk;
+}
+function tTime(t){return t.tExit||t.tEntry||0;}
+
+/* ================= CSV parser ================= */
+function parseCSV(text){
+  text=text.replace(/^﻿/,'');
+  const firstLine=text.split(/\r?\n/)[0]||'';
+  let best=',',bestC=-1;
+  for(const d of [',',';','\t']){
+    let c=0,inQ=false;
+    for(const ch of firstLine){if(ch==='"')inQ=!inQ;else if(ch===d&&!inQ)c++;}
+    if(c>bestC){bestC=c;best=d;}
+  }
+  const rows=[];let row=[],cell='',inQ=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inQ){
+      if(ch==='"'){if(text[i+1]==='"'){cell+='"';i++;}else inQ=false;}
+      else cell+=ch;
+    }else{
+      if(ch==='"')inQ=true;
+      else if(ch===best){row.push(cell);cell='';}
+      else if(ch==='\n'||ch==='\r'){
+        if(ch==='\r'&&text[i+1]==='\n')i++;
+        row.push(cell);cell='';
+        if(row.length>1||row[0].trim()!=='')rows.push(row);
+        row=[];
+      }else cell+=ch;
+    }
+  }
+  if(cell!==''||row.length){row.push(cell);if(row.length>1||row[0].trim()!=='')rows.push(row);}
+  return rows;
+}
+
+/* ================= I18N ================= */
+const I18N_EN={
+'Kalendár':'Calendar','Štatistiky':'Statistics','Obchody':'Trades','Reporty':'Reports','Dáta grafu':'Chart data','Nastavenia':'Settings',
+'Táto sekcia zobrazuje len obchody, ku ktorým si napísal poznámku/review (pole „Denník / poznámky k obchodu"). Nemusíš nič ručne pridávať – stačí obchod okomentovať a automaticky sa objaví tu.':'This section shows only trades you\'ve written a note/review for (the "Journal / trade notes" field). Nothing to add manually – just comment on a trade and it will show up here automatically.',
+'Zatiaľ žiadne okomentované obchody. Otvor obchod a napíš poznámku/review – automaticky sa zobrazí tu.':'No commented trades yet. Open a trade and write a note/review – it will show up here automatically.',
+'Poznámka':'Note',
+'+ Pridať obchod':'+ Add trade','Všetky účty':'All accounts',
+'Celé obdobie':'All time','Tento mesiac':'This month','Posledných 30 dní':'Last 30 days','Posledných 90 dní':'Last 90 days','Tento rok':'This year',
+'Equity krivka':'Equity curve','Denný P&L':'Daily P&L','Podľa symbolu':'By symbol','Podľa dňa v týždni':'By day of week','Podľa hodiny vstupu':'By entry hour',
+'Počet obchodov':'Number of trades','Očak. hodnota / trade':'Expected value / trade','Najlepší deň':'Best day','Najhorší deň':'Worst day','Žiadne dáta':'No data',
+'Najlepší mesiac':'Best month','Najhorší mesiac':'Worst month','Priemer / mesiac':'Average / month',
+'Dni':'Days','Celkový P&L':'Total P&L','Priemerný P&L / obchod':'Average P&L / trade','Priemerný ziskový obchod':'Average winning trade','Priemerný stratový obchod':'Average losing trade',
+'Ziskové obchody':'Winning trades','Stratové obchody':'Losing trades','Breakeven obchody':'Breakeven trades',
+'Max po sebe idúce výhry':'Max consecutive wins','Max po sebe idúce prehry':'Max consecutive losses','Najväčší zisk':'Largest profit','Najväčšia strata':'Largest loss',
+'Poplatky spolu':'Total commissions','Priem. držanie (všetky)':'Avg hold time (all)','Priem. držanie (ziskové)':'Avg hold time (winners)','Priem. držanie (stratové)':'Avg hold time (losers)',
+'Otvorené obchody (bez výstupu)':'Open trades (no exit)','Obchodných dní':'Trading days','Ziskové dni':'Winning days','Stratové dni':'Losing days','Breakeven dni':'Breakeven days',
+'Max po sebe ziskových dní':'Max consecutive winning days','Max po sebe stratových dní':'Max consecutive losing days',
+'Priemerný denný P&L':'Average daily P&L','Priemerný ziskový deň':'Average winning day','Priemerný stratový deň':'Average losing day',
+'Priem. denný objem (kontrakty)':'Avg daily volume (contracts)','Očakávaná hodnota / obchod':'Trade expectancy','Priemerný realizovaný R-multiple':'Average realized R-multiple',
+'Mesiac:':'Month:','Po':'Mo','Ut':'Tu','St':'We','Št':'Th','Pi':'Fr','So':'Sa','Ne':'Su',
+'Pondelok':'Monday','Utorok':'Tuesday','Streda':'Wednesday','Štvrtok':'Thursday','Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
+'Všetky symboly':'All symbols','Hľadať v poznámkach/tagoch...':'Search notes/tags...','Dátum':'Date','Smer':'Side','Množstvo':'Quantity','Vstup':'Entry','Výstup':'Exit','Trvanie':'Duration','Tagy':'Tags',
+'Žiadne obchody. Pridaj ručne alebo importuj CSV.':'No trades yet. Add one manually or import a CSV.','Filter podľa tagov:':'Filter by tags:','✕ Zrušiť filter':'✕ Clear filter',
+'Import obchodov z CSV':'Import trades from CSV','Importovať do účtu':'Import into account','CSV súbor':'CSV file','Mapovanie stĺpcov':'Column mapping','Náhľad (prvých 5 riadkov)':'Preview (first 5 rows)','Importovať obchody':'Import trades',
+'Nahraj CSV export z tvojej platformy. Appka sa pokúsi automaticky rozpoznať stĺpce – skontroluj mapovanie a potvrď import. Podporované sú čiarky aj bodkočiarky, desatinné bodky aj čiarky, dátumy vo formátoch':'Upload a CSV export from your platform. The app auto-detects columns – check the mapping and confirm the import. Supports commas and semicolons, decimal points and commas, dates in formats',
+'aj unix timestamp.':'and unix timestamps.',
+'Smer (long/short)':'Side (long/short)','Vstupná cena':'Entry price','Výstupná cena':'Exit price','Čas vstupu *':'Entry time *','Čas výstupu':'Exit time','Poplatky':'Fees','P&L (hotové)':'P&L (imported)','Poznámky':'Notes',
+'Pozitívne tagy/Setup':'Positive tags/Setup','Negatívne tagy/Chyby':'Negative tags/Mistakes',
+'Stiahnuť sviečky z internetu (Yahoo Finance)':'Download candles from the internet (Yahoo Finance)',
+'Automaticky stiahne historické sviečky pre futures (GC → GC=F, NQ → NQ=F, MGC → MGC=F...). Limity dát: 1m sviečky max ~7 dní dozadu, 5m/15m max ~60 dní, 1h ~2 roky, denné neobmedzene. Pri otvorenom obchode to vieš spraviť aj priamo tlačidlom „⟳ Stiahnuť sviečky" nad grafom.':'Automatically downloads historical candles for futures (GC → GC=F, NQ → NQ=F, MGC → MGC=F...). Data limits: 1m candles ~7 days back, 5m/15m ~60 days, 1h ~2 years, daily unlimited. With a trade open you can also use the "⟳ Download candles" button above the chart.',
+'Dní dozadu':'Days back','Stiahnuť':'Download','Nahrať dáta':'Upload data','Nahrané datasety':'Uploaded datasets','Zatiaľ žiadne dáta.':'No data yet.',
+'Nahrať OHLC dáta z CSV (napr. export z TradingView)':'Upload OHLC data from CSV (e.g. TradingView export)',
+'Alternatíva s presnými dátami tvojho kontraktu: v TradingView otvor graf → menu grafu →':'Alternative with exact data for your contract: in TradingView open the chart → chart menu →',
+'→ stiahnutý CSV nahraj sem. CSV musí obsahovať stĺpce: čas, open, high, low, close (voliteľne volume).':'→ upload the downloaded CSV here. The CSV must contain columns: time, open, high, low, close (volume optional).',
+'napr. NQ, GC, MGC':'e.g. NQ, GC, MGC','1 hod':'1 hour','4 hod':'4 hours','Denný':'Daily','Sviečok':'Candles','Od':'From','Do':'To','Vymazať':'Delete',
+'Účty':'Accounts',
+'Každý obchod patrí do jedného účtu. Aktívny účet prepínaš hore v hlavičke – dashboard, štatistiky, kalendár aj zoznam obchodov sa počítajú len z neho (alebo zvoľ „Všetky účty"). Počiatočný kapitál sa používa pre equity krivku.':'Each trade belongs to one account. Switch the active account in the header – the dashboard, statistics, calendar and trade list are computed from it (or choose "All accounts"). Starting capital is used for the equity curve.',
+'Názov účtu':'Account name','Počiat. kapitál':'Starting capital','+ Pridať účet':'+ Add account','Uložiť účty':'Save accounts',
+'Hodnota bodu (multiplikátor) podľa symbolu':'Point value (multiplier) per symbol',
+'P&L = (výstup − vstup) × smer × množstvo × multiplikátor − poplatky. Pre futures: NQ=20, MNQ=2, ES=50, MES=5, GC=100 (zlato), MGC=10. Symbol obchodu sa páruje aj podľa prefixu (NQZ5 → NQ).':'P&L = (exit − entry) × side × quantity × multiplier − fees. For futures: NQ=20, MNQ=2, ES=50, MES=5, GC=100 (gold), MGC=10. Trade symbols also match by prefix (NQZ5 → NQ).',
+'+ Pridať symbol':'+ Add symbol','Uložiť multiplikátory':'Save multipliers','Záloha dát':'Backup','Exportovať zálohu (JSON)':'Export backup (JSON)','Obnoviť zo zálohy':'Restore from backup',
+'Záloha obsahuje obchody, nastavenia a screenshoty. Dáta sú inak uložené len v tomto prehliadači.':'The backup contains trades, settings and screenshots. Otherwise data is stored only in this browser.',
+'Nebezpečná zóna':'Danger zone','Vymazať všetky dáta':'Delete all data',
+'Nový obchod':'New trade','Množstvo (kontrakty)':'Quantity (contracts)','Účet':'Account','Vstupná cena *':'Entry price *','P&L manuálne (prepíše výpočet)':'Manual P&L (overrides calculation)',
+'🟢 Pozitívne tagy – čo bolo dobré (odd. čiarkou)':'🟢 Positive tags – what went well (comma separated)','🔴 Negatívne tagy – chyby (odd. čiarkou)':'🔴 Negative tags – mistakes (comma separated)',
+'A+ setup, dodržaný plán, trpezlivosť...':'A+ setup, followed plan, patience...','FOMO, posunutý stop, revenge trading...':'FOMO, moved stop, revenge trading...',
+'Denník / poznámky k obchodu':'Journal / trade notes',
+'Setup a dôvod vstupu, manažment pozície, emócie, chyby, čo nabudúce spraviť inak...':'Setup and entry reason, position management, emotions, mistakes, what to do differently next time...',
+'Graf':'Chart','Screenshoty':'Screenshots','Žiadne screenshoty':'No screenshots',
+'Pretiahni sem obrázok, vlož zo schránky (Ctrl+V) alebo':'Drag an image here, paste from clipboard (Ctrl+V) or','vyber súbor':'choose a file',
+'Zavrieť':'Close','Uložiť obchod':'Save trade',
+'Zatiaľ žiadne pozitívne tagy – napíš prvý hore (napr. A+ setup, dodržaný plán).':'No positive tags yet – type the first one above (e.g. A+ setup, followed plan).',
+'Zatiaľ žiadne negatívne tagy – napíš prvý hore (napr. FOMO, posunutý stop).':'No negative tags yet – type the first one above (e.g. FOMO, moved stop).',
+'⟳ Stiahnuť sviečky':'⟳ Download candles','Sťahujem...':'Downloading...','– dataset:':'– dataset:',
+'Knižnica grafu sa nenačítala (skontroluj internetové pripojenie).':'Chart library failed to load (check your internet connection).',
+'Zadaj symbol a čas vstupu.':'Enter a symbol and entry time.','Pre symbol':'For symbol','nie sú žiadne OHLC dáta.':'there is no OHLC data.',
+'Klikni hore na':'Click above on','„⟳ Stiahnuť sviečky"':'"⟳ Download candles"','(Yahoo Finance, automaticky) alebo nahraj CSV v záložke':'(Yahoo Finance, automatic) or upload a CSV in the tab',
+'Zadaj symbol':'Enter a symbol','Zadaj čas vstupu':'Enter entry time','Zadaj vstupnú cenu alebo manuálne P&L':'Enter an entry price or manual P&L',
+'Obchod uložený':'Trade saved','Obchod vymazaný':'Trade deleted','Vymazať tento obchod?':'Delete this trade?','Screenshot vložený':'Screenshot added',
+'CSV je prázdne alebo má len hlavičku':'CSV is empty or has only a header','Namapuj minimálne Symbol a Čas vstupu':'Map at least Symbol and Entry time','Najprv nahraj CSV':'Upload a CSV first',
+'Vyber CSV súbor':'Choose a CSV file','Prázdny súbor':'Empty file','Nenašiel som stĺpce open/high/low/close':'Could not find open/high/low/close columns',
+'Nepodarilo sa načítať žiadne sviečky – skontroluj formát':'Could not parse any candles – check the format','OHLC dáta nahrané':'OHLC data uploaded','Vymazať tento dataset?':'Delete this dataset?',
+'Dáta stiahnuté':'Data downloaded','Multiplikátory uložené':'Multipliers saved','Uložené':'Saved','Záloha stiahnutá':'Backup downloaded','Neplatný JSON':'Invalid JSON','Záloha obnovená':'Backup restored',
+'Obnovenie PREPÍŠE všetky aktuálne dáta. Pokračovať?':'Restoring will OVERWRITE all current data. Continue?',
+'Naozaj vymazať VŠETKY obchody, screenshoty a dáta?':'Really delete ALL trades, screenshots and data?','Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?':'Last warning – this cannot be undone. Delete?',
+'Všetky dáta vymazané':'All data deleted','Účty uložené':'Accounts saved','Musí existovať aspoň jeden účet':'At least one account must exist','Zobrazujem všetky účty':'Showing all accounts',
+'Nepoznám Yahoo symbol pre':'Unknown Yahoo symbol for','Zadaj ho ručne (napr. GC=F, NQ=F, BTC-USD):':'Enter it manually (e.g. GC=F, NQ=F, BTC-USD):','Zadaj ho ručne (napr. GC=F):':'Enter it manually (e.g. GC=F):',
+'Yahoo nevrátil dáta':'Yahoo returned no data','Chýbajú OHLC dáta v odpovedi':'OHLC data missing in the response','Yahoo vrátil 0 sviečok pre toto obdobie':'Yahoo returned 0 candles for this period',
+'0 sviečok':'0 candles','skús to znova alebo nahraj CSV':'try again or upload a CSV','Sťahovanie zlyhalo':'Download failed','neznáma chyba':'unknown error',
+};
+const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
+const I18N_RULES=[
+[/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
+[/^Stiahnutých (\d+) sviečok \((.+)\)\. Dataset (.+) má teraz (\d+) sviečok\.$/,'Downloaded $1 candles ($2). Dataset $3 now has $4 candles.'],
+[/^Stiahnutých (\d+) sviečok \((.+)\)$/,'Downloaded $1 candles ($2)'],
+[/^Uložených (\d+) sviečok pre (.+), pokrytie (.+)$/,'Saved $1 candles for $2, coverage $3'],
+[/^Sťahovanie zlyhalo: ([\s\S]+)$/,(m,p1)=>'Download failed: '+(I18N_EN[p1]||p1)],
+[/^nepokrýva čas tohto obchodu \((.+)\)\.$/,"does not cover this trade's time ($1)."],
+[/^(\d+) (obchodov|obchody|obchod)$/,(m,n)=>n+' '+(n==='1'?'trade':'trades')],
+[/^(\d+) riadkov na import$/,'$1 rows to import'],
+[/^Importované: (\d+), preskočené: (\d+)$/,'Imported: $1, skipped: $2'],
+[/^Importovaných (\d+) obchodov$/,'Imported $1 trades'],
+[/^multiplikátor (.+)$/,'multiplier $1'],
+[/^(.+) \((\d+) sviečok\)$/,'$1 ($2 candles)'],
+[/^Obchod #(\d+) – (.+)$/,'Trade #$1 – $2'],
+[/^Obchody (\d.+)$/,'Trades $1'],
+[/^(\d+) mes\.$/,'$1 mo.'],
+[/^Účet: (.+)$/,'Account: $1'],
+[/^Účet "(.+)" má obchody\. Presunúť ich do účtu "(.+)"\?$/,'Account "$1" has trades. Move them to account "$2"?'],
+];
+const I18N_REV={};
+Object.entries(I18N_EN).forEach(([k,v])=>{if(k!==v)I18N_REV[v]=k;});
+function translateText(s,dir){
+  const t=String(s).trim();
+  if(!t)return s;
+  const d=dir==='fwd'?I18N_EN:I18N_REV;
+  if(d[t]!=null)return s.replace(t,d[t]);
+  if(dir==='fwd'){
+    for(const [re,out] of I18N_RULES){
+      if(re.test(t))return s.replace(t,t.replace(re,out));
+    }
+  }
+  return s;
+}
+function tr(s){return settings.lang==='en'?translateText(s,'fwd'):s;}
+function translateDOM(root,dir){
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+  const nodes=[];
+  while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const n of nodes){
+    const p=n.parentElement;
+    if(p&&(p.tagName==='SCRIPT'||p.tagName==='STYLE'||p.tagName==='TEXTAREA'))continue;
+    const v=translateText(n.nodeValue,dir);
+    if(v!==n.nodeValue)n.nodeValue=v;
+  }
+  if(root.querySelectorAll){
+    root.querySelectorAll('input[placeholder],textarea[placeholder],[title]').forEach(el=>{
+      if(el.placeholder){const v=translateText(el.placeholder,dir);if(v!==el.placeholder)el.placeholder=v;}
+      if(el.title){const v=translateText(el.title,dir);if(v!==el.title)el.title=v;}
+    });
+  }
+}
+let i18nBusy=false;
+const i18nObserver=new MutationObserver(muts=>{
+  if(settings.lang!=='en'||i18nBusy)return;
+  i18nBusy=true;
+  for(const m of muts){
+    if(m.type==='characterData'&&m.target.nodeValue){
+      const v=translateText(m.target.nodeValue,'fwd');
+      if(v!==m.target.nodeValue)m.target.nodeValue=v;
+    }
+    if(m.addedNodes)m.addedNodes.forEach(n=>{
+      if(n.nodeType===3){const v=translateText(n.nodeValue,'fwd');if(v!==n.nodeValue)n.nodeValue=v;}
+      else if(n.nodeType===1)translateDOM(n,'fwd');
+    });
+  }
+  i18nBusy=false;
+});
+i18nObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
+async function switchLang(l){
+  if(l===(settings.lang||'sk'))return;
+  settings.lang=l;
+  await saveSettings();
+  document.documentElement.lang=l;
+  if(l==='en'){renderAll();i18nBusy=true;translateDOM(document.body,'fwd');i18nBusy=false;}
+  else{i18nBusy=true;translateDOM(document.body,'rev');i18nBusy=false;renderAll();}
+}
+const _cfm=window.confirm.bind(window);
+function ask(s){return _cfm(tr(s));}
+
+/* ================= Init ================= */
+async function init(){
+  await idbOpen();
+  const s=await idbGet('kv','settings');
+  if(s&&s.v){settings.balance=s.v.balance||0;settings.mults=Object.assign({},settings.mults,s.v.mults||{});
+    if(s.v.multsExact)settings.mults=s.v.mults;
+    if(s.v.accounts&&s.v.accounts.length)settings.accounts=s.v.accounts;
+    if(s.v.activeAccount!=null)settings.activeAccount=s.v.activeAccount;
+    if(s.v.lang)settings.lang=s.v.lang;
+    if(s.v.gClientId)settings.gClientId=s.v.gClientId;
+    settings.gConnected=!!s.v.gConnected;
+    settings.gLastSync=s.v.gLastSync||null;}
+  // migrácia: starý settings.balance -> prvý účet
+  if(settings.accounts.length===1&&!settings.accounts[0].balance&&settings.balance)settings.accounts[0].balance=settings.balance;
+  if(settings.activeAccount!=='all'&&!settings.accounts.some(a=>a.id===settings.activeAccount))settings.activeAccount=settings.accounts[0].id;
+  trades=await idbAll('trades');
+  ohlcSets=await idbAll('ohlc');
+  renderAll();
+  bindGlobal();
+  $('langSelect').value=settings.lang||'sk';
+  document.documentElement.lang=settings.lang||'sk';
+  if(settings.lang==='en'){i18nBusy=true;translateDOM(document.body,'fwd');i18nBusy=false;}
+  gBootDone=true;
+  if(settings.gConnected&&settings.gClientId){
+    setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
+  }
+}
+function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync}});}
+function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();}
+
+/* ================= Účty ================= */
+function defaultAccId(){return settings.accounts[0].id;}
+function accTrades(){
+  const a=settings.activeAccount;
+  if(a==='all')return trades;
+  return trades.filter(t=>(t.account??defaultAccId())===a);
+}
+function activeStartBalance(){
+  if(settings.activeAccount==='all')return settings.accounts.reduce((s,a)=>s+(a.balance||0),0);
+  const a=settings.accounts.find(x=>x.id===settings.activeAccount);
+  return a?(a.balance||0):0;
+}
+function accName(id){const a=settings.accounts.find(x=>x.id===id);return a?a.name:'?';}
+function renderAccSelects(){
+  const opts=settings.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  const sel=$('accSelect');
+  sel.innerHTML=opts+'<option value="all">Všetky účty</option>';
+  sel.value=String(settings.activeAccount);
+  const imp=$('importAccount');
+  imp.innerHTML=opts;
+  imp.value=String(settings.activeAccount==='all'?defaultAccId():settings.activeAccount);
+}
+async function switchAccount(v){
+  settings.activeAccount=v==='all'?'all':parseInt(v,10);
+  await saveSettings();
+  renderAll();
+  toast(v==='all'?'Zobrazujem všetky účty':'Účet: '+accName(settings.activeAccount));
+}
+function addAccRow(name,balance,id){
+  const div=document.createElement('div');
+  div.className='multrow';
+  div.dataset.accid=id==null?'':String(id);
+  div.innerHTML=`<input class="an" value="${esc(name)}" placeholder="Názov účtu" style="width:180px">
+    <input class="ab" type="number" step="any" value="${balance||0}" style="width:140px">
+    <button class="btn secondary small" onclick="this.parentElement.remove()">✕</button>`;
+  $('accList').appendChild(div);
+}
+async function saveAccounts(){
+  const rows=[...document.querySelectorAll('#accList .multrow')];
+  const newAccs=[];
+  let nextId=Math.max(0,...settings.accounts.map(a=>a.id))+1;
+  for(const r of rows){
+    const name=r.querySelector('.an').value.trim();
+    if(!name)continue;
+    const bal=num(r.querySelector('.ab').value)||0;
+    const id=r.dataset.accid?parseInt(r.dataset.accid,10):nextId++;
+    newAccs.push({id,name,balance:bal});
+  }
+  if(!newAccs.length){toast('Musí existovať aspoň jeden účet');return;}
+  // účty odstránené v UI, ktoré majú trady -> presun do prvého účtu
+  const newIds=new Set(newAccs.map(a=>a.id));
+  const removedWithTrades=settings.accounts.filter(a=>!newIds.has(a.id)&&trades.some(t=>(t.account??defaultAccId())===a.id));
+  if(removedWithTrades.length){
+    if(!ask(`Účet "${removedWithTrades.map(a=>a.name).join(', ')}" má obchody. Presunúť ich do účtu "${newAccs[0].name}"?`))return;
+    for(const t of trades){
+      const acc=t.account??defaultAccId();
+      if(removedWithTrades.some(a=>a.id===acc)){t.account=newAccs[0].id;await idbPut('trades',t);}
+    }
+  }
+  settings.accounts=newAccs;
+  if(settings.activeAccount!=='all'&&!newIds.has(settings.activeAccount))settings.activeAccount=newAccs[0].id;
+  await saveSettings();
+  renderAll();
+  scheduleAutoSync();
+  toast('Účty uložené');
+}
+
+/* ================= Tabs ================= */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    $('tab-'+b.dataset.tab).classList.add('active');
+    if(b.dataset.tab==='dashboard')renderDashboard();
+    if(b.dataset.tab==='stats')renderStats();
+    if(b.dataset.tab==='reports')renderReports();
+  };
+});
+
+/* ================= Dashboard ================= */
+const GAUGE_L=125.66; // dĺžka polkruhu r=40
+function gaugeSVG(wN,bN,lN){
+  const tot=wN+bN+lN;
+  const seg=(frac,off,color)=>frac>0?`<path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="${color}" stroke-width="9" stroke-dasharray="${(frac*GAUGE_L).toFixed(2)} 999" stroke-dashoffset="${(-off*GAUGE_L).toFixed(2)}"/>`:'';
+  let segs='';
+  if(tot>0){
+    const fw=wN/tot,fb=bN/tot,fl=lN/tot;
+    segs=seg(fw,0,'#26a69a')+seg(fb,fw,'#5b8def')+seg(fl,fw+fb,'#ef5350');
+  }
+  return `<svg viewBox="0 0 100 55" width="88" height="49">
+    <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#2a3441" stroke-width="9"/>${segs}</svg>`;
+}
+function donutSVG(frac,hasData){
+  const C=(2*Math.PI*16).toFixed(2);
+  if(!hasData)return `<svg viewBox="0 0 44 44" width="54" height="54"><circle cx="22" cy="22" r="16" fill="none" stroke="#2a3441" stroke-width="7"/></svg>`;
+  return `<svg viewBox="0 0 44 44" width="54" height="54" style="transform:rotate(-90deg)">
+    <circle cx="22" cy="22" r="16" fill="none" stroke="#ef5350" stroke-width="7"/>
+    <circle cx="22" cy="22" r="16" fill="none" stroke="#26a69a" stroke-width="7" stroke-dasharray="${(frac*C).toFixed(2)} 999" stroke-linecap="round"/>
+  </svg>`;
+}
+function filteredForDash(){
+  const p=$('dashPeriod').value;
+  const now=new Date();
+  let from=0;
+  if(p==='month')from=new Date(now.getFullYear(),now.getMonth(),1).getTime()/1000;
+  else if(p==='year')from=new Date(now.getFullYear(),0,1).getTime()/1000;
+  else if(p==='30')from=now.getTime()/1000-30*86400;
+  else if(p==='90')from=now.getTime()/1000-90*86400;
+  return accTrades().filter(t=>tTime(t)>=from).sort((a,b)=>tTime(a)-tTime(b));
+}
+function renderDashboard(){
+  const ts=filteredForDash();
+  const pnls=ts.map(computePnl);
+  const net=pnls.reduce((a,b)=>a+b,0);
+  const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0);
+  const wr=pnls.length?wins.length/pnls.length*100:0;
+  const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
+  const pf=gl>0?gw/gl:(gw>0?Infinity:0);
+  const avgW=wins.length?gw/wins.length:0,avgL=losses.length?gl/losses.length:0;
+  const expct=pnls.length?net/pnls.length:0;
+  // max drawdown
+  let peak=0,dd=0,cum=0;
+  for(const p of pnls){cum+=p;if(cum>peak)peak=cum;const d=peak-cum;if(d>dd)dd=d;}
+  const be=pnls.filter(p=>p===0).length;
+  // daily sums
+  const daily={};
+  ts.forEach((t,i)=>{const k=dayKey(tTime(t));daily[k]=(daily[k]||0)+pnls[i];});
+  const dayVals=Object.values(daily);
+  const dW=dayVals.filter(v=>v>0).length,dL=dayVals.filter(v=>v<0).length,dB=dayVals.filter(v=>v===0).length;
+  const dwr=dayVals.length?dW/dayVals.length*100:0;
+  const ratio=avgL>0?avgW/avgL:(avgW>0?Infinity:0);
+  const pfFrac=(gw+gl)>0?gw/(gw+gl):0;
+  const bestDay=dayVals.length?Math.max(...dayVals):0;
+  const worstDay=dayVals.length?Math.min(...dayVals):0;
+  const awPct=(avgW+avgL)>0?avgW/(avgW+avgL)*100:50;
+  $('kpiCards').innerHTML=`
+    <div class="card kpi">
+      <div>
+        <div class="lbl">Net P&L <span class="badge">${pnls.length}</span></div>
+        <div class="big ${moneyCls(net)}">${fmtMoney(net)}</div>
+      </div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="lbl">Trade win %</div>
+        <div class="big">${wr.toFixed(2)}%</div>
+      </div>
+      <div style="text-align:center">
+        ${gaugeSVG(wins.length,be,losses.length)}
+        <div class="gpills"><span class="gpill w">${wins.length}</span><span class="gpill b">${be}</span><span class="gpill l">${losses.length}</span></div>
+      </div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="lbl">Profit factor</div>
+        <div class="big">${pf===Infinity?'∞':pf.toFixed(2)}</div>
+      </div>
+      <div>${donutSVG(pfFrac,pnls.length>0)}</div>
+    </div>
+    <div class="card kpi">
+      <div>
+        <div class="lbl">Day win %</div>
+        <div class="big">${dwr.toFixed(2)}%</div>
+      </div>
+      <div style="text-align:center">
+        ${gaugeSVG(dW,dB,dL)}
+        <div class="gpills"><span class="gpill w">${dW}</span><span class="gpill b">${dB}</span><span class="gpill l">${dL}</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="lbl">Avg win/loss trade</div>
+      <div class="big" style="font-size:23px;font-weight:800">${ratio===Infinity?'∞':ratio.toFixed(2)}</div>
+      <div class="wlbar"><div style="width:${awPct.toFixed(1)}%;background:var(--green)"></div><div style="flex:1;background:${(avgW+avgL)>0?'var(--red)':'var(--bg3)'}"></div></div>
+      <div class="wllabels"><span class="pos">${fmtMoney(avgW)}</span><span class="neg">${fmtMoney(-avgL)}</span></div>
+    </div>`;
+  $('kpiCards2').innerHTML=[
+    ['Očak. hodnota / trade',fmtMoney(expct),moneyCls(expct)],
+    ['Max drawdown',fmtMoney(-dd),dd?'neg':''],
+    ['Najlepší deň',fmtMoney(bestDay),moneyCls(bestDay)],
+    ['Najhorší deň',fmtMoney(worstDay),moneyCls(worstDay)],
+  ].map(k=>`<div class="card"><div class="lbl">${k[0]}</div><div class="val ${k[2]}">${k[1]}</div></div>`).join('');
+
+  // equity
+  if(typeof Chart!=='undefined'){
+    const labels=ts.map((t,i)=>i+1);
+    let c=activeStartBalance(),eq=ts.map((t,i)=>{c+=pnls[i];return c;});
+    if(eqChartObj)eqChartObj.destroy();
+    eqChartObj=new Chart($('eqChart'),{type:'line',data:{labels,datasets:[{data:eq,borderColor:'#5b8def',backgroundColor:'rgba(91,141,239,.12)',fill:true,pointRadius:0,tension:.2,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'#2a3441'},ticks:{color:'#8b98a9'}}}}});
+    // daily
+    const dkeys=Object.keys(daily).sort();
+    if(dailyChartObj)dailyChartObj.destroy();
+    dailyChartObj=new Chart($('dailyChart'),{type:'bar',data:{labels:dkeys.map(k=>k.slice(5)),datasets:[{data:dkeys.map(k=>daily[k]),backgroundColor:dkeys.map(k=>daily[k]>=0?'#26a69a':'#ef5350')}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#8b98a9',maxTicksLimit:12}},y:{grid:{color:'#2a3441'},ticks:{color:'#8b98a9'}}}}});
+  }
+  // breakdowns
+  renderBreakdown('bySymbol',ts,t=>String(t.symbol).toUpperCase());
+  const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
+  renderBreakdown('byDow',ts,t=>dows[new Date(tTime(t)*1000).getDay()]);
+  renderBreakdown('byHour',ts,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00');
+}
+function renderBreakdown(elId,ts,keyFn){
+  const g={};
+  ts.forEach(t=>{const k=keyFn(t);(g[k]=g[k]||[]).push(computePnl(t));});
+  const keys=Object.keys(g).sort((a,b)=>{
+    const sa=g[a].reduce((x,y)=>x+y,0),sb=g[b].reduce((x,y)=>x+y,0);
+    return elId==='byHour'?a.localeCompare(b):sb-sa;});
+  if(!keys.length){$(elId).innerHTML='<span class="hint">Žiadne dáta</span>';return;}
+  $(elId).innerHTML='<table><thead><tr><th></th><th>Trades</th><th>WR</th><th>P&L</th></tr></thead><tbody>'+
+    keys.map(k=>{const arr=g[k];const s=arr.reduce((x,y)=>x+y,0);const w=arr.filter(x=>x>0).length;
+      return `<tr style="cursor:default"><td>${esc(k)}</td><td>${arr.length}</td><td>${(w/arr.length*100).toFixed(0)}%</td><td class="${moneyCls(s)}">${fmtMoney(s)}</td></tr>`;}).join('')+'</tbody></table>';
+}
+
+/* ================= Stats page ================= */
+function periodFiltered(p){
+  const now=new Date();
+  let from=0;
+  if(p==='month')from=new Date(now.getFullYear(),now.getMonth(),1).getTime()/1000;
+  else if(p==='year')from=new Date(now.getFullYear(),0,1).getTime()/1000;
+  else if(p==='30')from=now.getTime()/1000-30*86400;
+  else if(p==='90')from=now.getTime()/1000-90*86400;
+  return accTrades().filter(t=>tTime(t)>=from).sort((a,b)=>tTime(a)-tTime(b));
+}
+function maxStreak(arr,pred){let m=0,c=0;for(const x of arr){if(pred(x)){c++;if(c>m)m=c;}else c=0;}return m;}
+function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;}
+function srow(l,v,cls){return `<div class="srow"><span>${l}</span><b class="${cls||''}">${v}</b></div>`;}
+function renderStats(){
+  const ts=periodFiltered($('statsPeriod').value);
+  const pnls=ts.map(computePnl);
+  const net=pnls.reduce((a,b)=>a+b,0);
+  const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0),be=pnls.filter(p=>p===0);
+  const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
+  const pf=gl>0?gw/gl:(gw>0?Infinity:0);
+  const fees=ts.reduce((a,t)=>a+(t.fees||0),0);
+  const openTrades=ts.filter(t=>!isFinite(t.exit)&&t.pnlOverride==null).length;
+  // hold times
+  const durs=ts.map(t=>(t.tEntry&&t.tExit&&t.tExit>t.tEntry)?t.tExit-t.tEntry:null);
+  const dAll=durs.filter(d=>d!=null);
+  const dWin=durs.filter((d,i)=>d!=null&&pnls[i]>0);
+  const dLoss=durs.filter((d,i)=>d!=null&&pnls[i]<0);
+  // daily
+  const daily={},dailyVol={};
+  ts.forEach((t,i)=>{const k=dayKey(tTime(t));daily[k]=(daily[k]||0)+pnls[i];dailyVol[k]=(dailyVol[k]||0)+(t.qty||1);});
+  const dkeys=Object.keys(daily).sort();
+  const dVals=dkeys.map(k=>daily[k]);
+  const dW=dVals.filter(v=>v>0),dL=dVals.filter(v=>v<0),dB=dVals.filter(v=>v===0);
+  // drawdown
+  let peak=0,dd=0,cum=0;
+  for(const p of pnls){cum+=p;if(cum>peak)peak=cum;const d=peak-cum;if(d>dd)dd=d;}
+  // R multiples
+  const rs=ts.map(riskR).filter(r=>r!=null);
+  // months
+  const months={};
+  ts.forEach((t,i)=>{const d=new Date(tTime(t)*1000);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');months[k]=(months[k]||0)+pnls[i];});
+  const mkeys=Object.keys(months).sort();
+  const mName=k=>{const [y,m]=k.split('-');return new Date(+y,+m-1,1).toLocaleDateString(settings.lang==='en'?'en-US':'sk-SK',{month:'short',year:'numeric'});};
+  let bestM=null,worstM=null;
+  for(const k of mkeys){
+    if(bestM==null||months[k]>months[bestM])bestM=k;
+    if(worstM==null||months[k]<months[worstM])worstM=k;
+  }
+  const mAvg=mkeys.length?net/mkeys.length:0;
+  $('statsMonths').innerHTML=[
+    ['Najlepší mesiac',bestM?fmtMoney(months[bestM]):'–',bestM?moneyCls(months[bestM]):'',bestM?mName(bestM):''],
+    ['Najhorší mesiac',worstM?fmtMoney(months[worstM]):'–',worstM?moneyCls(months[worstM]):'',worstM?mName(worstM):''],
+    ['Priemer / mesiac',fmtMoney(mAvg),moneyCls(mAvg),mkeys.length+' mes.'],
+  ].map(k=>`<div class="card"><div class="lbl">${k[0]}</div><div class="val ${k[2]}">${k[1]}</div><div class="lbl" style="margin-top:4px">${k[3]}</div></div>`).join('');
+
+  $('statsLeft').innerHTML='<h3>Obchody</h3>'+
+    srow('Celkový P&L',fmtMoney(net),moneyCls(net))+
+    srow('Priemerný P&L / obchod',fmtMoney(avg(pnls)),moneyCls(avg(pnls)))+
+    srow('Priemerný ziskový obchod',fmtMoney(avg(wins)),'pos')+
+    srow('Priemerný stratový obchod',fmtMoney(-Math.abs(avg(losses))),losses.length?'neg':'')+
+    srow('Počet obchodov',pnls.length)+
+    srow('Ziskové obchody',wins.length,'pos')+
+    srow('Stratové obchody',losses.length,losses.length?'neg':'')+
+    srow('Breakeven obchody',be.length)+
+    srow('Max po sebe idúce výhry',maxStreak(pnls,p=>p>0))+
+    srow('Max po sebe idúce prehry',maxStreak(pnls,p=>p<0))+
+    srow('Najväčší zisk',fmtMoney(pnls.length?Math.max(...pnls):0),'pos')+
+    srow('Najväčšia strata',fmtMoney(pnls.length?Math.min(...pnls):0),pnls.length&&Math.min(...pnls)<0?'neg':'')+
+    srow('Poplatky spolu',fmtMoney(fees),fees?'neg':'')+
+    srow('Priem. držanie (všetky)',dAll.length?fmtDur(avg(dAll)):'–')+
+    srow('Priem. držanie (ziskové)',dWin.length?fmtDur(avg(dWin)):'–')+
+    srow('Priem. držanie (stratové)',dLoss.length?fmtDur(avg(dLoss)):'–')+
+    srow('Profit factor',pf===Infinity?'∞':pf.toFixed(2),pf>=1?'pos':(pnls.length?'neg':''));
+
+  $('statsRight').innerHTML='<h3>Dni</h3>'+
+    srow('Otvorené obchody (bez výstupu)',openTrades)+
+    srow('Obchodných dní',dkeys.length)+
+    srow('Ziskové dni',dW.length,'pos')+
+    srow('Stratové dni',dL.length,dL.length?'neg':'')+
+    srow('Breakeven dni',dB.length)+
+    srow('Max po sebe ziskových dní',maxStreak(dVals,v=>v>0))+
+    srow('Max po sebe stratových dní',maxStreak(dVals,v=>v<0))+
+    srow('Priemerný denný P&L',fmtMoney(avg(dVals)),moneyCls(avg(dVals)))+
+    srow('Priemerný ziskový deň',fmtMoney(avg(dW)),'pos')+
+    srow('Priemerný stratový deň',fmtMoney(avg(dL)),dL.length?'neg':'')+
+    srow('Najlepší deň',fmtMoney(dVals.length?Math.max(...dVals):0),'pos')+
+    srow('Najhorší deň',fmtMoney(dVals.length?Math.min(...dVals):0),dVals.length&&Math.min(...dVals)<0?'neg':'')+
+    srow('Priem. denný objem (kontrakty)',dkeys.length?avg(Object.values(dailyVol)).toFixed(1):'–')+
+    srow('Očakávaná hodnota / obchod',fmtMoney(avg(pnls)),moneyCls(avg(pnls)))+
+    srow('Priemerný realizovaný R-multiple',rs.length?avg(rs).toFixed(2)+'R':'–',rs.length?(avg(rs)>=0?'pos':'neg'):'')+
+    srow('Max drawdown',fmtMoney(-dd),dd?'neg':'');
+}
+
+/* ================= Calendar ================= */
+function calMove(d){calDate=new Date(calDate.getFullYear(),calDate.getMonth()+d,1);renderCalendar();}
+function renderCalendar(){
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  const months=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+  $('calMonthName').textContent=months[m]+' '+y;
+  const daily={};
+  accTrades().forEach(t=>{const k=dayKey(tTime(t));(daily[k]=daily[k]||{pnl:0,n:0});daily[k].pnl+=computePnl(t);daily[k].n++;});
+  const first=new Date(y,m,1);
+  let startDow=(first.getDay()+6)%7; // Monday first
+  const dim=new Date(y,m+1,0).getDate();
+  const dows=['Po','Ut','St','Št','Pi','So','Ne'];
+  let html=dows.map(d=>`<div class="dow">${d}</div>`).join('');
+  for(let i=0;i<startDow;i++)html+='<div class="day other"></div>';
+  let monthTotal=0;
+  for(let d=1;d<=dim;d++){
+    const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const info=daily[k];
+    let cls='day',inner=`<div class="dn">${d}</div>`;
+    if(info){monthTotal+=info.pnl;
+      cls+=' has '+(info.pnl>0?'win':(info.pnl<0?'loss':''));
+      inner+=`<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div><div class="dc">${info.n} ${info.n===1?'obchod':(info.n<5?'obchody':'obchodov')}</div>`;
+    }
+    html+=`<div class="${cls}" ${info?`onclick="showDay('${k}')"`:''}>${inner}</div>`;
+  }
+  $('calGrid').innerHTML=html;
+  $('calTotal').innerHTML=`Mesiac: <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
+  $('calDayPanel').style.display='none';
+}
+function showDay(k){
+  const dayTrades=accTrades().filter(t=>dayKey(tTime(t))===k).sort((a,b)=>tTime(a)-tTime(b));
+  const p=$('calDayPanel');
+  p.style.display='block';
+  p.innerHTML=`<h3>Obchody ${k.split('-').reverse().join('.')}</h3>`+tradeTableHTML(dayTrades);
+}
+
+/* ================= Trades list ================= */
+function refreshSymbolFilter(){
+  const syms=[...new Set(accTrades().map(t=>String(t.symbol).toUpperCase()))].sort();
+  const cur=$('fSymbol').value;
+  $('fSymbol').innerHTML='<option value="">Všetky symboly</option>'+syms.map(s=>`<option ${s===cur?'selected':''}>${esc(s)}</option>`).join('');
+}
+let tagFilter=new Set(); // kľúče 'g:nazov' / 'r:nazov'
+function allTagsOf(field){
+  const s=new Set();
+  accTrades().forEach(t=>(t[field]||[]).forEach(x=>s.add(x)));
+  return [...s].sort((a,b)=>a.localeCompare(b));
+}
+function renderTagBar(){
+  const el=$('tagBar');
+  const gTags=allTagsOf('tags'),rTags=allTagsOf('tagsNeg');
+  const valid=new Set([...gTags.map(x=>'g:'+x),...rTags.map(x=>'r:'+x)]);
+  [...tagFilter].forEach(k=>{if(!valid.has(k))tagFilter.delete(k);});
+  if(!gTags.length&&!rTags.length){el.innerHTML='';el.style.display='none';return;}
+  el.style.display='flex';
+  const chip=(tg,type)=>{const k=type+':'+tg;
+    return `<span class="tagchip ${type==='g'?'g':'r'} ${tagFilter.has(k)?'on':''}" data-key="${esc(k)}">${esc(tg)}</span>`;};
+  el.innerHTML='<span class="hint">Filter podľa tagov:</span>'+
+    gTags.map(tg=>chip(tg,'g')).join('')+rTags.map(tg=>chip(tg,'r')).join('')+
+    (tagFilter.size?'<button class="btn secondary small" id="tagClear">✕ Zrušiť filter</button>':'');
+  el.querySelectorAll('.tagchip').forEach(c=>c.onclick=()=>{
+    const k=c.dataset.key;
+    if(tagFilter.has(k))tagFilter.delete(k);else tagFilter.add(k);
+    renderTrades();
+  });
+  const tc=$('tagClear');
+  if(tc)tc.onclick=()=>{tagFilter.clear();renderTrades();};
+}
+function filteredTrades(){
+  const sym=$('fSymbol').value,dir=$('fDir').value,from=$('fFrom').value,to=$('fTo').value,q=$('fSearch').value.toLowerCase();
+  return accTrades().filter(t=>{
+    if(sym&&String(t.symbol).toUpperCase()!==sym)return false;
+    if(dir&&String(t.dir)!==dir)return false;
+    if(tagFilter.size){
+      const match=[...tagFilter].some(k=>{
+        const name=k.slice(2);
+        return k[0]==='g'?(t.tags||[]).includes(name):(t.tagsNeg||[]).includes(name);
+      });
+      if(!match)return false;
+    }
+    const tt=tTime(t);
+    if(from&&tt<new Date(from).getTime()/1000)return false;
+    if(to&&tt>new Date(to).getTime()/1000+86399)return false;
+    if(q){const hay=((t.notes||'')+' '+(t.tags||[]).join(' ')+' '+(t.tagsNeg||[]).join(' ')+' '+t.symbol).toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  }).sort((a,b)=>tTime(b)-tTime(a));
+}
+function tradeRowHTML(t){
+  const pnl=computePnl(t);
+  const r=riskR(t);
+  const dur=(t.tEntry&&t.tExit)?t.tExit-t.tEntry:null;
+  return `<tr onclick="openTrade(${t.id})">
+    <td>${fmtDT(t.tEntry)}</td>
+    <td><b>${esc(String(t.symbol).toUpperCase())}</b></td>
+    <td><span class="pill ${t.dir===1?'long':'short'}">${t.dir===1?'LONG':'SHORT'}</span></td>
+    <td>${t.qty??''}</td>
+    <td>${isFinite(t.entry)?t.entry:''}</td>
+    <td>${isFinite(t.exit)?t.exit:'–'}</td>
+    <td>${fmtDur(dur)}</td>
+    <td class="${moneyCls(pnl)}"><b>${fmtMoney(pnl)}</b></td>
+    <td>${r==null?'–':r.toFixed(2)+'R'}</td>
+    <td>${(t.tags||[]).map(x=>`<span class="tag g">${esc(x)}</span>`).join('')}${(t.tagsNeg||[]).map(x=>`<span class="tag r">${esc(x)}</span>`).join('')}</td>
+    <td><button class="btn secondary small" onclick="event.stopPropagation();delTrade(${t.id})">✕</button></td>
+  </tr>`;
+}
+function tradeTableHTML(list){
+  return `<div style="overflow-x:auto"><table><thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Tagy</th><th></th></tr></thead><tbody>${list.map(tradeRowHTML).join('')}</tbody></table></div>`;
+}
+function renderTrades(){
+  renderTagBar();
+  const list=filteredTrades();
+  $('tradesBody').innerHTML=list.length?list.map(tradeRowHTML).join(''):'<tr><td colspan="11" class="hint" style="cursor:default">Žiadne obchody. Pridaj ručne alebo importuj CSV.</td></tr>';
+  $('fCount').textContent=list.length+' obchodov';
+}
+function commentedTrades(){
+  const q=($('rSearch')?$('rSearch').value:'').toLowerCase().trim();
+  return accTrades().filter(t=>(t.notes||'').trim()!=='').filter(t=>{
+    if(!q)return true;
+    const hay=((t.notes||'')+' '+(t.tags||[]).join(' ')+' '+(t.tagsNeg||[]).join(' ')+' '+t.symbol).toLowerCase();
+    return hay.includes(q);
+  }).sort((a,b)=>tTime(b)-tTime(a));
+}
+function reportRowHTML(t){
+  const pnl=computePnl(t);
+  const noteRaw=(t.notes||'').trim();
+  const noteExcerpt=esc(noteRaw.slice(0,160))+(noteRaw.length>160?'…':'');
+  return `<tr onclick="openTrade(${t.id})">
+    <td>${fmtDT(t.tEntry)}</td>
+    <td><b>${esc(String(t.symbol).toUpperCase())}</b></td>
+    <td><span class="pill ${t.dir===1?'long':'short'}">${t.dir===1?'LONG':'SHORT'}</span></td>
+    <td class="${moneyCls(pnl)}"><b>${fmtMoney(pnl)}</b></td>
+    <td>${(t.tags||[]).map(x=>`<span class="tag g">${esc(x)}</span>`).join('')}${(t.tagsNeg||[]).map(x=>`<span class="tag r">${esc(x)}</span>`).join('')}</td>
+    <td style="max-width:360px;white-space:pre-wrap">${noteExcerpt}</td>
+  </tr>`;
+}
+function renderReports(){
+  const list=commentedTrades();
+  $('reportsBody').innerHTML=list.length?list.map(reportRowHTML).join(''):'<tr><td colspan="6" class="hint" style="cursor:default">Zatiaľ žiadne okomentované obchody. Otvor obchod a napíš poznámku/review – automaticky sa zobrazí tu.</td></tr>';
+  $('rCount').textContent=list.length+' obchodov';
+}
+async function delTrade(id){
+  if(!ask('Vymazať tento obchod?'))return;
+  await idbDel('trades',id);
+  const shots=await shotsByTrade(id);
+  for(const s of shots)await idbDel('shots',s.id);
+  trades=trades.filter(t=>t.id!==id);
+  renderAll();scheduleAutoSync();toast('Obchod vymazaný');
+}
+
+/* ================= Trade modal ================= */
+async function openTrade(id){
+  currentTradeId=id;pendingShots=[];removedShotIds=[];
+  const t=id!=null?trades.find(x=>x.id===id):null;
+  $('tmTitle').textContent=t?`Obchod #${t.id} – ${String(t.symbol).toUpperCase()}`:'Nový obchod';
+  $('tDelete').style.display=t?'':'none';
+  $('tAccount').innerHTML=settings.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  $('tAccount').value=String(t?(t.account??defaultAccId()):(settings.activeAccount==='all'?defaultAccId():settings.activeAccount));
+  $('tSymbol').value=t?t.symbol:'';
+  $('tDir').value=t?String(t.dir):'1';
+  $('tQty').value=t?(t.qty??1):1;
+  $('tFees').value=t?(t.fees??0):0;
+  $('tEntry').value=t&&isFinite(t.entry)?t.entry:'';
+  $('tExit').value=t&&isFinite(t.exit)?t.exit:'';
+  $('tStop').value=t&&t.stop!=null?t.stop:'';
+  $('tTarget').value=t&&t.target!=null?t.target:'';
+  $('tTimeIn').value=t?tsToLocalInput(t.tEntry):tsToLocalInput(Math.floor(Date.now()/1000));
+  $('tTimeOut').value=t?tsToLocalInput(t.tExit):'';
+  $('tPnl').value=t&&t.pnlOverride!=null?t.pnlOverride:'';
+  $('tTags').value=t?(t.tags||[]).join(', '):'';
+  $('tTagsNeg').value=t?(t.tagsNeg||[]).join(', '):'';
+  $('tNotes').value=t?(t.notes||''):'';
+  if(t){
+    const shots=await shotsByTrade(t.id);
+    pendingShots=shots.map(s=>({id:s.id,blob:s.blob}));
+  }
+  renderShots();
+  renderTagSuggest();
+  updatePnlPreview();
+  $('tradeOverlay').classList.add('open');
+  renderModalChart();
+}
+function closeTrade(){
+  $('tradeOverlay').classList.remove('open');
+  destroyModalChart();
+  currentTradeId=null;pendingShots=[];removedShotIds=[];
+}
+function formTrade(){
+  const symbol=$('tSymbol').value.trim();
+  const entry=num($('tEntry').value),exit=num($('tExit').value);
+  const t={
+    symbol,
+    account:parseInt($('tAccount').value,10)||defaultAccId(),
+    dir:parseInt($('tDir').value,10),
+    qty:num($('tQty').value)||1,
+    fees:num($('tFees').value)||0,
+    entry:isFinite(entry)?entry:NaN,
+    exit:isFinite(exit)?exit:NaN,
+    stop:isFinite(num($('tStop').value))?num($('tStop').value):null,
+    target:isFinite(num($('tTarget').value))?num($('tTarget').value):null,
+    tEntry:localInputToTs($('tTimeIn').value),
+    tExit:localInputToTs($('tTimeOut').value),
+    pnlOverride:$('tPnl').value.trim()===''?null:num($('tPnl').value),
+    tags:$('tTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tagsNeg:$('tTagsNeg').value.split(',').map(s=>s.trim()).filter(Boolean),
+    notes:$('tNotes').value,
+  };
+  return t;
+}
+function updatePnlPreview(){
+  const t=formTrade();
+  if(!t.symbol){$('tPnlPreview').textContent='';return;}
+  const pnl=computePnl(t);
+  const r=riskR(t);
+  $('tPnlPreview').innerHTML=`P&L: <span class="${moneyCls(pnl)}">${fmtMoney(pnl)}</span>`+
+    (r!=null?` &nbsp; <span class="hint">(${r.toFixed(2)}R)</span>`:'')+
+    ` &nbsp; <span class="hint">multiplikátor ${multFor(t.symbol)}</span>`;
+}
+['tSymbol','tDir','tQty','tFees','tEntry','tExit','tStop','tTarget','tPnl'].forEach(id=>{
+  document.addEventListener('input',e=>{if(e.target.id===id)updatePnlPreview();});
+});
+document.addEventListener('input',e=>{if(e.target.id==='tTags'||e.target.id==='tTagsNeg')renderTagSuggest();});
+function inputTags(inputId){return $(inputId).value.split(',').map(s=>s.trim()).filter(Boolean);}
+function renderTagSuggestOne(inputId,elId,field,cls,emptyMsg){
+  const el=$(elId);
+  const cur=inputTags(inputId);
+  const tags=[...new Set([...allTagsOf(field),...cur])].sort((a,b)=>a.localeCompare(b));
+  if(!tags.length){el.innerHTML='<span class="hint">'+emptyMsg+'</span>';return;}
+  el.innerHTML=tags.map(tg=>`<span class="tagchip ${cls} ${cur.includes(tg)?'on':''}" data-tag="${esc(tg)}">${cur.includes(tg)?'✓ ':''}${esc(tg)}</span>`).join('');
+  el.querySelectorAll('.tagchip').forEach(c=>c.onclick=()=>{
+    let now=inputTags(inputId);
+    const tg=c.dataset.tag;
+    if(now.includes(tg))now=now.filter(x=>x!==tg);else now.push(tg);
+    $(inputId).value=now.join(', ');
+    renderTagSuggest();
+  });
+}
+function renderTagSuggest(){
+  renderTagSuggestOne('tTags','tagSuggest','tags','g','Zatiaľ žiadne pozitívne tagy – napíš prvý hore (napr. A+ setup, dodržaný plán).');
+  renderTagSuggestOne('tTagsNeg','tagSuggestNeg','tagsNeg','r','Zatiaľ žiadne negatívne tagy – napíš prvý hore (napr. FOMO, posunutý stop).');
+}
+['tEntry','tExit','tStop','tTarget','tTimeIn','tTimeOut','tSymbol'].forEach(id=>{
+  document.addEventListener('change',e=>{if(e.target.id===id)renderModalChart();});
+});
+async function saveTrade(){
+  const t=formTrade();
+  if(!t.symbol){toast('Zadaj symbol');return;}
+  if(!t.tEntry){toast('Zadaj čas vstupu');return;}
+  if(!isFinite(t.entry)&&t.pnlOverride==null){toast('Zadaj vstupnú cenu alebo manuálne P&L');return;}
+  if(currentTradeId!=null){
+    t.id=currentTradeId;
+    const old=trades.find(x=>x.id===currentTradeId);
+    t.createdAt=old?old.createdAt:Date.now();
+    await idbPut('trades',t);
+    trades=trades.map(x=>x.id===t.id?t:x);
+  }else{
+    t.createdAt=Date.now();
+    const id=await idbAdd('trades',t);
+    t.id=id;trades.push(t);
+  }
+  for(const rid of removedShotIds)await idbDel('shots',rid);
+  for(const s of pendingShots){
+    if(s.id==null){await idbAdd('shots',{tradeId:t.id,blob:s.blob,added:Date.now()});}
+  }
+  closeTrade();
+  renderAll();
+  scheduleAutoSync();
+  toast('Obchod uložený');
+}
+async function deleteCurrentTrade(){
+  if(currentTradeId==null)return;
+  const id=currentTradeId;
+  closeTrade();
+  await delTrade(id);
+}
+
+/* ---- screenshots ---- */
+function renderShots(){
+  const el=$('shotList');
+  el.innerHTML='';
+  pendingShots.forEach((s,i)=>{
+    const url=URL.createObjectURL(s.blob);
+    const div=document.createElement('div');
+    div.className='shot';
+    div.innerHTML=`<img src="${url}"><button title="Odstrániť">✕</button>`;
+    div.querySelector('img').onclick=()=>{$('lightboxImg').src=url;$('lightbox').classList.add('open');};
+    div.querySelector('button').onclick=()=>{
+      if(s.id!=null)removedShotIds.push(s.id);
+      pendingShots.splice(i,1);renderShots();
+    };
+    el.appendChild(div);
+  });
+  if(!pendingShots.length)el.innerHTML='<span class="hint">Žiadne screenshoty</span>';
+}
+function addShotFiles(files){
+  for(const f of files){
+    if(f&&f.type&&f.type.startsWith('image/')){pendingShots.push({id:null,blob:f});}
+  }
+  renderShots();
+}
+function bindGlobal(){
+  $('shotFile').addEventListener('change',e=>{addShotFiles(e.target.files);e.target.value='';});
+  const dz=$('dropzone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');addShotFiles(e.dataTransfer.files);});
+  document.addEventListener('paste',e=>{
+    if(!$('tradeOverlay').classList.contains('open'))return;
+    const items=e.clipboardData&&e.clipboardData.items;
+    if(!items)return;
+    const files=[];
+    for(const it of items){if(it.type&&it.type.startsWith('image/'))files.push(it.getAsFile());}
+    if(files.length){addShotFiles(files);toast('Screenshot vložený');}
+  });
+  $('csvFile').addEventListener('change',e=>{if(e.target.files[0])loadCsvForImport(e.target.files[0]);});
+  $('tradeOverlay').addEventListener('mousedown',e=>{if(e.target===$('tradeOverlay'))closeTrade();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTrade();$('lightbox').classList.remove('open');}});
+}
+
+/* ---- modal chart ---- */
+const TF_SEC={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1d':86400};
+function destroyModalChart(){if(modalChart){modalChart.remove();modalChart=null;}
+  const c=$('tChart');[...c.children].forEach(ch=>{if(ch.id!=='tChartHint')ch.remove();});}
+function symBase(s){return String(s||'').toUpperCase().replace(/[^A-Z].*$/,'');}
+function datasetsForSymbol(sym){
+  const s=String(sym||'').toUpperCase().trim();
+  const b=symBase(s);
+  return ohlcSets.filter(d=>{
+    const ds=String(d.symbol).toUpperCase();
+    return ds===s||ds===b||s.startsWith(ds)||ds.startsWith(b)&&b.length>0;
+  });
+}
+function pickDataset(sym,tEntry,tExit){
+  const cands=datasetsForSymbol(sym);
+  if(!cands.length)return null;
+  const dur=Math.max((tExit||tEntry)-(tEntry||0),60);
+  let best=null,bestScore=Infinity;
+  for(const d of cands){
+    const tf=TF_SEC[d.tf]||300;
+    const bars=dur/tf;
+    const score=Math.abs(Math.log((bars||1)/40)); // ideal ~40 bars for trade duration
+    if(score<bestScore){bestScore=score;best=d;}
+  }
+  return best;
+}
+function renderModalChart(){
+  if(!$('tradeOverlay').classList.contains('open'))return;
+  destroyModalChart();
+  const hint=$('tChartHint');
+  const t=formTrade();
+  const wrap=$('tChartDsWrap');
+  if(typeof LightweightCharts==='undefined'){hint.textContent='Knižnica grafu sa nenačítala (skontroluj internetové pripojenie).';hint.style.display='flex';wrap.innerHTML='';return;}
+  const cands=t.symbol?datasetsForSymbol(t.symbol):[];
+  // dataset selector + fetch button
+  const fetchBtn=t.symbol&&t.tEntry?` <button class="btn secondary small" id="btnAutoFetch">⟳ Stiahnuť sviečky</button>`:'';
+  if(cands.length){
+    const selId='dsSelect';
+    const cur=wrap.dataset.chosen||'';
+    wrap.innerHTML=' – dataset: <select id="'+selId+'" style="padding:3px 6px;font-size:12px">'+
+      cands.map(d=>`<option value="${esc(d.key)}" ${d.key===cur?'selected':''}>${esc(d.symbol)} ${esc(d.tf)} (${d.bars.length} sviečok)</option>`).join('')+'</select>'+fetchBtn;
+    $(selId).onchange=e=>{wrap.dataset.chosen=e.target.value;renderModalChart();};
+  }else wrap.innerHTML=fetchBtn;
+  const fb=$('btnAutoFetch');
+  if(fb)fb.onclick=autoFetchForTrade;
+  let ds=null;
+  if(cands.length){
+    ds=cands.find(d=>d.key===wrap.dataset.chosen)||pickDataset(t.symbol,t.tEntry,t.tExit);
+  }
+  if(!ds||!t.tEntry){
+    hint.innerHTML=t.symbol
+      ?`Pre symbol <b>${esc(String(t.symbol).toUpperCase())}</b> nie sú žiadne OHLC dáta.<br>Klikni hore na <b>„⟳ Stiahnuť sviečky"</b> (Yahoo Finance, automaticky) alebo nahraj CSV v záložke <b>Dáta grafu</b>.`
+      :'Zadaj symbol a čas vstupu.';
+    hint.style.display='flex';
+    return;
+  }
+  const tf=TF_SEC[ds.tf]||300;
+  const t1=t.tEntry,t2=t.tExit||t.tEntry;
+  const pad=Math.max(tf*60,(t2-t1)*1.5);
+  const bars=ds.bars.filter(b=>b.t>=t1-pad&&b.t<=t2+pad);
+  if(!bars.length){
+    hint.innerHTML=`Dataset <b>${esc(ds.symbol)} ${esc(ds.tf)}</b> nepokrýva čas tohto obchodu (${fmtDT(t1)}).`;
+    hint.style.display='flex';return;
+  }
+  hint.style.display='none';
+  const tzOff=ts=>ts-new Date(ts*1000).getTimezoneOffset()*60;
+  modalChart=LightweightCharts.createChart($('tChart'),{
+    layout:{background:{color:'#0d1117'},textColor:'#8b98a9'},
+    grid:{vertLines:{color:'#1c2430'},horzLines:{color:'#1c2430'}},
+    timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#2a3441'},
+    rightPriceScale:{borderColor:'#2a3441'},
+    height:420,
+  });
+  const series=modalChart.addCandlestickSeries({
+    upColor:'#26a69a',downColor:'#ef5350',borderVisible:false,wickUpColor:'#26a69a',wickDownColor:'#ef5350',
+  });
+  series.setData(bars.map(b=>({time:tzOff(b.t),open:b.o,high:b.h,low:b.l,close:b.c})));
+  const markers=[];
+  const near=ts=>{let best=bars[0].t,bd=Infinity;for(const b of bars){const d=Math.abs(b.t-ts);if(d<bd){bd=d;best=b.t;}}return tzOff(best);};
+  if(isFinite(t.entry)){
+    markers.push({time:near(t1),position:t.dir===1?'belowBar':'aboveBar',color:t.dir===1?'#26a69a':'#ef5350',shape:t.dir===1?'arrowUp':'arrowDown',text:tr('Vstup')+' '+t.entry});
+    series.createPriceLine({price:t.entry,color:'#5b8def',lineWidth:1,lineStyle:2,title:tr('Vstup')});
+  }
+  if(isFinite(t.exit)&&t.tExit){
+    const pnl=computePnl(t);
+    markers.push({time:near(t2),position:t.dir===1?'aboveBar':'belowBar',color:pnl>=0?'#26a69a':'#ef5350',shape:'circle',text:tr('Výstup')+' '+t.exit});
+    series.createPriceLine({price:t.exit,color:pnl>=0?'#26a69a':'#ef5350',lineWidth:1,lineStyle:2,title:tr('Výstup')});
+  }
+  if(t.stop!=null)series.createPriceLine({price:t.stop,color:'#ef5350',lineWidth:1,lineStyle:3,title:'SL'});
+  if(t.target!=null)series.createPriceLine({price:t.target,color:'#26a69a',lineWidth:1,lineStyle:3,title:'TP'});
+  markers.sort((a,b)=>a.time-b.time);
+  series.setMarkers(markers);
+  modalChart.timeScale().fitContent();
+}
+
+/* ================= CSV import (trades) ================= */
+let csvRows=null,csvHeaders=null;
+const IMPORT_FIELDS=[
+  ['symbol','Symbol *',['symbol','ticker','instrument','market','contract','produkt','symb']],
+  ['dir','Smer (long/short)',['side','dir','direction','type','smer','buysell','b/s','position','pozicia']],
+  ['qty','Množstvo',['qty','quantity','size','contracts','amount','mnozstvo','lots','volume','pocet']],
+  ['entry','Vstupná cena',['entryprice','entry','avgentryprice','priceentry','openprice','buyprice','vstup','vstupnacena','avgbuy','pricein','open']],
+  ['exit','Výstupná cena',['exitprice','exit','avgexitprice','priceexit','closeprice','sellprice','vystup','vystupnacena','avgsell','priceout','close']],
+  ['tEntry','Čas vstupu *',['entrytime','opentime','entrydate','opendate','datetime','opened','boughttimestamp','casvstupu','date','datum','time','timestamp']],
+  ['tExit','Čas výstupu',['exittime','closetime','exitdate','closedate','closed','soldtimestamp','casvystupu']],
+  ['stop','Stop loss',['stop','sl','stoploss','stopprice']],
+  ['target','Take profit',['target','tp','takeprofit','targetprice']],
+  ['fees','Poplatky',['fee','fees','commission','commissions','comm','poplatky','naklady']],
+  ['pnl','P&L (hotové)',['pnl','profit','netpnl','netprofit','p/l','pl','zisk','realizedpnl','gain']],
+  ['notes','Poznámky',['note','notes','comment','comments','poznamka','poznamky']],
+  ['tags','Pozitívne tagy/Setup',['tag','tags','setup','strategy','strategia','playbook']],
+  ['tagsNeg','Negatívne tagy/Chyby',['mistake','mistakes','chyba','chyby','error','errors','negatives']],
+];
+function normH(h){return String(h).toLowerCase().replace(/[^a-z0-9/]/g,'');}
+let rawCsvHeaders=null,rawCsvRows=null;
+let rawCashHeaders=null,rawCashRows=null;
+function isBrokerOrderCsv(headers){
+  const hs=headers.map(normH);
+  return hs.includes('b/s')&&hs.includes('status')&&(hs.includes('filledqty')||hs.includes('avgprice')||hs.includes('avgfillprice'));
+}
+function loadCashHistoryFile(file){
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const rows=parseCSV(rd.result);
+    if(rows.length<2){toast('Cash History CSV je prázdne alebo má len hlavičku');return;}
+    rawCashHeaders=rows[0];rawCashRows=rows.slice(1);
+    $('cashFileLabel').innerHTML='✅ Cash History pripojený ('+rawCashRows.length+' riadkov) – poplatky sa doplnia<input type="file" id="cashFile" accept=".csv,.txt,.tsv" style="display:none">';
+    $('cashFile').addEventListener('change',e=>{if(e.target.files[0])loadCashHistoryFile(e.target.files[0]);});
+  };
+  rd.readAsText(file);
+}
+function buildCommissionMap(headers,rows){
+  const map={};
+  if(!headers||!rows)return map;
+  const idx=name=>headers.findIndex(h=>normH(h)===normH(name));
+  const iType=idx('Cash Change Type'),iContract=idx('Contract'),iDelta=idx('Delta'),iTime=idx('Timestamp');
+  if(iType<0||iContract<0||iDelta<0||iTime<0)return map;
+  for(const r of rows){
+    const type=String(r[iType]||'').trim().toLowerCase();
+    if(type!=='commission')continue;
+    const contract=String(r[iContract]||'').trim().toUpperCase();
+    const t=parseDT(r[iTime]);
+    const delta=Math.abs(num(r[iDelta])||0);
+    if(!contract||!t||!isFinite(delta))continue;
+    const key=contract+'|'+t;
+    map[key]=(map[key]||0)+delta;
+  }
+  return map;
+}
+function convertBrokerOrdersToTrades(headers,rows,commissionMap){
+  commissionMap=commissionMap||{};
+  const idx=name=>headers.findIndex(h=>normH(h)===normH(name));
+  const iAcc=idx('Account'),iSide=idx('B/S'),iContract=idx('Contract'),iStatus=idx('Status');
+  const iQty=idx('Filled Qty')>=0?idx('Filled Qty'):idx('filledQty');
+  const iPrice=idx('Avg Fill Price')>=0?idx('Avg Fill Price'):idx('avgPrice');
+  const iTime=idx('Fill Time')>=0?idx('Fill Time'):idx('Timestamp');
+  const fills=[];
+  for(const r of rows){
+    const status=String(r[iStatus]||'').trim().toLowerCase();
+    if(status!=='filled')continue;
+    const qty=num(r[iQty]),price=num(r[iPrice]),t=parseDT(r[iTime]);
+    const sideRaw=String(r[iSide]||'').trim().toLowerCase();
+    const side=sideRaw.startsWith('b')?1:-1;
+    const symbol=String(r[iContract]||'').trim();
+    const account=iAcc>=0?String(r[iAcc]||''):'';
+    if(!symbol||!isFinite(qty)||qty<=0||!isFinite(price)||!t)continue;
+    const fee=commissionMap[symbol.toUpperCase()+'|'+t]||0;
+    fills.push({account,symbol,side,qty,price,t,fee});
+  }
+  fills.sort((a,b)=>a.t-b.t);
+  const groups={};
+  for(const f of fills){(groups[f.account+'|'+f.symbol]=groups[f.account+'|'+f.symbol]||[]).push(f);}
+  const trades=[];
+  for(const k in groups){
+    let position=0,cur=null;
+    for(const f of groups[k]){
+      let remaining=f.qty;
+      const feePerUnit=f.fee/f.qty;
+      while(remaining>0){
+        if(position===0){
+          cur={dir:f.side,symbol:f.symbol,entryQty:0,entryNotional:0,exitQty:0,exitNotional:0,fees:0,tEntry:f.t,tExit:null};
+          cur.entryQty+=remaining;cur.entryNotional+=remaining*f.price;cur.fees+=feePerUnit*remaining;
+          position=f.side*remaining;remaining=0;
+        }else if(Math.sign(position)===f.side){
+          cur.entryQty+=remaining;cur.entryNotional+=remaining*f.price;cur.fees+=feePerUnit*remaining;
+          position+=f.side*remaining;remaining=0;
+        }else{
+          const closeQty=Math.min(remaining,Math.abs(position));
+          cur.exitQty+=closeQty;cur.exitNotional+=closeQty*f.price;cur.fees+=feePerUnit*closeQty;
+          position-=Math.sign(position)*closeQty;
+          remaining-=closeQty;
+          if(position===0){cur.tExit=f.t;trades.push(cur);cur=null;}
+        }
+      }
+    }
+    if(cur)trades.push(cur);
+  }
+  trades.sort((a,b)=>a.tEntry-b.tEntry);
+  const rnd=x=>Math.round(x*1e6)/1e6;
+  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees'];
+  const outRows=trades.map(t=>[
+    t.symbol,
+    t.dir===1?'Buy':'Sell',
+    String(t.entryQty),
+    String(rnd(t.entryNotional/t.entryQty)),
+    t.exitQty?String(rnd(t.exitNotional/t.exitQty)):'',
+    tsToLocalInput(t.tEntry),
+    t.tExit?tsToLocalInput(t.tExit):'',
+    String(rnd(t.fees||0)),
+  ]);
+  return {headers:outHeaders,rows:outRows,openCount:trades.filter(t=>!t.tExit).length};
+}
+function buildImportMapUI(){
+  const opts=(sel)=>'<option value="-1">—</option>'+csvHeaders.map((h,i)=>`<option value="${i}" ${i===sel?'selected':''}>${esc(h)}</option>`).join('');
+  $('mapRows').innerHTML=IMPORT_FIELDS.map(f=>{
+    const auto=csvHeaders.findIndex(h=>f[2].includes(normH(h)));
+    return `<div class="maprow"><div>${f[1]}</div><select id="map_${f[0]}">${opts(auto)}</select></div>`;
+  }).join('');
+  $('csvPreview').innerHTML='<table><thead><tr>'+csvHeaders.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
+    csvRows.slice(0,5).map(r=>'<tr style="cursor:default">'+csvHeaders.map((_,i)=>`<td>${esc(r[i]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+  $('mapPanel').style.display='block';
+  $('importResult').textContent=csvRows.length+' riadkov na import';
+}
+function convertAndRebuild(){
+  const commissionMap=buildCommissionMap(rawCashHeaders,rawCashRows);
+  const res=convertBrokerOrdersToTrades(rawCsvHeaders,rawCsvRows,commissionMap);
+  if(!res.rows.length){toast('Nenašli sa žiadne vyplnené (Filled) objednávky na spárovanie');return;}
+  csvHeaders=res.headers;csvRows=res.rows;
+  $('brokerConvertBox').style.display='none';
+  buildImportMapUI();
+  const feeNote=rawCashRows?' + poplatky doplnené':'';
+  toast(`Spárovaných ${csvRows.length} obchodov`+(res.openCount?` (${res.openCount} stále otvorených)`:'')+feeNote);
+}
+function loadCsvForImport(file){
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const rows=parseCSV(rd.result);
+    if(rows.length<2){toast('CSV je prázdne alebo má len hlavičku');return;}
+    csvHeaders=rows[0];csvRows=rows.slice(1);
+    rawCsvHeaders=csvHeaders;rawCsvRows=csvRows;
+    rawCashHeaders=null;rawCashRows=null;
+    $('cashFileLabel').innerHTML='📎 Priložiť Cash History.csv (voliteľné, doplní poplatky)<input type="file" id="cashFile" accept=".csv,.txt,.tsv" style="display:none">';
+    $('cashFile').addEventListener('change',e=>{if(e.target.files[0])loadCashHistoryFile(e.target.files[0]);});
+    $('brokerConvertBox').style.display=isBrokerOrderCsv(csvHeaders)?'block':'none';
+    buildImportMapUI();
+  };
+  rd.readAsText(file);
+}
+function parseDir(v){
+  const s=String(v||'').toLowerCase().trim();
+  if(['buy','long','b','l','1','kupa','kúpa','bot'].includes(s))return 1;
+  if(['sell','short','s','sh','-1','predaj','sld'].includes(s))return -1;
+  if(s.startsWith('buy')||s.startsWith('long'))return 1;
+  if(s.startsWith('sell')||s.startsWith('short'))return -1;
+  return 1;
+}
+async function doImport(){
+  if(!csvRows){toast('Najprv nahraj CSV');return;}
+  const map={};
+  IMPORT_FIELDS.forEach(f=>{map[f[0]]=parseInt($('map_'+f[0]).value,10);});
+  if(map.symbol<0||map.tEntry<0){toast('Namapuj minimálne Symbol a Čas vstupu');return;}
+  const get=(r,k)=>map[k]>=0?r[map[k]]:null;
+  let ok=0,skip=0;
+  for(const r of csvRows){
+    const symbol=String(get(r,'symbol')||'').trim();
+    const tEntry=parseDT(get(r,'tEntry'));
+    if(!symbol||!tEntry){skip++;continue;}
+    const entry=num(get(r,'entry')),exit=num(get(r,'exit'));
+    const pnlRaw=get(r,'pnl');
+    const pnlOverride=(pnlRaw!=null&&String(pnlRaw).trim()!=='')?num(pnlRaw):null;
+    if(!isFinite(entry)&&(pnlOverride==null||!isFinite(pnlOverride))){skip++;continue;}
+    const t={
+      symbol,
+      account:parseInt($('importAccount').value,10)||defaultAccId(),
+      dir:map.dir>=0?parseDir(get(r,'dir')):((isFinite(entry)&&isFinite(exit))?(exit>=entry?1:1):1),
+      qty:isFinite(num(get(r,'qty')))?num(get(r,'qty')):1,
+      entry:isFinite(entry)?entry:NaN,
+      exit:isFinite(exit)?exit:NaN,
+      stop:isFinite(num(get(r,'stop')))?num(get(r,'stop')):null,
+      target:isFinite(num(get(r,'target')))?num(get(r,'target')):null,
+      tEntry,
+      tExit:parseDT(get(r,'tExit'))||tEntry,
+      fees:isFinite(num(get(r,'fees')))?num(get(r,'fees')):0,
+      pnlOverride:(pnlOverride!=null&&isFinite(pnlOverride))?pnlOverride:null,
+      notes:String(get(r,'notes')||''),
+      tags:String(get(r,'tags')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
+      tagsNeg:String(get(r,'tagsNeg')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
+      createdAt:Date.now(),
+    };
+    const id=await idbAdd('trades',t);
+    t.id=id;trades.push(t);ok++;
+  }
+  $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}`;
+  renderAll();
+  scheduleAutoSync();
+  toast(`Importovaných ${ok} obchodov`);
+}
+
+/* ================= Online fetch (Yahoo Finance) ================= */
+const YAHOO_MAP={NQ:'NQ=F',MNQ:'MNQ=F',ES:'ES=F',MES:'MES=F',YM:'YM=F',MYM:'MYM=F',RTY:'RTY=F',M2K:'M2K=F',
+  GC:'GC=F',MGC:'MGC=F',SI:'SI=F',SIL:'SIL=F',CL:'CL=F',MCL:'MCL=F',NG:'NG=F',HG:'HG=F',PL:'PL=F',
+  XAUUSD:'GC=F',XAGUSD:'SI=F',ZB:'ZB=F',ZN:'ZN=F',BTC:'BTC-USD',ETH:'ETH-USD'};
+function yahooSymbolFor(sym){
+  const s=String(sym||'').toUpperCase().trim();
+  if(YAHOO_MAP[s])return YAHOO_MAP[s];
+  const b=symBase(s);
+  if(YAHOO_MAP[b])return YAHOO_MAP[b];
+  return null;
+}
+async function fetchJSONcors(url){
+  const attempts=[url,
+    'https://corsproxy.io/?url='+encodeURIComponent(url),
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(url),
+    'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(url)];
+  let lastErr=null;
+  for(const u of attempts){
+    try{
+      const r=await fetch(u,{cache:'no-store'});
+      if(!r.ok){lastErr=new Error('HTTP '+r.status);continue;}
+      return await r.json();
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error('Sťahovanie zlyhalo');
+}
+const YAHOO_IV={'1m':'1m','5m':'5m','15m':'15m','1h':'60m','1d':'1d'};
+async function fetchYahooCandles(ySym,tf,p1,p2){
+  const iv=YAHOO_IV[tf]||'5m';
+  const url=`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySym)}?period1=${Math.floor(p1)}&period2=${Math.floor(p2)}&interval=${iv}&includePrePost=true`;
+  const j=await fetchJSONcors(url);
+  const res=j&&j.chart&&j.chart.result&&j.chart.result[0];
+  if(!res)throw new Error((j&&j.chart&&j.chart.error&&j.chart.error.description)||'Yahoo nevrátil dáta');
+  const ts=res.timestamp||[];
+  const q=res.indicators&&res.indicators.quote&&res.indicators.quote[0];
+  if(!q)throw new Error('Chýbajú OHLC dáta v odpovedi');
+  const bars=[];
+  for(let i=0;i<ts.length;i++){
+    if(q.open[i]==null||q.high[i]==null||q.low[i]==null||q.close[i]==null)continue;
+    bars.push({t:ts[i],o:q.open[i],h:q.high[i],l:q.low[i],c:q.close[i]});
+  }
+  return bars;
+}
+async function saveBars(sym,tf,newBars){
+  newBars.sort((a,b)=>a.t-b.t);
+  const key=sym+'|'+tf;
+  const existing=ohlcSets.find(d=>d.key===key);
+  let merged=newBars;
+  if(existing){
+    const map=new Map(existing.bars.map(b=>[b.t,b]));
+    for(const b of newBars)map.set(b.t,b);
+    merged=[...map.values()].sort((a,b)=>a.t-b.t);
+  }
+  const ds={key,symbol:sym,tf,bars:merged,updated:Date.now()};
+  await idbPut('ohlc',ds);
+  ohlcSets=ohlcSets.filter(d=>d.key!==key);ohlcSets.push(ds);
+  renderOhlcList();
+  return ds;
+}
+function pickAutoTf(tEntry,tExit){
+  const now=Date.now()/1000;
+  const age=now-tEntry;
+  const dur=Math.max((tExit||tEntry)-tEntry,60);
+  if(age<6.5*86400)return dur<=2*3600?'1m':'5m';
+  if(age<58*86400)return dur<=4*3600?'5m':'15m';
+  if(age<700*86400)return '1h';
+  return '1d';
+}
+async function autoFetchForTrade(){
+  const t=formTrade();
+  if(!t.symbol||!t.tEntry){toast('Zadaj symbol a čas vstupu');return;}
+  let ySym=yahooSymbolFor(t.symbol);
+  if(!ySym){
+    ySym=prompt(tr('Nepoznám Yahoo symbol pre')+' "'+t.symbol+'". '+tr('Zadaj ho ručne (napr. GC=F, NQ=F, BTC-USD):'),'');
+    if(!ySym)return;
+    ySym=ySym.trim();
+  }
+  const tf=pickAutoTf(t.tEntry,t.tExit);
+  const tfS=TF_SEC[tf];
+  const now=Date.now()/1000;
+  let p1=t.tEntry-Math.max(tfS*150,86400);
+  let p2=Math.min((t.tExit||t.tEntry)+Math.max(tfS*150,86400),now);
+  if(tf==='1m')p1=Math.max(p1,now-6.9*86400);
+  if(tf==='5m'||tf==='15m')p1=Math.max(p1,now-58*86400);
+  const btn=$('btnAutoFetch');
+  if(btn){btn.disabled=true;btn.textContent='Sťahujem...';}
+  try{
+    const bars=await fetchYahooCandles(ySym,tf,p1,p2);
+    if(!bars.length)throw new Error('Yahoo vrátil 0 sviečok pre toto obdobie');
+    const sym=symBase(t.symbol)||String(t.symbol).toUpperCase();
+    const ds=await saveBars(sym,tf,bars);
+    $('tChartDsWrap').dataset.chosen=ds.key;
+    toast(`Stiahnutých ${bars.length} sviečok (${ySym}, ${tf})`);
+    renderModalChart();
+  }catch(e){
+    toast('Sťahovanie zlyhalo: '+(e&&e.message?e.message:'skús to znova alebo nahraj CSV'));
+    renderModalChart();
+  }
+}
+async function fetchOnline(){
+  const symIn=$('ofSymbol').value.trim().toUpperCase();
+  if(!symIn){toast('Zadaj symbol');return;}
+  const tf=$('ofTf').value;
+  const days=Math.max(1,num($('ofDays').value)||30);
+  let ySym=yahooSymbolFor(symIn)||( /[=\-]/.test(symIn)?symIn:null);
+  if(!ySym){
+    ySym=prompt(tr('Nepoznám Yahoo symbol pre')+' "'+symIn+'". '+tr('Zadaj ho ručne (napr. GC=F):'),'');
+    if(!ySym)return;ySym=ySym.trim();
+  }
+  const now=Date.now()/1000;
+  let p1=now-days*86400;
+  if(tf==='1m')p1=Math.max(p1,now-6.9*86400);
+  if(tf==='5m'||tf==='15m')p1=Math.max(p1,now-58*86400);
+  if(tf==='1h')p1=Math.max(p1,now-700*86400);
+  $('ofResult').textContent='Sťahujem...';
+  try{
+    const bars=await fetchYahooCandles(ySym,tf,p1,now);
+    if(!bars.length)throw new Error('0 sviečok');
+    const sym=symBase(symIn)||symIn;
+    const ds=await saveBars(sym,tf,bars);
+    $('ofResult').textContent=`Stiahnutých ${bars.length} sviečok (${ySym}, ${tf}). Dataset ${sym}|${tf} má teraz ${ds.bars.length} sviečok.`;
+    toast('Dáta stiahnuté');
+  }catch(e){
+    $('ofResult').textContent='Sťahovanie zlyhalo: '+(e&&e.message?e.message:'neznáma chyba');
+  }
+}
+
+/* ================= OHLC import ================= */
+function importOHLC(){
+  const sym=$('ohlcSymbol').value.trim().toUpperCase();
+  const tf=$('ohlcTf').value;
+  const file=$('ohlcFile').files[0];
+  if(!sym){toast('Zadaj symbol');return;}
+  if(!file){toast('Vyber CSV súbor');return;}
+  const rd=new FileReader();
+  rd.onload=async()=>{
+    const rows=parseCSV(rd.result);
+    if(!rows.length){toast('Prázdny súbor');return;}
+    let start=0,ci={t:0,o:1,h:2,l:3,c:4};
+    const h0=rows[0].map(normH);
+    const findCol=names=>h0.findIndex(h=>names.some(n=>h===n||h.startsWith(n)));
+    const timeIdx=findCol(['time','date','datetime','timestamp','cas','datum']);
+    if(timeIdx>=0){
+      start=1;
+      ci={t:timeIdx,
+        o:findCol(['open','otvaracia']),h:findCol(['high','max']),
+        l:findCol(['low','min']),c:findCol(['close','zatvaracia','last'])};
+      if(ci.o<0||ci.h<0||ci.l<0||ci.c<0){toast('Nenašiel som stĺpce open/high/low/close');return;}
+    }
+    const bars=[];
+    for(let i=start;i<rows.length;i++){
+      const r=rows[i];
+      const t=parseDT(r[ci.t]);
+      const o=num(r[ci.o]),h=num(r[ci.h]),l=num(r[ci.l]),c=num(r[ci.c]);
+      if(t&&isFinite(o)&&isFinite(h)&&isFinite(l)&&isFinite(c))bars.push({t,o,h,l,c});
+    }
+    if(!bars.length){toast('Nepodarilo sa načítať žiadne sviečky – skontroluj formát');return;}
+    bars.sort((a,b)=>a.t-b.t);
+    const dedup=[];let last=null;
+    for(const b of bars){if(b.t!==last){dedup.push(b);last=b.t;}}
+    const key=sym+'|'+tf;
+    const existing=ohlcSets.find(d=>d.key===key);
+    let merged=dedup;
+    if(existing){
+      const map=new Map(existing.bars.map(b=>[b.t,b]));
+      for(const b of dedup)map.set(b.t,b);
+      merged=[...map.values()].sort((a,b)=>a.t-b.t);
+    }
+    const ds={key,symbol:sym,tf,bars:merged,updated:Date.now()};
+    await idbPut('ohlc',ds);
+    ohlcSets=ohlcSets.filter(d=>d.key!==key);ohlcSets.push(ds);
+    $('ohlcResult').textContent=`Uložených ${merged.length} sviečok pre ${sym} (${tf}), pokrytie ${fmtDT(merged[0].t)} – ${fmtDT(merged[merged.length-1].t)}`;
+    renderOhlcList();
+    toast('OHLC dáta nahrané');
+    $('ohlcFile').value='';
+  };
+  rd.readAsText(file);
+}
+function renderOhlcList(){
+  if(!ohlcSets.length){$('ohlcList').innerHTML='Zatiaľ žiadne dáta.';return;}
+  $('ohlcList').innerHTML='<table><thead><tr><th>Symbol</th><th>TF</th><th>Sviečok</th><th>Od</th><th>Do</th><th></th></tr></thead><tbody>'+
+    ohlcSets.map(d=>`<tr style="cursor:default"><td><b>${esc(d.symbol)}</b></td><td>${esc(d.tf)}</td><td>${d.bars.length}</td><td>${fmtDT(d.bars[0].t)}</td><td>${fmtDT(d.bars[d.bars.length-1].t)}</td>
+      <td><button class="btn secondary small" onclick="delOhlc('${esc(d.key)}')">Vymazať</button></td></tr>`).join('')+'</tbody></table>';
+}
+async function delOhlc(key){
+  if(!ask('Vymazať tento dataset?'))return;
+  await idbDel('ohlc',key);
+  ohlcSets=ohlcSets.filter(d=>d.key!==key);
+  renderOhlcList();
+}
+
+/* ================= Settings ================= */
+function renderSettings(){
+  $('accList').innerHTML='';
+  settings.accounts.forEach(a=>addAccRow(a.name,a.balance||0,a.id));
+  $('multList').innerHTML='';
+  Object.entries(settings.mults).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>addMultRow(k,v));
+  renderGDriveStatus();
+}
+function addMultRow(k,v){
+  const div=document.createElement('div');
+  div.className='multrow';
+  div.innerHTML=`<input class="mk" value="${esc(k)}" placeholder="SYMBOL" style="width:120px;text-transform:uppercase">
+    <input class="mv" type="number" step="any" value="${v}" style="width:120px">
+    <button class="btn secondary small" onclick="this.parentElement.remove()">✕</button>`;
+  $('multList').appendChild(div);
+}
+async function saveMults(){
+  const m={};
+  document.querySelectorAll('#multList .multrow').forEach(r=>{
+    const k=r.querySelector('.mk').value.trim().toUpperCase();
+    const v=num(r.querySelector('.mv').value);
+    if(k&&isFinite(v))m[k]=v;
+  });
+  settings.mults=m;
+  await saveSettings();
+  renderAll();
+  scheduleAutoSync();
+  toast('Multiplikátory uložené');
+}
+function blobToB64(blob){return new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);});}
+function b64ToBlob(dataUrl){
+  const [meta,data]=dataUrl.split(',');
+  const mime=(meta.match(/data:(.*?);/)||[])[1]||'image/png';
+  const bin=atob(data);const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:mime});
+}
+async function buildBackupPayload(){
+  const shots=await idbAll('shots');
+  const shotsOut=[];
+  for(const s of shots)shotsOut.push({tradeId:s.tradeId,data:await blobToB64(s.blob)});
+  const settingsOut=Object.assign({},settings);
+  delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
+  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades,ohlc:ohlcSets,shots:shotsOut};
+}
+async function applyBackupPayload(p){
+  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
+  const idMap={};
+  for(const t of (p.trades||[])){
+    const oldId=t.id;delete t.id;
+    const nid=await idbAdd('trades',t);
+    t.id=nid;idMap[oldId]=nid;
+  }
+  for(const s of (p.shots||[])){
+    const tid=idMap[s.tradeId];
+    if(tid!=null)await idbAdd('shots',{tradeId:tid,blob:b64ToBlob(s.data),added:Date.now()});
+  }
+  for(const d of (p.ohlc||[]))await idbPut('ohlc',d);
+  if(p.settings){
+    const keepClientId=settings.gClientId;
+    settings=Object.assign(settings,p.settings);
+    settings.gClientId=keepClientId;
+    await saveSettings();
+  }
+  trades=await idbAll('trades');
+  ohlcSets=await idbAll('ohlc');
+}
+async function exportBackup(){
+  const payload=await buildBackupPayload();
+  const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='trading-journal-zaloha-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  toast('Záloha stiahnutá');
+}
+async function restoreBackup(input){
+  const file=input.files[0];if(!file)return;
+  if(!ask('Obnovenie PREPÍŠE všetky aktuálne dáta. Pokračovať?')){input.value='';return;}
+  const text=await file.text();
+  let p;try{p=JSON.parse(text);}catch(e){toast('Neplatný JSON');return;}
+  await applyBackupPayload(p);
+  renderAll();
+  scheduleAutoSync();
+  input.value='';
+  toast('Záloha obnovená');
+}
+async function wipeAll(){
+  if(!ask('Naozaj vymazať VŠETKY obchody, screenshoty a dáta?'))return;
+  if(!ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
+  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
+  trades=[];ohlcSets=[];
+  renderAll();
+  scheduleAutoSync();
+  toast('Všetky dáta vymazané');
+}
+
+/* ================= Google Drive sync ================= */
+const GDRIVE_FILE_NAME='trading-journal-backup.json';
+let gToken=null,gTokenClient=null,gFileId=null,gSyncTimer=null,gSyncing=false,gBootDone=false;
+
+function gdriveReady(){return typeof google!=='undefined'&&google.accounts&&google.accounts.oauth2;}
+function gdriveInitTokenClient(){
+  if(!settings.gClientId||!gdriveReady())return null;
+  if(gTokenClient)return gTokenClient;
+  gTokenClient=google.accounts.oauth2.initTokenClient({client_id:settings.gClientId,scope:'https://www.googleapis.com/auth/drive.appdata',callback:()=>{}});
+  return gTokenClient;
+}
+function gdriveRequestToken(interactive){
+  return new Promise((resolve,reject)=>{
+    const tc=gdriveInitTokenClient();
+    if(!tc){reject(new Error('Google Identity Services sa nenačítalo'));return;}
+    tc.callback=(resp)=>{if(resp&&resp.access_token){gToken=resp.access_token;resolve(gToken);}else reject(new Error('Prihlásenie zamietnuté'));};
+    tc.error_callback=(err)=>reject(new Error((err&&err.type)||'auth-error'));
+    try{tc.requestAccessToken({prompt:interactive?'consent':''});}catch(e){reject(e);}
+  });
+}
+async function gdriveApi(url,opts){
+  opts=opts||{};
+  opts.headers=Object.assign({},opts.headers,{Authorization:'Bearer '+gToken});
+  let res=await fetch(url,opts);
+  if(res.status===401){
+    await gdriveRequestToken(false);
+    opts.headers=Object.assign({},opts.headers,{Authorization:'Bearer '+gToken});
+    res=await fetch(url,opts);
+  }
+  return res;
+}
+async function gdriveFindFile(){
+  const url='https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent(`name='${GDRIVE_FILE_NAME}' and trashed=false`)+'&fields=files(id,modifiedTime)';
+  const res=await gdriveApi(url);
+  if(!res.ok)throw new Error('Zoznam súborov zlyhal ('+res.status+')');
+  const data=await res.json();
+  return (data.files&&data.files[0])||null;
+}
+async function gdriveUpload(payload){
+  const metadata=gFileId?{name:GDRIVE_FILE_NAME}:{name:GDRIVE_FILE_NAME,parents:['appDataFolder']};
+  const boundary='tjbnd'+Date.now();
+  const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(payload)}\r\n`+
+    `--${boundary}--`;
+  const url=gFileId?`https://www.googleapis.com/upload/drive/v3/files/${gFileId}?uploadType=multipart`:`https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+  const res=await gdriveApi(url,{method:gFileId?'PATCH':'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body});
+  if(!res.ok)throw new Error('Nahrávanie zlyhalo ('+res.status+')');
+  const data=await res.json();
+  gFileId=data.id;
+  return data;
+}
+async function gdriveDownload(fileId){
+  const res=await gdriveApi(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  if(!res.ok)throw new Error('Sťahovanie zlyhalo ('+res.status+')');
+  return res.json();
+}
+function gdriveSetLastLocalChange(){try{localStorage.setItem('tj_lastLocalChange',String(Date.now()));}catch(e){}}
+function gdriveLastLocalChange(){try{return parseInt(localStorage.getItem('tj_lastLocalChange')||'0',10);}catch(e){return 0;}}
+function scheduleAutoSync(){
+  gdriveSetLastLocalChange();
+  if(!gBootDone||!settings.gConnected)return;
+  clearTimeout(gSyncTimer);
+  gSyncTimer=setTimeout(()=>{gdriveSyncNow(false);},4000);
+}
+async function gdriveSyncNow(isInitial){
+  if(!settings.gConnected||!settings.gClientId)return;
+  if(gSyncing)return;
+  gSyncing=true;
+  renderGDriveStatus('syncing');
+  try{
+    if(!gToken)await gdriveRequestToken(false);
+    const remoteMeta=await gdriveFindFile();
+    if(remoteMeta){
+      gFileId=remoteMeta.id;
+      if(isInitial){
+        const remote=await gdriveDownload(remoteMeta.id);
+        const remoteUpdated=remote.updatedAt||0;
+        const localChanged=gdriveLastLocalChange();
+        if(remoteUpdated>localChanged){
+          await applyBackupPayload(remote);
+          renderAll();
+          toast('Dáta stiahnuté z Google Drive');
+        }else{
+          await gdriveUpload(await buildBackupPayload());
+        }
+      }else{
+        await gdriveUpload(await buildBackupPayload());
+      }
+    }else{
+      await gdriveUpload(await buildBackupPayload());
+    }
+    settings.gLastSync=Date.now();
+    await saveSettings();
+    renderGDriveStatus();
+  }catch(e){
+    console.error('Drive sync error',e);
+    renderGDriveStatus(e);
+  }finally{
+    gSyncing=false;
+  }
+}
+async function gdriveConnect(){
+  const idInput=$('gClientId');
+  if(idInput)settings.gClientId=idInput.value.trim();
+  if(!settings.gClientId){toast('Najprv zadaj Google Client ID');return;}
+  gTokenClient=null;
+  try{
+    await gdriveRequestToken(true);
+    settings.gConnected=true;
+    await saveSettings();
+    gdriveSetLastLocalChange();
+    toast('Pripojené ku Google Drive');
+    renderGDriveStatus();
+    await gdriveSyncNow(true);
+  }catch(e){
+    toast('Pripojenie zlyhalo: '+(e&&e.message?e.message:'neznáma chyba'));
+    renderGDriveStatus(e);
+  }
+}
+function gdriveDisconnect(){
+  try{if(gToken&&gdriveReady())google.accounts.oauth2.revoke(gToken,()=>{});}catch(e){}
+  gToken=null;gFileId=null;
+  settings.gConnected=false;
+  saveSettings();
+  renderGDriveStatus();
+  toast('Google Drive odpojený');
+}
+function renderGDriveStatus(state){
+  const el=$('gdriveStatus');if(!el)return;
+  const connectBtn=$('gdriveConnectBtn'),disconnectBtn=$('gdriveDisconnectBtn');
+  if(state instanceof Error){el.textContent='⚠️ Chyba synchronizácie: '+state.message;el.style.color='var(--red)';}
+  else if(state==='syncing'){el.textContent='⏳ Synchronizujem…';el.style.color='';}
+  else{
+    el.style.color='';
+    if(!settings.gConnected)el.textContent='Nepripojené.';
+    else el.textContent='✅ Pripojené'+(settings.gLastSync?(' · posledná synchronizácia '+new Date(settings.gLastSync).toLocaleTimeString('sk-SK')):'');
+  }
+  if($('gClientId')&&document.activeElement!==$('gClientId'))$('gClientId').value=settings.gClientId||'';
+  if(connectBtn)connectBtn.style.display=settings.gConnected?'none':'';
+  if(disconnectBtn)disconnectBtn.style.display=settings.gConnected?'':'none';
+}
+
+init();
+</script>
+</body>
+</html>
