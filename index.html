@@ -2015,7 +2015,6 @@ async function gdriveConnect(){
     await gdriveRequestToken(true);
     settings.gConnected=true;
     await saveSettings();
-    gdriveSetLastLocalChange();
     toast('Pripojené ku Google Drive');
     renderGDriveStatus();
     await gdriveSyncNow(true);
