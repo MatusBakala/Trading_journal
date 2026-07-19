@@ -15,12 +15,27 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
-header{display:flex;align-items:center;gap:24px;padding:0 24px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+header{display:flex;align-items:center;gap:16px;padding:0 24px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
 header h1{font-size:17px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
-nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+#headerControls{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
+.headerSide{display:flex;align-items:center;gap:12px;flex-shrink:0}
+nav{display:flex;gap:4px;flex:1;overflow-x:auto;min-width:0}
 nav button{background:none;border:none;color:var(--muted);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px;white-space:nowrap}
 nav button:hover{color:var(--text);background:var(--bg3)}
 nav button.active{color:var(--text);background:var(--bg3);font-weight:600}
+.navToggle{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:4px 6px;border-radius:8px;flex-shrink:0}
+.navToggle:hover{background:var(--bg3)}
+@media(max-width:820px){
+  header{gap:12px;padding:0 14px}
+  header h1{font-size:15px}
+  .navToggle{display:block}
+  #headerControls{position:fixed;top:58px;left:0;right:0;bottom:0;background:var(--bg2);flex-direction:column;align-items:stretch;gap:0;padding:10px 14px 24px;overflow-y:auto;display:none;z-index:60;border-top:1px solid var(--border)}
+  #headerControls.open{display:flex}
+  nav{flex-direction:column;gap:2px;overflow-x:visible;flex:none}
+  nav button{width:100%;text-align:left;padding:12px 14px;font-size:15px}
+  .headerSide{flex-direction:column;align-items:stretch;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .headerSide select,.headerSide .btn{width:100%}
+}
 .btn{background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
 .btn:hover{filter:brightness(1.1)}
 .btn.secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border)}
@@ -121,22 +136,27 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 </head>
 <body>
 <header>
+  <button id="navToggle" class="navToggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
   <h1>📈 Trading Journal</h1>
-  <nav>
-    <button data-tab="dashboard" class="active">Dashboard</button>
-    <button data-tab="calendar">Kalendár</button>
-    <button data-tab="stats">Štatistiky</button>
-    <button data-tab="trades">Obchody</button>
-    <button data-tab="reports">Reporty</button>
-    <button data-tab="import">Import CSV</button>
-    <button data-tab="data">Dáta grafu</button>
-    <button data-tab="settings">Nastavenia</button>
-  </nav>
-  <select id="accSelect" onchange="switchAccount(this.value)" style="max-width:170px;font-weight:600"></select>
-  <button class="btn" onclick="openTrade(null)">+ Pridať obchod</button>
-  <select id="langSelect" onchange="switchLang(this.value)" title="Jazyk / Language" style="width:70px;font-weight:600">
-    <option value="sk">🌐 SK</option><option value="en">🌐 EN</option>
-  </select>
+  <div id="headerControls">
+    <nav>
+      <button data-tab="dashboard" class="active">Dashboard</button>
+      <button data-tab="calendar">Kalendár</button>
+      <button data-tab="stats">Štatistiky</button>
+      <button data-tab="trades">Obchody</button>
+      <button data-tab="reports">Reporty</button>
+      <button data-tab="import">Import CSV</button>
+      <button data-tab="data">Dáta grafu</button>
+      <button data-tab="settings">Nastavenia</button>
+    </nav>
+    <div class="headerSide">
+      <select id="accSelect" onchange="switchAccount(this.value)" style="max-width:170px;font-weight:600"></select>
+      <button class="btn" onclick="openTrade(null)">+ Pridať obchod</button>
+      <select id="langSelect" onchange="switchLang(this.value)" title="Jazyk / Language" style="width:70px;font-weight:600">
+        <option value="sk">🌐 SK</option><option value="en">🌐 EN</option>
+      </select>
+    </div>
+  </div>
 </header>
 <main>
 
@@ -331,8 +351,10 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <br>
     <button class="btn" id="gdriveConnectBtn" onclick="gdriveConnect()">🔗 Pripojiť Google Drive</button>
     <button class="btn secondary" id="gdriveDisconnectBtn" style="display:none" onclick="gdriveDisconnect()">Odpojiť</button>
-    <button class="btn secondary small" onclick="gdriveSyncNow(false)" style="margin-left:6px">⟳ Synchronizovať teraz</button>
+    <button class="btn secondary small" onclick="gdriveSyncNow(false)" style="margin-left:6px">⬆️ Nahrať na Drive</button>
+    <button class="btn secondary small" onclick="gdriveForceDownload()" style="margin-left:6px">⬇️ Stiahnuť z Drive</button>
     <div id="gdriveStatus" class="hint" style="margin-top:8px">Nepripojené.</div>
+    <p class="hint" style="margin-top:6px">"Nahrať na Drive" pošle aktuálny lokálny stav do cloudu (prepíše to, čo tam je). "Stiahnuť z Drive" naopak prepíše dáta v tomto prehliadači tým, čo je uložené v cloude – použi to napr. keď appka na novom zariadení automaticky nestiahla dáta sama.</p>
   </div>
   <div class="panel">
     <h3>Manuálna záloha</h3>
@@ -771,8 +793,11 @@ document.querySelectorAll('nav button').forEach(b=>{
     if(b.dataset.tab==='dashboard')renderDashboard();
     if(b.dataset.tab==='stats')renderStats();
     if(b.dataset.tab==='reports')renderReports();
+    closeMobileNav();
   };
 });
+function toggleMobileNav(){$('headerControls').classList.toggle('open');}
+function closeMobileNav(){$('headerControls').classList.remove('open');}
 
 /* ================= Dashboard ================= */
 const GAUGE_L=125.66; // dĺžka polkruhu r=40
@@ -1937,11 +1962,38 @@ async function gdriveApi(url,opts){
   return res;
 }
 async function gdriveFindFile(){
-  const url='https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent(`name='${GDRIVE_FILE_NAME}' and trashed=false`)+'&fields=files(id,modifiedTime)';
+  const url='https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent(`name='${GDRIVE_FILE_NAME}' and trashed=false`)+'&orderBy=modifiedTime desc&fields=files(id,modifiedTime)';
   const res=await gdriveApi(url);
   if(!res.ok)throw new Error('Zoznam súborov zlyhal ('+res.status+')');
   const data=await res.json();
   return (data.files&&data.files[0])||null;
+}
+async function gdriveForceDownload(){
+  if(!settings.gConnected||!settings.gClientId){toast('Najprv sa pripoj ku Google Drive');return;}
+  if(!ask('Stiahnutie PREPÍŠE aktuálne lokálne dáta v tomto prehliadači dátami z Google Drive. Pokračovať?'))return;
+  if(gSyncing)return;
+  gSyncing=true;
+  renderGDriveStatus('syncing');
+  try{
+    if(!gToken)await gdriveRequestToken(false);
+    const remoteMeta=await gdriveFindFile();
+    if(!remoteMeta){toast('Na Google Drive zatiaľ nie je žiadna záloha');return;}
+    gFileId=remoteMeta.id;
+    const remote=await gdriveDownload(remoteMeta.id);
+    await applyBackupPayload(remote);
+    try{localStorage.setItem('tj_lastLocalChange',String(remote.updatedAt||Date.now()));}catch(e){}
+    settings.gLastSync=Date.now();
+    await saveSettings();
+    renderAll();
+    renderGDriveStatus();
+    toast('Dáta stiahnuté z Google Drive');
+  }catch(e){
+    console.error('Drive force download error',e);
+    renderGDriveStatus(e);
+    toast('Sťahovanie zlyhalo: '+(e&&e.message?e.message:'neznáma chyba'));
+  }finally{
+    gSyncing=false;
+  }
 }
 async function gdriveUpload(payload){
   const metadata=gFileId?{name:GDRIVE_FILE_NAME}:{name:GDRIVE_FILE_NAME,parents:['appDataFolder']};
