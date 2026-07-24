@@ -138,6 +138,20 @@ hr.sep{border:none;border-top:1px solid var(--border);margin:16px 0}
 .srow span{color:var(--muted)}
 .srow b{white-space:nowrap}
 code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
+.patHead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.patBadge{background:rgba(38,166,154,.15);color:var(--green);font-weight:700;letter-spacing:.3px}
+.patLegend{display:flex;gap:16px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.patLegend span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.patLegend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+.patRow{position:relative;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;overflow:hidden;background:var(--bg3)}
+.patRow .patBar{position:absolute;inset:0;z-index:0;opacity:.4;pointer-events:none}
+.patRow.bad .patBar{background:linear-gradient(90deg,var(--red),transparent 85%)}
+.patRow.good .patBar{background:linear-gradient(90deg,var(--green),transparent 85%)}
+.patRow.neutral .patBar{background:linear-gradient(90deg,#8b98a9,transparent 85%)}
+.patRow .patContent{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.patRow .patText{font-size:14px;line-height:1.4}
+.patRow .patStat{text-align:right;white-space:nowrap}
+.patRow .patStat .pct{font-size:19px;font-weight:800}
 </style>
 </head>
 <body>
@@ -187,6 +201,20 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <div class="panel"><h3>Podľa symbolu</h3><div id="bySymbol"></div></div>
     <div class="panel"><h3>Podľa dňa v týždni</h3><div id="byDow"></div></div>
     <div class="panel"><h3>Podľa hodiny vstupu</h3><div id="byHour"></div></div>
+  </div>
+  <div class="panel">
+    <div class="patHead">
+      <div>
+        <span class="badge patBadge">VZORY V OBCHODOVANÍ</span>
+        <div class="hint" id="patternsSub" style="margin-top:8px"></div>
+      </div>
+      <div class="patLegend">
+        <span><i style="background:var(--green)"></i>Silná stránka</span>
+        <span><i style="background:var(--red)"></i>Priestor na zlepšenie</span>
+        <span><i style="background:#8b98a9"></i>Neutrálny vzor</span>
+      </div>
+    </div>
+    <div id="patternsBody" style="margin-top:14px"></div>
   </div>
 </section>
 
@@ -615,6 +643,14 @@ const I18N_EN={
 'Nepoznám Yahoo symbol pre':'Unknown Yahoo symbol for','Zadaj ho ručne (napr. GC=F, NQ=F, BTC-USD):':'Enter it manually (e.g. GC=F, NQ=F, BTC-USD):','Zadaj ho ručne (napr. GC=F):':'Enter it manually (e.g. GC=F):',
 'Yahoo nevrátil dáta':'Yahoo returned no data','Chýbajú OHLC dáta v odpovedi':'OHLC data missing in the response','Yahoo vrátil 0 sviečok pre toto obdobie':'Yahoo returned 0 candles for this period',
 '0 sviečok':'0 candles','skús to znova alebo nahraj CSV':'try again or upload a CSV','Sťahovanie zlyhalo':'Download failed','neznáma chyba':'unknown error',
+'VZORY V OBCHODOVANÍ':'TRADING PATTERNS','Silná stránka':'Strength','Priestor na zlepšenie':'Area to improve','Neutrálny vzor':'Neutral pattern',
+'Potrebných je aspoň':'You need at least','uzavretých obchodov na rozpoznanie vzorov (zatiaľ':'closed trades to detect patterns (currently',
+'Top vzory naprieč':'Top patterns across','obchodmi':'trades','obchodov':'trades','Chýbajú sviečkové dáta':'Missing candle data',
+'Väčšinu času v strate':'Mostly in drawdown','Dlhšie ako priemerné držanie':'Longer than average hold','Nezvyčajne vysoký objem':'Unusually high volume',
+'Obchod bol dočasne v zisku, no skončil v strate':'Trade was floating in profit but closed at a loss',
+'Väčšinu trvania obchodu bola cena proti tebe':'Price was against you for most of the trade\'s duration',
+'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
+'Obchodoval si s výrazne vyšším objemom než zvyčajne':'You traded with significantly higher volume than usual',
 };
 const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 const I18N_RULES=[
@@ -930,6 +966,104 @@ function renderDashboard(){
   const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
   renderBreakdown('byDow',ts,t=>dows[new Date(tTime(t)*1000).getDay()]);
   renderBreakdown('byHour',ts,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00');
+  renderPatterns(ts);
+}
+/* ================= Trading patterns ================= */
+const PATTERNS_MIN_TRADES=5;
+function barsForTrade(t){
+  if(!t.symbol||!t.tEntry||!t.tExit)return null;
+  const cands=datasetsForSymbol(t.symbol);
+  let best=null,bestCount=0;
+  for(const d of cands){
+    const tf=TF_SEC[d.tf]||300;
+    // include any bar whose [t, t+tf) interval overlaps the trade's duration, not just
+    // ones that start inside it - otherwise a trade shorter than one candle (common for
+    // scalps) matches zero bars even though a covering candle exists.
+    const bars=d.bars.filter(b=>b.t<=t.tExit&&(b.t+tf)>=t.tEntry);
+    if(bars.length>bestCount){bestCount=bars.length;best=bars;}
+  }
+  return bestCount>=1?best:null;
+}
+const _volMemo={};
+function avgVolumeForSymbol(sym){
+  if(_volMemo[sym]!=null)return _volMemo[sym];
+  let sum=0,n=0;
+  for(const d of datasetsForSymbol(sym))for(const b of d.bars){if(b.v>0){sum+=b.v;n++;}}
+  return _volMemo[sym]=(n?sum/n:0);
+}
+function patGreenToRed(t,bars){
+  if(!isFinite(t.entry)||!isFinite(t.exit))return false;
+  if(computePnl(t)>=0)return false;
+  let mfe=-Infinity;
+  for(const b of bars){
+    const fav=t.dir===1?(b.h-t.entry):(t.entry-b.l);
+    if(fav>mfe)mfe=fav;
+  }
+  return mfe>0;
+}
+function patDrawdownMajority(t,bars){
+  if(!isFinite(t.entry))return false;
+  let ddBars=0;
+  for(const b of bars){
+    const underwater=t.dir===1?(b.c<t.entry):(b.c>t.entry);
+    if(underwater)ddBars++;
+  }
+  return ddBars/bars.length>0.5;
+}
+function patUnusualVolume(t,bars){
+  const symAvg=avgVolumeForSymbol(String(t.symbol||'').toUpperCase());
+  if(!symAvg)return false;
+  const vols=bars.map(b=>b.v||0).filter(v=>v>0);
+  if(!vols.length)return false;
+  const avg=vols.reduce((a,b)=>a+b,0)/vols.length;
+  return avg>symAvg*1.5;
+}
+function renderPatterns(ts){
+  const sub=$('patternsSub'),body=$('patternsBody');
+  const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const total=closed.length;
+  if(total<PATTERNS_MIN_TRADES){
+    sub.textContent=tr('Potrebných je aspoň')+' '+PATTERNS_MIN_TRADES+' '+tr('uzavretých obchodov na rozpoznanie vzorov (zatiaľ')+' '+total+').';
+    body.innerHTML='';
+    return;
+  }
+  const avgDur=closed.reduce((a,t)=>a+(t.tExit-t.tEntry),0)/total;
+  let gtr=0,ddm=0,eht=0,vol=0,ohlcElig=0;
+  for(const t of closed){
+    if((t.tExit-t.tEntry)>avgDur)eht++;
+    const bars=barsForTrade(t);
+    if(bars){
+      ohlcElig++;
+      if(patGreenToRed(t,bars))gtr++;
+      if(patDrawdownMajority(t,bars))ddm++;
+      if(patUnusualVolume(t,bars))vol++;
+    }
+  }
+  const rows=[
+    {name:'Dlhšie ako priemerné držanie',desc:'Obchod držaný dlhšie než je tvoj priemer',count:eht,cls:'neutral',needsOhlc:false,eligible:total},
+    {name:'Green to Red',desc:'Obchod bol dočasne v zisku, no skončil v strate',count:gtr,cls:'bad',needsOhlc:true,eligible:ohlcElig},
+    {name:'Väčšinu času v strate',desc:'Väčšinu trvania obchodu bola cena proti tebe',count:ddm,cls:'bad',needsOhlc:true,eligible:ohlcElig},
+    {name:'Nezvyčajne vysoký objem',desc:'Obchodoval si s výrazne vyšším objemom než zvyčajne',count:vol,cls:'neutral',needsOhlc:true,eligible:ohlcElig},
+  ].map(r=>({...r,pct:r.eligible?r.count/r.eligible*100:0})).sort((a,b)=>b.pct-a.pct);
+  sub.textContent=tr('Top vzory naprieč')+' '+total+' '+tr('obchodmi');
+  body.innerHTML=rows.map(r=>{
+    if(r.needsOhlc&&r.eligible===0){
+      return `<div class="patRow neutral">
+        <div class="patContent">
+          <div class="patText"><b>${esc(tr(r.name))}</b> – ${esc(tr(r.desc))}</div>
+          <div class="patStat"><div class="hint">${esc(tr('Chýbajú sviečkové dáta'))}</div></div>
+        </div>
+      </div>`;
+    }
+    const countLabel=r.needsOhlc?`${r.count}/${r.eligible} ${esc(tr('obchodov'))}`:esc(tr(r.count+' obchodov'));
+    return `<div class="patRow ${r.cls}">
+      <div class="patBar" style="width:${r.pct.toFixed(1)}%"></div>
+      <div class="patContent">
+        <div class="patText"><b>${esc(tr(r.name))}</b> – ${esc(tr(r.desc))}</div>
+        <div class="patStat"><div class="pct">${r.pct.toFixed(1)}%</div><div class="hint">${countLabel}</div></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 function renderBreakdown(elId,ts,keyFn){
   const g={};
