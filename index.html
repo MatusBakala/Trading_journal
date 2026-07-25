@@ -222,7 +222,10 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
         <span class="badge patBadge" style="background:rgba(124,91,239,.15);color:var(--accent2)">🤖 AI ZHODNOTENIE</span>
         <div class="hint" style="margin-top:8px">Písané zhodnotenie tvojho obchodovania od Claude, na základe štatistík a vzorov vyššie.</div>
       </div>
-      <button class="btn small" id="btnAiInsight" onclick="getAiInsight()">Získať AI zhodnotenie</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn small" id="btnAiInsight" onclick="getAiInsight()">Získať AI zhodnotenie</button>
+        <button class="btn secondary small" onclick="openAiChat()">💬 Opýtať sa AI</button>
+      </div>
     </div>
     <div id="aiInsightBody" style="margin-top:14px"></div>
   </div>
@@ -477,6 +480,28 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 <div id="lightbox" onclick="this.classList.remove('open')"><img id="lightboxImg"></div>
 <div id="toast"></div>
 
+<!-- AI CHAT -->
+<div class="overlay" id="aiChatOverlay">
+  <div class="modal" style="max-width:680px">
+    <h2>💬 AI Chat</h2>
+    <div class="filters">
+      <label class="f">Model<select id="aiChatModel" onchange="saveAiChatModel()">
+        <option value="claude-sonnet-5">Claude Sonnet 5</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (rýchly, lacný)</option>
+        <option value="claude-opus-5">Claude Opus 5</option>
+      </select></label>
+    </div>
+    <div id="aiChatMessages" style="height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:14px;margin:10px 0;background:var(--bg3)"></div>
+    <div style="display:flex;gap:8px">
+      <input id="aiChatInput" placeholder="Opýtaj sa niečo o svojom obchodovaní..." style="flex:1" onkeydown="if(event.key==='Enter')sendAiChatMessage()">
+      <button class="btn" id="btnAiChatSend" onclick="sendAiChatMessage()">Odoslať</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+      <button class="btn secondary" onclick="closeAiChat()">Zavrieť</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 /* ================= IndexedDB ================= */
@@ -504,7 +529,7 @@ function idbClear(n){return pReq(store(n,'readwrite').clear());}
 
 /* ================= State ================= */
 let trades=[];
-let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:''};
+let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:'',aiChatModel:'claude-sonnet-5'};
 let ohlcSets=[];
 let calDate=new Date();
 let eqChartObj=null,dailyChartObj=null;
@@ -678,6 +703,10 @@ const I18N_EN={
 'Prázdna odpoveď.':'Empty response.','Chyba:':'Error:',
 'Appka vie poslať zhrnutie tvojich štatistík (P&L, win rate, rozpoznané vzory a pod. – nie surové obchody či poznámky) na Claude API a získať písané zhodnotenie s odporúčaniami. Kľúč sa ukladá len lokálne v tomto prehliadači a nikdy sa nezálohuje ani nezdieľa – nepoužívaj appku s vloženým kľúčom na cudzom/zdieľanom zariadení.':'The app can send a summary of your stats (P&L, win rate, detected patterns, etc. – not raw trades or notes) to the Claude API and get back a written review with recommendations. The key is stored only locally in this browser and is never backed up or shared – don\'t use the app with a key entered on a shared/foreign device.',
 'Anthropic API kľúč':'Anthropic API key','Uložiť kľúč':'Save key','Kľúč získaš na':'Get a key at',
+'💬 Opýtať sa AI':'💬 Ask AI','Model':'Model','Odoslať':'Send','Claude píše…':'Claude is typing…',
+'Opýtaj sa niečo o svojom obchodovaní...':'Ask something about your trading...',
+'Opýtaj sa čokoľvek o svojich štatistikách, vzoroch alebo výkonnosti – appka pošle Claude súhrn tvojich dát.':'Ask anything about your stats, patterns, or performance – the app will send Claude a summary of your data.',
+'Najprv si v Nastaveniach ulož svoj Anthropic API kľúč':'First save your Anthropic API key in Settings',
 'Obchod bol dočasne v zisku, no skončil v strate':'Trade was floating in profit but closed at a loss',
 'Väčšinu trvania obchodu bola cena proti tebe':'Price was against you for most of the trade\'s duration',
 'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
@@ -775,7 +804,8 @@ async function init(){
     if(s.v.gClientId)settings.gClientId=s.v.gClientId;
     settings.gConnected=!!s.v.gConnected;
     settings.gLastSync=s.v.gLastSync||null;
-    if(s.v.anthropicKey)settings.anthropicKey=s.v.anthropicKey;}
+    if(s.v.anthropicKey)settings.anthropicKey=s.v.anthropicKey;
+    if(s.v.aiChatModel)settings.aiChatModel=s.v.aiChatModel;}
   // migrácia: starý settings.balance -> prvý účet
   if(settings.accounts.length===1&&!settings.accounts[0].balance&&settings.balance)settings.accounts[0].balance=settings.balance;
   if(settings.activeAccount!=='all'&&!settings.accounts.some(a=>a.id===settings.activeAccount))settings.activeAccount=settings.accounts[0].id;
@@ -791,7 +821,7 @@ async function init(){
     setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
   }
 }
-function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync,anthropicKey:settings.anthropicKey}});}
+function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync,anthropicKey:settings.anthropicKey,aiChatModel:settings.aiChatModel}});}
 function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();}
 
 /* ================= Účty ================= */
@@ -1220,6 +1250,67 @@ async function getAiInsight(){
     btn.disabled=false;btn.textContent=tr('Získať AI zhodnotenie');
   }
 }
+/* ---- AI chat ---- */
+let aiChatHistory=[];
+function saveAiChatModel(){settings.aiChatModel=$('aiChatModel').value;saveSettings();}
+function openAiChat(){
+  if(!settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
+  $('aiChatModel').value=settings.aiChatModel||'claude-sonnet-5';
+  $('aiChatOverlay').classList.add('open');
+  renderAiChatMessages();
+  $('aiChatInput').focus();
+}
+function closeAiChat(){$('aiChatOverlay').classList.remove('open');}
+function renderAiChatMessages(){
+  const box=$('aiChatMessages');
+  if(!aiChatHistory.length){
+    box.innerHTML=`<div class="hint">${esc(tr('Opýtaj sa čokoľvek o svojich štatistikách, vzoroch alebo výkonnosti – appka pošle Claude súhrn tvojich dát.'))}</div>`;
+    return;
+  }
+  box.innerHTML=aiChatHistory.map(m=>`
+    <div style="margin-bottom:12px;display:flex;${m.role==='user'?'justify-content:flex-end':''}">
+      <div style="max-width:80%;padding:8px 12px;border-radius:10px;white-space:pre-wrap;line-height:1.5;background:${m.role==='user'?'var(--accent)':'var(--bg2)'};color:${m.role==='user'?'#fff':'var(--text)'}">${esc(m.content)}</div>
+    </div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+async function sendAiChatMessage(){
+  const input=$('aiChatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  if(!settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
+  input.value='';
+  aiChatHistory.push({role:'user',content:text});
+  renderAiChatMessages();
+  const box=$('aiChatMessages'),sendBtn=$('btnAiChatSend');
+  sendBtn.disabled=true;input.disabled=true;
+  box.insertAdjacentHTML('beforeend',`<div class="hint" id="aiChatTyping">${esc(tr('Claude píše…'))}</div>`);
+  box.scrollTop=box.scrollHeight;
+  const model=$('aiChatModel').value;
+  const summary=buildAiSummary(filteredForDash());
+  const langName=settings.lang==='en'?'English':'Slovak';
+  const systemPrompt=`Si asistent v trading journal appke používateľa. Máš k dispozícii súhrn jeho obchodných štatistík, vypočítaný appkou (presné čísla, JSON): ${JSON.stringify(summary)}\n\nOdpovedaj na otázky o jeho obchodovaní stručne a vecne, v jazyku: ${langName}. Ak sa opýta na niečo, čo v týchto dátach nie je (napr. konkrétne poznámky k jednotlivým obchodom), povedz, že to nemáš k dispozícii.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':settings.anthropicKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({model,max_tokens:1024,system:systemPrompt,messages:aiChatHistory}),
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error((data&&data.error&&data.error.message)||('HTTP '+res.status));
+    const reply=(data.content||[]).map(c=>c.text||'').join('').trim();
+    aiChatHistory.push({role:'assistant',content:reply||tr('Prázdna odpoveď.')});
+  }catch(e){
+    aiChatHistory.push({role:'assistant',content:tr('Chyba:')+' '+(e&&e.message?e.message:tr('neznáma chyba'))});
+  }finally{
+    sendBtn.disabled=false;input.disabled=false;input.focus();
+    renderAiChatMessages();
+  }
+}
 function renderBreakdown(elId,ts,keyFn){
   const g={};
   ts.forEach(t=>{const k=keyFn(t);(g[k]=g[k]||[]).push(computePnl(t));});
@@ -1641,7 +1732,8 @@ function bindGlobal(){
   });
   $('csvFile').addEventListener('change',e=>{if(e.target.files[0])loadCsvForImport(e.target.files[0]);});
   $('tradeOverlay').addEventListener('mousedown',e=>{if(e.target===$('tradeOverlay'))closeTrade();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTrade();$('lightbox').classList.remove('open');}});
+  $('aiChatOverlay').addEventListener('mousedown',e=>{if(e.target===$('aiChatOverlay'))closeAiChat();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTrade();closeAiChat();$('lightbox').classList.remove('open');}});
 }
 
 /* ---- modal chart ---- */
