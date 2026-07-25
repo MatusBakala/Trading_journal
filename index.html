@@ -16,7 +16,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
 header{display:flex;align-items:center;gap:16px;padding:0 24px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
-header h1{font-size:17px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+header h1{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:700;white-space:nowrap}
+.logoIcon{flex-shrink:0;display:block}
+.logoText{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
 #headerControls{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
 .headerSide{display:flex;align-items:center;gap:12px;flex-shrink:0}
 nav{display:flex;gap:4px;flex:1;overflow-x:auto;min-width:0}
@@ -157,7 +159,20 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 <body>
 <header>
   <button id="navToggle" class="navToggle" onclick="toggleMobileNav()" aria-label="Menu">☰</button>
-  <h1>📈 Trading Journal</h1>
+  <h1>
+    <svg class="logoIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect width="24" height="24" rx="7" fill="url(#logoGrad)"/>
+      <path d="M5 15.5L9.5 10.5L12.5 13.5L17.5 7.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.5 7H18V11.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <defs>
+        <linearGradient id="logoGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#5b8def"/>
+          <stop offset="1" stop-color="#7c5bef"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <span class="logoText">Trading Journal</span>
+  </h1>
   <div id="headerControls">
     <nav>
       <button data-tab="dashboard" class="active">Dashboard</button>
@@ -215,6 +230,25 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
       </div>
     </div>
     <div id="patternsBody" style="margin-top:14px"></div>
+  </div>
+  <div class="panel">
+    <div class="patHead">
+      <div>
+        <span class="badge patBadge" style="background:rgba(124,91,239,.15);color:var(--accent2)">🤖 AI ZHODNOTENIE</span>
+        <div class="hint" style="margin-top:8px">Písané zhodnotenie tvojho obchodovania od Claude, na základe štatistík a vzorov vyššie.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <select id="aiInsightModel" onchange="saveAiInsightModel()" style="font-size:12px">
+          <option value="claude-haiku-4-5-20251001">Haiku 4.5 (rýchly, lacný)</option>
+          <option value="claude-sonnet-5">Sonnet 5 (vyvážený)</option>
+          <option value="claude-opus-5">Opus 5 (najhlbší, drahší)</option>
+        </select>
+        <button class="btn small" id="btnAiInsight" onclick="getAiInsight()">Získať AI zhodnotenie</button>
+        <button class="btn secondary small" onclick="openAiChat()">💬 Opýtať sa AI</button>
+        <button class="btn secondary small" onclick="exportAiData()" title="Stiahni dáta a prompt na použitie zadarmo v claude.ai (bez API poplatkov)">📥 Export pre AI</button>
+      </div>
+    </div>
+    <div id="aiInsightBody" style="margin-top:14px"></div>
   </div>
 </section>
 
@@ -354,6 +388,13 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <h3>Nahrané datasety</h3>
     <div id="ohlcList" class="hint">Zatiaľ žiadne dáta.</div>
   </div>
+  <div class="panel" id="ohlcCoveragePanel">
+    <h3>🔍 Kontrola pokrytia sviečkových dát</h3>
+    <p class="hint">Skontroluje, ktoré uzavreté obchody nemajú zodpovedajúce sviečkové dáta (potrebné pre vzory Green to Red, Väčšinu času v strate, Nezvyčajne vysoký objem) a ukáže presne, pre ktoré symboly a dátumy chýbajú, aby si mohol cielene dostiahnuť len to, čo treba.</p>
+    <br>
+    <button class="btn secondary small" onclick="runOhlcCoverageCheck()">Skontrolovať chýbajúce dáta</button>
+    <div id="ohlcCoverageResult" style="margin-top:12px"></div>
+  </div>
 </section>
 
 <!-- SETTINGS -->
@@ -389,6 +430,17 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <button class="btn secondary small" onclick="gdriveForceDownload()" style="margin-left:6px">⬇️ Stiahnuť z Drive</button>
     <div id="gdriveStatus" class="hint" style="margin-top:8px">Nepripojené.</div>
     <p class="hint" style="margin-top:6px">"Nahrať na Drive" pošle aktuálny lokálny stav do cloudu (prepíše to, čo tam je). "Stiahnuť z Drive" naopak prepíše dáta v tomto prehliadači tým, čo je uložené v cloude – použi to napr. keď appka na novom zariadení automaticky nestiahla dáta sama.</p>
+  </div>
+  <div class="panel">
+    <h3>🤖 AI zhodnotenie (Claude)</h3>
+    <p class="hint">Appka vie poslať zhrnutie tvojich štatistík (P&L, win rate, rozpoznané vzory a pod. – nie surové obchody či poznámky) na Claude API a získať písané zhodnotenie s odporúčaniami. Kľúč sa ukladá len lokálne v tomto prehliadači a nikdy sa nezálohuje ani nezdieľa – nepoužívaj appku s vloženým kľúčom na cudzom/zdieľanom zariadení.</p>
+    <br>
+    <div class="filters">
+      <label class="f" style="flex:1;min-width:220px">Anthropic API kľúč<input id="anthropicKey" type="password" placeholder="sk-ant-..." value=""></label>
+    </div>
+    <br>
+    <button class="btn small" onclick="saveAnthropicKey()">Uložiť kľúč</button>
+    <p class="hint" style="margin-top:6px">Kľúč získaš na <code>console.anthropic.com</code> → API Keys.</p>
   </div>
   <div class="panel">
     <h3>Manuálna záloha</h3>
@@ -456,6 +508,28 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 <div id="lightbox" onclick="this.classList.remove('open')"><img id="lightboxImg"></div>
 <div id="toast"></div>
 
+<!-- AI CHAT -->
+<div class="overlay" id="aiChatOverlay">
+  <div class="modal" style="max-width:680px">
+    <h2>💬 AI Chat</h2>
+    <div class="filters">
+      <label class="f">Model<select id="aiChatModel" onchange="saveAiChatModel()">
+        <option value="claude-sonnet-5">Claude Sonnet 5</option>
+        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (rýchly, lacný)</option>
+        <option value="claude-opus-5">Claude Opus 5</option>
+      </select></label>
+    </div>
+    <div id="aiChatMessages" style="height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:14px;margin:10px 0;background:var(--bg3)"></div>
+    <div style="display:flex;gap:8px">
+      <input id="aiChatInput" placeholder="Opýtaj sa niečo o svojom obchodovaní..." style="flex:1" onkeydown="if(event.key==='Enter')sendAiChatMessage()">
+      <button class="btn" id="btnAiChatSend" onclick="sendAiChatMessage()">Odoslať</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+      <button class="btn secondary" onclick="closeAiChat()">Zavrieť</button>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict';
 /* ================= IndexedDB ================= */
@@ -483,7 +557,7 @@ function idbClear(n){return pReq(store(n,'readwrite').clear());}
 
 /* ================= State ================= */
 let trades=[];
-let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null};
+let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:'',aiChatModel:'claude-sonnet-5',aiInsightModel:'claude-haiku-4-5-20251001'};
 let ohlcSets=[];
 let calDate=new Date();
 let eqChartObj=null,dailyChartObj=null;
@@ -636,6 +710,13 @@ const I18N_EN={
 'CSV je prázdne alebo má len hlavičku':'CSV is empty or has only a header','Namapuj minimálne Symbol a Čas vstupu':'Map at least Symbol and Entry time','Najprv nahraj CSV':'Upload a CSV first',
 'Vyber CSV súbor':'Choose a CSV file','Prázdny súbor':'Empty file','Nenašiel som stĺpce open/high/low/close':'Could not find open/high/low/close columns',
 'Nepodarilo sa načítať žiadne sviečky – skontroluj formát':'Could not parse any candles – check the format','OHLC dáta nahrané':'OHLC data uploaded','Vymazať tento dataset?':'Delete this dataset?',
+'🔍 Kontrola pokrytia sviečkových dát':'🔍 Candle data coverage check',
+'Skontroluje, ktoré uzavreté obchody nemajú zodpovedajúce sviečkové dáta (potrebné pre vzory Green to Red, Väčšinu času v strate, Nezvyčajne vysoký objem) a ukáže presne, pre ktoré symboly a dátumy chýbajú, aby si mohol cielene dostiahnuť len to, čo treba.':'Checks which closed trades have no matching candle data (needed for the Green to Red, Majority in drawdown, and Unusual volume patterns) and shows exactly which symbols and dates are missing, so you can re-download only what you need.',
+'Skontrolovať chýbajúce dáta':'Check for missing data',
+'Zobraziť detaily chýbajúcich dát →':'View missing data details →',
+'Všetky uzavreté obchody majú kompletné sviečkové dáta.':'All closed trades have complete candle data.',
+'Chýbajú sviečkové dáta pre':'Missing candle data for','z':'of','uzavretých obchodov':'closed trades','obchodov bez dát':'trades without data',
+'žiadny dataset pre tento symbol':'no dataset for this symbol',
 'Dáta stiahnuté':'Data downloaded','Multiplikátory uložené':'Multipliers saved','Uložené':'Saved','Záloha stiahnutá':'Backup downloaded','Neplatný JSON':'Invalid JSON','Záloha obnovená':'Backup restored',
 'Obnovenie PREPÍŠE všetky aktuálne dáta. Pokračovať?':'Restoring will OVERWRITE all current data. Continue?',
 'Naozaj vymazať VŠETKY obchody, screenshoty a dáta?':'Really delete ALL trades, screenshots and data?','Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?':'Last warning – this cannot be undone. Delete?',
@@ -646,7 +727,26 @@ const I18N_EN={
 'VZORY V OBCHODOVANÍ':'TRADING PATTERNS','Silná stránka':'Strength','Priestor na zlepšenie':'Area to improve','Neutrálny vzor':'Neutral pattern',
 'Potrebných je aspoň':'You need at least','uzavretých obchodov na rozpoznanie vzorov (zatiaľ':'closed trades to detect patterns (currently',
 'Top vzory naprieč':'Top patterns across','obchodmi':'trades','obchodov':'trades','Chýbajú sviečkové dáta':'Missing candle data',
+'Menovateľ je nižší ako celkový počet obchodov – tento vzor vyžaduje sviečkové dáta, ktoré nie sú dostupné pre všetky obchody.':'The denominator is lower than the total trade count – this pattern needs candle data that is not available for every trade.',
 'Väčšinu času v strate':'Mostly in drawdown','Dlhšie ako priemerné držanie':'Longer than average hold','Nezvyčajne vysoký objem':'Unusually high volume',
+'Rýchly nový vstup hneď po stratovom obchode':'Quickly re-entered right after a losing trade',
+'Výrazne viac obchodov za deň než je tvoj priemer':'Significantly more trades in a day than your average',
+'🤖 AI ZHODNOTENIE':'🤖 AI INSIGHTS','🤖 AI zhodnotenie (Claude)':'🤖 AI insights (Claude)',
+'Písané zhodnotenie tvojho obchodovania od Claude, na základe štatistík a vzorov vyššie.':'A written review of your trading from Claude, based on the stats and patterns above.',
+'Získať AI zhodnotenie':'Get AI insights','Analyzujem…':'Analyzing…','Čakám na odpoveď od Claude…':'Waiting for a response from Claude…',
+'Najprv si v Nastaveniach ulož svoj Anthropic API kľúč.':'First save your Anthropic API key in Settings.',
+'uzavretých obchodov na AI zhodnotenie.':'closed trades for AI insights.',
+'Prázdna odpoveď.':'Empty response.','Chyba:':'Error:',
+'Odpoveď bola príliš dlhá a orezaná. Skús to znova alebo zvoľ iný model.':'The response was too long and got truncated. Try again or pick a different model.',
+'📥 Export pre AI':'📥 Export for AI','Stiahni dáta a prompt na použitie zadarmo v claude.ai (bez API poplatkov)':'Download the data and prompt to use for free in claude.ai (no API charges)',
+'JSON stiahnutý, prompt skopírovaný do schránky – vlož oboje do claude.ai':'JSON downloaded, prompt copied to clipboard – paste both into claude.ai',
+'JSON stiahnutý':'JSON downloaded',
+'Appka vie poslať zhrnutie tvojich štatistík (P&L, win rate, rozpoznané vzory a pod. – nie surové obchody či poznámky) na Claude API a získať písané zhodnotenie s odporúčaniami. Kľúč sa ukladá len lokálne v tomto prehliadači a nikdy sa nezálohuje ani nezdieľa – nepoužívaj appku s vloženým kľúčom na cudzom/zdieľanom zariadení.':'The app can send a summary of your stats (P&L, win rate, detected patterns, etc. – not raw trades or notes) to the Claude API and get back a written review with recommendations. The key is stored only locally in this browser and is never backed up or shared – don\'t use the app with a key entered on a shared/foreign device.',
+'Anthropic API kľúč':'Anthropic API key','Uložiť kľúč':'Save key','Kľúč získaš na':'Get a key at',
+'💬 Opýtať sa AI':'💬 Ask AI','Model':'Model','Odoslať':'Send','Claude píše…':'Claude is typing…',
+'Opýtaj sa niečo o svojom obchodovaní...':'Ask something about your trading...',
+'Opýtaj sa čokoľvek o svojich štatistikách, vzoroch alebo výkonnosti – appka pošle Claude súhrn tvojich dát.':'Ask anything about your stats, patterns, or performance – the app will send Claude a summary of your data.',
+'Najprv si v Nastaveniach ulož svoj Anthropic API kľúč':'First save your Anthropic API key in Settings',
 'Obchod bol dočasne v zisku, no skončil v strate':'Trade was floating in profit but closed at a loss',
 'Väčšinu trvania obchodu bola cena proti tebe':'Price was against you for most of the trade\'s duration',
 'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
@@ -743,7 +843,10 @@ async function init(){
     if(s.v.lang)settings.lang=s.v.lang;
     if(s.v.gClientId)settings.gClientId=s.v.gClientId;
     settings.gConnected=!!s.v.gConnected;
-    settings.gLastSync=s.v.gLastSync||null;}
+    settings.gLastSync=s.v.gLastSync||null;
+    if(s.v.anthropicKey)settings.anthropicKey=s.v.anthropicKey;
+    if(s.v.aiChatModel)settings.aiChatModel=s.v.aiChatModel;
+    if(s.v.aiInsightModel)settings.aiInsightModel=s.v.aiInsightModel;}
   // migrácia: starý settings.balance -> prvý účet
   if(settings.accounts.length===1&&!settings.accounts[0].balance&&settings.balance)settings.accounts[0].balance=settings.balance;
   if(settings.activeAccount!=='all'&&!settings.accounts.some(a=>a.id===settings.activeAccount))settings.activeAccount=settings.accounts[0].id;
@@ -759,7 +862,7 @@ async function init(){
     setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
   }
 }
-function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync}});}
+function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync,anthropicKey:settings.anthropicKey,aiChatModel:settings.aiChatModel,aiInsightModel:settings.aiInsightModel}});}
 function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();}
 
 /* ================= Účty ================= */
@@ -830,17 +933,19 @@ async function saveAccounts(){
 }
 
 /* ================= Tabs ================= */
+function goToTab(name){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  const btn=document.querySelector('nav button[data-tab="'+name+'"]');
+  if(btn)btn.classList.add('active');
+  $('tab-'+name).classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='stats')renderStats();
+  if(name==='reports')renderReports();
+  closeMobileNav();
+}
 document.querySelectorAll('nav button').forEach(b=>{
-  b.onclick=()=>{
-    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    $('tab-'+b.dataset.tab).classList.add('active');
-    if(b.dataset.tab==='dashboard')renderDashboard();
-    if(b.dataset.tab==='stats')renderStats();
-    if(b.dataset.tab==='reports')renderReports();
-    closeMobileNav();
-  };
+  b.onclick=()=>goToTab(b.dataset.tab);
 });
 function toggleMobileNav(){$('headerControls').classList.toggle('open');}
 function closeMobileNav(){$('headerControls').classList.remove('open');}
@@ -1018,15 +1123,47 @@ function patUnusualVolume(t,bars){
   const avg=vols.reduce((a,b)=>a+b,0)/vols.length;
   return avg>symAvg*1.5;
 }
-function renderPatterns(ts){
-  const sub=$('patternsSub'),body=$('patternsBody');
-  const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
-  const total=closed.length;
-  if(total<PATTERNS_MIN_TRADES){
-    sub.textContent=tr('Potrebných je aspoň')+' '+PATTERNS_MIN_TRADES+' '+tr('uzavretých obchodov na rozpoznanie vzorov (zatiaľ')+' '+total+').';
-    body.innerHTML='';
-    return;
+function patRevengeCount(chrono){
+  // only compare gaps between trades on the same calendar day - otherwise overnight
+  // gaps between sessions would dominate the average and make every same-day
+  // re-entry look "fast" by comparison.
+  const sameDayGap=(a,b)=>dayKey(a.tExit)===dayKey(b.tEntry)?b.tEntry-a.tExit:null;
+  const gaps=[];
+  for(let i=1;i<chrono.length;i++){
+    const gap=sameDayGap(chrono[i-1],chrono[i]);
+    if(gap!=null&&gap>=0)gaps.push(gap);
   }
+  if(gaps.length<2)return 0;
+  // use the median, not the mean, as the "typical gap" baseline - a handful of long
+  // same-day gaps (e.g. a lunch break) skew the mean upward, which made half-the-mean
+  // wider than most of the trader's normal fast re-entries and over-flagged them all.
+  gaps.sort((a,b)=>a-b);
+  const typicalGap=gaps[Math.floor(gaps.length/2)];
+  if(!typicalGap)return 0;
+  let n=0;
+  for(let i=1;i<chrono.length;i++){
+    const gap=sameDayGap(chrono[i-1],chrono[i]);
+    if(gap!=null&&gap>=0&&gap<typicalGap*0.5&&computePnl(chrono[i-1])<0)n++;
+  }
+  return n;
+}
+function patOvertradingCount(closed){
+  const byDay={};
+  for(const t of closed){const k=dayKey(tTime(t));(byDay[k]=byDay[k]||[]).push(t);}
+  const dayCounts=Object.values(byDay).map(a=>a.length);
+  if(dayCounts.length<2)return 0;
+  const avgPerDay=dayCounts.reduce((a,b)=>a+b,0)/dayCounts.length;
+  const variance=dayCounts.reduce((a,b)=>a+(b-avgPerDay)**2,0)/dayCounts.length;
+  const threshold=avgPerDay+Math.sqrt(variance);
+  // a fixed multiplier (e.g. avg*1.5) misses traders whose day-to-day count varies
+  // gradually rather than in rare spikes - comparing to the trader's own spread
+  // (1 stddev above their average) adapts to that instead.
+  let n=0;
+  for(const k in byDay){if(byDay[k].length>threshold)n+=byDay[k].length;}
+  return n;
+}
+function computePatternRows(closed){
+  const total=closed.length;
   const avgDur=closed.reduce((a,t)=>a+(t.tExit-t.tEntry),0)/total;
   let gtr=0,ddm=0,eht=0,vol=0,ohlcElig=0;
   for(const t of closed){
@@ -1039,13 +1176,34 @@ function renderPatterns(ts){
       if(patUnusualVolume(t,bars))vol++;
     }
   }
-  const rows=[
+  const chrono=[...closed].sort((a,b)=>a.tEntry-b.tEntry);
+  const revenge=patRevengeCount(chrono);
+  const overtrade=patOvertradingCount(closed);
+  return [
     {name:'Dlhšie ako priemerné držanie',desc:'Obchod držaný dlhšie než je tvoj priemer',count:eht,cls:'neutral',needsOhlc:false,eligible:total},
     {name:'Green to Red',desc:'Obchod bol dočasne v zisku, no skončil v strate',count:gtr,cls:'bad',needsOhlc:true,eligible:ohlcElig},
     {name:'Väčšinu času v strate',desc:'Väčšinu trvania obchodu bola cena proti tebe',count:ddm,cls:'bad',needsOhlc:true,eligible:ohlcElig},
     {name:'Nezvyčajne vysoký objem',desc:'Obchodoval si s výrazne vyšším objemom než zvyčajne',count:vol,cls:'neutral',needsOhlc:true,eligible:ohlcElig},
+    {name:'Revenge trading',desc:'Rýchly nový vstup hneď po stratovom obchode',count:revenge,cls:'bad',needsOhlc:false,eligible:total},
+    {name:'Overtrading',desc:'Výrazne viac obchodov za deň než je tvoj priemer',count:overtrade,cls:'bad',needsOhlc:false,eligible:total},
   ].map(r=>({...r,pct:r.eligible?r.count/r.eligible*100:0})).sort((a,b)=>b.pct-a.pct);
-  sub.textContent=tr('Top vzory naprieč')+' '+total+' '+tr('obchodmi');
+}
+function renderPatterns(ts){
+  const sub=$('patternsSub'),body=$('patternsBody');
+  if($('aiInsightModel'))$('aiInsightModel').value=settings.aiInsightModel||'claude-haiku-4-5-20251001';
+  const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const total=closed.length;
+  if(total<PATTERNS_MIN_TRADES){
+    sub.textContent=tr('Potrebných je aspoň')+' '+PATTERNS_MIN_TRADES+' '+tr('uzavretých obchodov na rozpoznanie vzorov (zatiaľ')+' '+total+').';
+    body.innerHTML='';
+    return;
+  }
+  const rows=computePatternRows(closed);
+  const ohlcRow=rows.find(r=>r.needsOhlc);
+  const gapLink=ohlcRow&&ohlcRow.eligible<total
+    ?` · <a href="javascript:void(0)" onclick="goToOhlcCoverage()" style="color:var(--accent)">${esc(tr('Zobraziť detaily chýbajúcich dát →'))}</a>`
+    :'';
+  sub.innerHTML=esc(tr('Top vzory naprieč')+' '+total+' '+tr('obchodmi'))+gapLink;
   body.innerHTML=rows.map(r=>{
     if(r.needsOhlc&&r.eligible===0){
       return `<div class="patRow neutral">
@@ -1055,15 +1213,182 @@ function renderPatterns(ts){
         </div>
       </div>`;
     }
-    const countLabel=r.needsOhlc?`${r.count}/${r.eligible} ${esc(tr('obchodov'))}`:esc(tr(r.count+' obchodov'));
+    const countLabel=`${r.count}/${r.eligible} ${esc(tr('obchodov'))}`;
+    const denomNote=r.needsOhlc&&r.eligible<total?` title="${esc(tr('Menovateľ je nižší ako celkový počet obchodov – tento vzor vyžaduje sviečkové dáta, ktoré nie sú dostupné pre všetky obchody.'))}"`:'';
     return `<div class="patRow ${r.cls}">
       <div class="patBar" style="width:${r.pct.toFixed(1)}%"></div>
       <div class="patContent">
         <div class="patText"><b>${esc(tr(r.name))}</b> – ${esc(tr(r.desc))}</div>
-        <div class="patStat"><div class="pct">${r.pct.toFixed(1)}%</div><div class="hint">${countLabel}</div></div>
+        <div class="patStat"><div class="pct">${r.pct.toFixed(1)}%</div><div class="hint"${denomNote}>${countLabel}</div></div>
       </div>
     </div>`;
   }).join('');
+}
+/* ================= AI insight ================= */
+function groupStats(closed,keyFn){
+  const g={};
+  closed.forEach(t=>{const k=keyFn(t);(g[k]=g[k]||[]).push(computePnl(t));});
+  return Object.entries(g).map(([k,arr])=>({
+    key:k,trades:arr.length,
+    winRatePct:+(arr.filter(p=>p>0).length/arr.length*100).toFixed(1),
+    pnl:+arr.reduce((a,b)=>a+b,0).toFixed(2),
+  }));
+}
+function buildAiSummary(ts){
+  const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const total=closed.length;
+  const pnls=closed.map(computePnl);
+  const net=pnls.reduce((a,b)=>a+b,0);
+  const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0);
+  const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
+  const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
+  const patterns=total>=PATTERNS_MIN_TRADES?computePatternRows(closed).map(r=>({
+    name:r.name,pctOfEligible:+r.pct.toFixed(1),matched:r.count,eligible:r.eligible,
+  })):[];
+  return {
+    totalClosedTrades:total,
+    netPnl:+net.toFixed(2),
+    winRatePct:total?+(wins.length/total*100).toFixed(1):0,
+    profitFactor:gl>0?+(gw/gl).toFixed(2):null,
+    avgWin:+(wins.length?gw/wins.length:0).toFixed(2),
+    avgLoss:+(-(losses.length?gl/losses.length:0)).toFixed(2),
+    bySymbol:groupStats(closed,t=>String(t.symbol).toUpperCase()),
+    byDayOfWeek:groupStats(closed,t=>dows[new Date(tTime(t)*1000).getDay()]),
+    byEntryHour:groupStats(closed,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00'),
+    detectedPatterns:patterns,
+  };
+}
+function saveAiInsightModel(){settings.aiInsightModel=$('aiInsightModel').value;saveSettings();}
+function buildAiPromptText(inlineSummary){
+  const langName=settings.lang==='en'?'English':'Slovak';
+  const base=`Toto je súhrn štatistík z trading journalu (počítané appkou, čísla sú presné). Napíš stručné, konkrétne zhodnotenie obchodovania: 2-3 silné stránky, 2-3 konkrétne oblasti na zlepšenie, a 1-2 praktické odporúčania na základe rozpoznaných vzorov a časových/symbolových štatistík. Buď priamy a vecný, žiadne všeobecné rady. Odpíš v jazyku: ${langName}.`;
+  if(inlineSummary)return base+`\n\nDáta (JSON):\n${JSON.stringify(inlineSummary)}`;
+  return base+`\n\nDáta sú v priloženom JSON súbore.`;
+}
+async function exportAiData(){
+  const summary=buildAiSummary(filteredForDash());
+  if(summary.totalClosedTrades<PATTERNS_MIN_TRADES){
+    toast(tr('Potrebných je aspoň')+' '+PATTERNS_MIN_TRADES+' '+tr('uzavretých obchodov na AI zhodnotenie.'));
+    return;
+  }
+  const blob=new Blob([JSON.stringify(summary,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='trading-journal-ai-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  const promptText=buildAiPromptText(null);
+  try{
+    await navigator.clipboard.writeText(promptText);
+    toast(tr('JSON stiahnutý, prompt skopírovaný do schránky – vlož oboje do claude.ai'));
+  }catch(e){
+    toast(tr('JSON stiahnutý'));
+  }
+}
+async function getAiInsight(){
+  const body=$('aiInsightBody'),btn=$('btnAiInsight');
+  if(!settings.anthropicKey){
+    body.innerHTML=`<div class="hint">${esc(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč.'))}</div>`;
+    return;
+  }
+  const ts=filteredForDash();
+  const summary=buildAiSummary(ts);
+  if(summary.totalClosedTrades<PATTERNS_MIN_TRADES){
+    body.innerHTML=`<div class="hint">${esc(tr('Potrebných je aspoň'))} ${PATTERNS_MIN_TRADES} ${esc(tr('uzavretých obchodov na AI zhodnotenie.'))}</div>`;
+    return;
+  }
+  btn.disabled=true;btn.textContent=tr('Analyzujem…');
+  body.innerHTML=`<div class="hint">${esc(tr('Čakám na odpoveď od Claude…'))}</div>`;
+  const prompt=buildAiPromptText(summary);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':settings.anthropicKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({
+        model:settings.aiInsightModel||'claude-haiku-4-5-20251001',
+        max_tokens:1536,
+        thinking:{type:'disabled'},
+        messages:[{role:'user',content:prompt}],
+      }),
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error((data&&data.error&&data.error.message)||('HTTP '+res.status));
+    const text=(data.content||[]).map(c=>c.text||'').join('').trim();
+    if(!text&&data.stop_reason==='max_tokens'){
+      body.innerHTML=`<div class="hint" style="color:var(--red)">${esc(tr('Odpoveď bola príliš dlhá a orezaná. Skús to znova alebo zvoľ iný model.'))}</div>`;
+    }else{
+      body.innerHTML=`<div class="patRow neutral" style="white-space:pre-wrap;line-height:1.6">${esc(text||tr('Prázdna odpoveď.'))}</div>`;
+    }
+  }catch(e){
+    body.innerHTML=`<div class="hint" style="color:var(--red)">${esc(tr('Chyba:'))} ${esc(e&&e.message?e.message:tr('neznáma chyba'))}</div>`;
+  }finally{
+    btn.disabled=false;btn.textContent=tr('Získať AI zhodnotenie');
+  }
+}
+/* ---- AI chat ---- */
+let aiChatHistory=[];
+function saveAiChatModel(){settings.aiChatModel=$('aiChatModel').value;saveSettings();}
+function openAiChat(){
+  if(!settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
+  $('aiChatModel').value=settings.aiChatModel||'claude-sonnet-5';
+  $('aiChatOverlay').classList.add('open');
+  renderAiChatMessages();
+  $('aiChatInput').focus();
+}
+function closeAiChat(){$('aiChatOverlay').classList.remove('open');}
+function renderAiChatMessages(){
+  const box=$('aiChatMessages');
+  if(!aiChatHistory.length){
+    box.innerHTML=`<div class="hint">${esc(tr('Opýtaj sa čokoľvek o svojich štatistikách, vzoroch alebo výkonnosti – appka pošle Claude súhrn tvojich dát.'))}</div>`;
+    return;
+  }
+  box.innerHTML=aiChatHistory.map(m=>`
+    <div style="margin-bottom:12px;display:flex;${m.role==='user'?'justify-content:flex-end':''}">
+      <div style="max-width:80%;padding:8px 12px;border-radius:10px;white-space:pre-wrap;line-height:1.5;background:${m.role==='user'?'var(--accent)':'var(--bg2)'};color:${m.role==='user'?'#fff':'var(--text)'}">${esc(m.content)}</div>
+    </div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+async function sendAiChatMessage(){
+  const input=$('aiChatInput');
+  const text=input.value.trim();
+  if(!text)return;
+  if(!settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
+  input.value='';
+  aiChatHistory.push({role:'user',content:text});
+  renderAiChatMessages();
+  const box=$('aiChatMessages'),sendBtn=$('btnAiChatSend');
+  sendBtn.disabled=true;input.disabled=true;
+  box.insertAdjacentHTML('beforeend',`<div class="hint" id="aiChatTyping">${esc(tr('Claude píše…'))}</div>`);
+  box.scrollTop=box.scrollHeight;
+  const model=$('aiChatModel').value;
+  const summary=buildAiSummary(filteredForDash());
+  const langName=settings.lang==='en'?'English':'Slovak';
+  const systemPrompt=`Si asistent v trading journal appke používateľa. Máš k dispozícii súhrn jeho obchodných štatistík, vypočítaný appkou (presné čísla, JSON): ${JSON.stringify(summary)}\n\nOdpovedaj na otázky o jeho obchodovaní stručne a vecne, v jazyku: ${langName}. Ak sa opýta na niečo, čo v týchto dátach nie je (napr. konkrétne poznámky k jednotlivým obchodom), povedz, že to nemáš k dispozícii.`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'content-type':'application/json',
+        'x-api-key':settings.anthropicKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body:JSON.stringify({model,max_tokens:1024,system:systemPrompt,messages:aiChatHistory}),
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error((data&&data.error&&data.error.message)||('HTTP '+res.status));
+    const reply=(data.content||[]).map(c=>c.text||'').join('').trim();
+    aiChatHistory.push({role:'assistant',content:reply||tr('Prázdna odpoveď.')});
+  }catch(e){
+    aiChatHistory.push({role:'assistant',content:tr('Chyba:')+' '+(e&&e.message?e.message:tr('neznáma chyba'))});
+  }finally{
+    sendBtn.disabled=false;input.disabled=false;input.focus();
+    renderAiChatMessages();
+  }
 }
 function renderBreakdown(elId,ts,keyFn){
   const g={};
@@ -1486,7 +1811,8 @@ function bindGlobal(){
   });
   $('csvFile').addEventListener('change',e=>{if(e.target.files[0])loadCsvForImport(e.target.files[0]);});
   $('tradeOverlay').addEventListener('mousedown',e=>{if(e.target===$('tradeOverlay'))closeTrade();});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTrade();$('lightbox').classList.remove('open');}});
+  $('aiChatOverlay').addEventListener('mousedown',e=>{if(e.target===$('aiChatOverlay'))closeAiChat();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeTrade();closeAiChat();$('lightbox').classList.remove('open');}});
 }
 
 /* ---- modal chart ---- */
@@ -2152,6 +2478,58 @@ async function delOhlc(key){
   ohlcSets=ohlcSets.filter(d=>d.key!==key);
   renderOhlcList();
 }
+function computeOhlcCoverage(){
+  const closed=trades.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const bySymbolDay={};
+  let missingTotal=0;
+  for(const t of closed){
+    if(barsForTrade(t))continue;
+    missingTotal++;
+    const sym=String(t.symbol||'?').toUpperCase();
+    const day=dayKey(t.tEntry);
+    bySymbolDay[sym]=bySymbolDay[sym]||{};
+    bySymbolDay[sym][day]=(bySymbolDay[sym][day]||0)+1;
+  }
+  const groups=Object.keys(bySymbolDay).sort().map(sym=>{
+    const days=Object.keys(bySymbolDay[sym]).sort();
+    const ranges=[];
+    let curStart=null,curEnd=null,curCount=0;
+    for(const d of days){
+      if(curStart&&(new Date(d+'T00:00:00')-new Date(curEnd+'T00:00:00'))===86400000){
+        curEnd=d;curCount+=bySymbolDay[sym][d];
+      }else{
+        if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
+        curStart=d;curEnd=d;curCount=bySymbolDay[sym][d];
+      }
+    }
+    if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
+    return {symbol:sym,totalMissing:days.reduce((a,d)=>a+bySymbolDay[sym][d],0),ranges,hasDataset:datasetsForSymbol(sym).length>0};
+  });
+  return {totalClosed:closed.length,missingTotal,groups};
+}
+function runOhlcCoverageCheck(){
+  const box=$('ohlcCoverageResult');
+  if(!box)return;
+  const res=computeOhlcCoverage();
+  if(!res.missingTotal){
+    box.innerHTML=`<div class="hint" style="color:var(--green)">✓ ${esc(tr('Všetky uzavreté obchody majú kompletné sviečkové dáta.'))}</div>`;
+    return;
+  }
+  const rows=res.groups.map(g=>{
+    const rangesHtml=g.ranges.map(r=>{
+      const rangeLabel=r.from===r.to?r.from:`${r.from} → ${r.to}`;
+      return `<div style="margin-left:14px;margin-top:2px">• ${esc(rangeLabel)} — ${r.count} ${esc(tr('obchodov'))}</div>`;
+    }).join('');
+    const noDatasetNote=g.hasDataset?'':` <span style="color:var(--red)">(${esc(tr('žiadny dataset pre tento symbol'))})</span>`;
+    return `<div style="margin-top:10px"><b>${esc(g.symbol)}</b>${noDatasetNote} – ${g.totalMissing} ${esc(tr('obchodov bez dát'))}${rangesHtml}</div>`;
+  }).join('');
+  box.innerHTML=`<div class="hint">${esc(tr('Chýbajú sviečkové dáta pre'))} <b>${res.missingTotal}</b> ${esc(tr('z'))} ${res.totalClosed} ${esc(tr('uzavretých obchodov'))}:</div>${rows}`;
+}
+function goToOhlcCoverage(){
+  goToTab('data');
+  runOhlcCoverageCheck();
+  setTimeout(()=>{const el=$('ohlcCoveragePanel');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
 
 /* ================= Settings ================= */
 function renderSettings(){
@@ -2160,6 +2538,12 @@ function renderSettings(){
   $('multList').innerHTML='';
   Object.entries(settings.mults).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>addMultRow(k,v));
   renderGDriveStatus();
+  if($('anthropicKey')&&document.activeElement!==$('anthropicKey'))$('anthropicKey').value=settings.anthropicKey||'';
+}
+function saveAnthropicKey(){
+  settings.anthropicKey=$('anthropicKey').value.trim();
+  saveSettings();
+  toast('Kľúč uložený');
 }
 function addMultRow(k,v){
   const div=document.createElement('div');
@@ -2196,6 +2580,7 @@ async function buildBackupPayload(){
   for(const s of shots)shotsOut.push({tradeId:s.tradeId,data:await blobToB64(s.blob)});
   const settingsOut=Object.assign({},settings);
   delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
+  delete settingsOut.anthropicKey; // API kľúč sa nezálohuje (citlivý údaj, len pre toto zariadenie)
   return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades,ohlc:ohlcSets,shots:shotsOut};
 }
 async function applyBackupPayload(p){
@@ -2212,9 +2597,10 @@ async function applyBackupPayload(p){
   }
   for(const d of (p.ohlc||[]))await idbPut('ohlc',d);
   if(p.settings){
-    const keepClientId=settings.gClientId;
+    const keepClientId=settings.gClientId,keepAnthropicKey=settings.anthropicKey;
     settings=Object.assign(settings,p.settings);
     settings.gClientId=keepClientId;
+    settings.anthropicKey=keepAnthropicKey;
     await saveSettings();
   }
   trades=await idbAll('trades');
