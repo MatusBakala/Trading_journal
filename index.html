@@ -1030,12 +1030,17 @@ function patRevengeCount(chrono){
     const gap=sameDayGap(chrono[i-1],chrono[i]);
     if(gap!=null&&gap>=0)gaps.push(gap);
   }
-  const avgGap=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0;
-  if(!avgGap)return 0;
+  if(gaps.length<2)return 0;
+  // use the median, not the mean, as the "typical gap" baseline - a handful of long
+  // same-day gaps (e.g. a lunch break) skew the mean upward, which made half-the-mean
+  // wider than most of the trader's normal fast re-entries and over-flagged them all.
+  gaps.sort((a,b)=>a-b);
+  const typicalGap=gaps[Math.floor(gaps.length/2)];
+  if(!typicalGap)return 0;
   let n=0;
   for(let i=1;i<chrono.length;i++){
     const gap=sameDayGap(chrono[i-1],chrono[i]);
-    if(gap!=null&&gap>=0&&gap<avgGap*0.5&&computePnl(chrono[i-1])<0)n++;
+    if(gap!=null&&gap>=0&&gap<typicalGap*0.5&&computePnl(chrono[i-1])<0)n++;
   }
   return n;
 }
@@ -1043,10 +1048,15 @@ function patOvertradingCount(closed){
   const byDay={};
   for(const t of closed){const k=dayKey(tTime(t));(byDay[k]=byDay[k]||[]).push(t);}
   const dayCounts=Object.values(byDay).map(a=>a.length);
-  const avgPerDay=dayCounts.length?dayCounts.reduce((a,b)=>a+b,0)/dayCounts.length:0;
-  if(!avgPerDay)return 0;
+  if(dayCounts.length<2)return 0;
+  const avgPerDay=dayCounts.reduce((a,b)=>a+b,0)/dayCounts.length;
+  const variance=dayCounts.reduce((a,b)=>a+(b-avgPerDay)**2,0)/dayCounts.length;
+  const threshold=avgPerDay+Math.sqrt(variance);
+  // a fixed multiplier (e.g. avg*1.5) misses traders whose day-to-day count varies
+  // gradually rather than in rare spikes - comparing to the trader's own spread
+  // (1 stddev above their average) adapts to that instead.
   let n=0;
-  for(const k in byDay){if(byDay[k].length>avgPerDay*1.5)n+=byDay[k].length;}
+  for(const k in byDay){if(byDay[k].length>threshold)n+=byDay[k].length;}
   return n;
 }
 function renderPatterns(ts){
