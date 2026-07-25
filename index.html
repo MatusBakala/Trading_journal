@@ -647,6 +647,8 @@ const I18N_EN={
 'Potrebných je aspoň':'You need at least','uzavretých obchodov na rozpoznanie vzorov (zatiaľ':'closed trades to detect patterns (currently',
 'Top vzory naprieč':'Top patterns across','obchodmi':'trades','obchodov':'trades','Chýbajú sviečkové dáta':'Missing candle data',
 'Väčšinu času v strate':'Mostly in drawdown','Dlhšie ako priemerné držanie':'Longer than average hold','Nezvyčajne vysoký objem':'Unusually high volume',
+'Rýchly nový vstup hneď po stratovom obchode':'Quickly re-entered right after a losing trade',
+'Výrazne viac obchodov za deň než je tvoj priemer':'Significantly more trades in a day than your average',
 'Obchod bol dočasne v zisku, no skončil v strate':'Trade was floating in profit but closed at a loss',
 'Väčšinu trvania obchodu bola cena proti tebe':'Price was against you for most of the trade\'s duration',
 'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
@@ -1018,6 +1020,35 @@ function patUnusualVolume(t,bars){
   const avg=vols.reduce((a,b)=>a+b,0)/vols.length;
   return avg>symAvg*1.5;
 }
+function patRevengeCount(chrono){
+  // only compare gaps between trades on the same calendar day - otherwise overnight
+  // gaps between sessions would dominate the average and make every same-day
+  // re-entry look "fast" by comparison.
+  const sameDayGap=(a,b)=>dayKey(a.tExit)===dayKey(b.tEntry)?b.tEntry-a.tExit:null;
+  const gaps=[];
+  for(let i=1;i<chrono.length;i++){
+    const gap=sameDayGap(chrono[i-1],chrono[i]);
+    if(gap!=null&&gap>=0)gaps.push(gap);
+  }
+  const avgGap=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:0;
+  if(!avgGap)return 0;
+  let n=0;
+  for(let i=1;i<chrono.length;i++){
+    const gap=sameDayGap(chrono[i-1],chrono[i]);
+    if(gap!=null&&gap>=0&&gap<avgGap*0.5&&computePnl(chrono[i-1])<0)n++;
+  }
+  return n;
+}
+function patOvertradingCount(closed){
+  const byDay={};
+  for(const t of closed){const k=dayKey(tTime(t));(byDay[k]=byDay[k]||[]).push(t);}
+  const dayCounts=Object.values(byDay).map(a=>a.length);
+  const avgPerDay=dayCounts.length?dayCounts.reduce((a,b)=>a+b,0)/dayCounts.length:0;
+  if(!avgPerDay)return 0;
+  let n=0;
+  for(const k in byDay){if(byDay[k].length>avgPerDay*1.5)n+=byDay[k].length;}
+  return n;
+}
 function renderPatterns(ts){
   const sub=$('patternsSub'),body=$('patternsBody');
   const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
@@ -1039,11 +1070,16 @@ function renderPatterns(ts){
       if(patUnusualVolume(t,bars))vol++;
     }
   }
+  const chrono=[...closed].sort((a,b)=>a.tEntry-b.tEntry);
+  const revenge=patRevengeCount(chrono);
+  const overtrade=patOvertradingCount(closed);
   const rows=[
     {name:'Dlhšie ako priemerné držanie',desc:'Obchod držaný dlhšie než je tvoj priemer',count:eht,cls:'neutral',needsOhlc:false,eligible:total},
     {name:'Green to Red',desc:'Obchod bol dočasne v zisku, no skončil v strate',count:gtr,cls:'bad',needsOhlc:true,eligible:ohlcElig},
     {name:'Väčšinu času v strate',desc:'Väčšinu trvania obchodu bola cena proti tebe',count:ddm,cls:'bad',needsOhlc:true,eligible:ohlcElig},
     {name:'Nezvyčajne vysoký objem',desc:'Obchodoval si s výrazne vyšším objemom než zvyčajne',count:vol,cls:'neutral',needsOhlc:true,eligible:ohlcElig},
+    {name:'Revenge trading',desc:'Rýchly nový vstup hneď po stratovom obchode',count:revenge,cls:'bad',needsOhlc:false,eligible:total},
+    {name:'Overtrading',desc:'Výrazne viac obchodov za deň než je tvoj priemer',count:overtrade,cls:'bad',needsOhlc:false,eligible:total},
   ].map(r=>({...r,pct:r.eligible?r.count/r.eligible*100:0})).sort((a,b)=>b.pct-a.pct);
   sub.textContent=tr('Top vzory naprieč')+' '+total+' '+tr('obchodmi');
   body.innerHTML=rows.map(r=>{
