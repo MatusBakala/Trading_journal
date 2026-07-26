@@ -81,19 +81,23 @@ main{max-width:1280px;margin:0 auto;padding:24px}
 .ruleAdh{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border)}
 .ruleAdh .bar{flex:1;height:6px;background:var(--bg3);border-radius:3px;margin:0 8px;align-self:center;overflow:hidden}
 .ruleAdh .bar i{display:block;height:100%;background:var(--accent)}
-.ruleRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.ruleRow{display:flex;gap:8px;align-items:center;margin-bottom:8px;border-radius:8px}
+.ruleRow.dragging{opacity:.35}
+.ruleRow.dragover{box-shadow:0 -2px 0 var(--accent)}
+.ruleHandle{cursor:grab;color:var(--muted);padding:10px 12px;margin:-10px -4px -10px -8px;font-size:18px;line-height:1;user-select:none;flex-shrink:0;touch-action:none;display:flex;align-items:center}
+.ruleHandle:active{cursor:grabbing}
 .ruleRow input[type=text]{flex:1}
 .checkRow{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:13px;line-height:1.4}
 .checkRow input{margin-top:3px}
 .stratDiagram{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0}
 .notesView{line-height:1.6}
 .notesView img{max-width:100%;border-radius:6px}
-.notesView h1{font-size:22px;margin:16px 0 8px}
-.notesView h2{font-size:19px;margin:14px 0 8px}
-.notesView h3{font-size:16px;margin:12px 0 6px}
+.notesView h1{font-size:22px;margin:16px 0 8px;color:var(--text)}
+.notesView h2{font-size:19px;margin:14px 0 8px;color:var(--text)}
+.notesView h3{font-size:16px;margin:12px 0 6px;color:var(--text)}
 .notesView p{margin:6px 0}
 .notesView a{color:var(--accent)}
-.rtToolbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px 8px 0 0;padding:6px 8px}
+.rtToolbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px 8px 0 0;padding:6px 8px;position:sticky;top:58px;z-index:40}
 .rtToolbar button{background:none;border:none;color:var(--text);min-width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px;padding:0 4px}
 .rtToolbar button:hover{background:var(--bg2)}
 .rtToolbar select{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 4px;font-size:12.5px;max-width:110px}
@@ -109,9 +113,9 @@ main{max-width:1280px;margin:0 auto;padding:24px}
 .rtDropSep{height:1px;background:var(--border);margin:5px 2px}
 #stNotesEditor{border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:14px;min-height:320px;background:var(--bg3);line-height:1.6;outline:none}
 #stNotesEditor img{max-width:100%;border-radius:6px}
-#stNotesEditor h1{font-size:22px;margin:14px 0 8px}
-#stNotesEditor h2{font-size:19px;margin:12px 0 8px}
-#stNotesEditor h3{font-size:16px;margin:10px 0 6px}
+#stNotesEditor h1{font-size:22px;margin:14px 0 8px;color:var(--text)}
+#stNotesEditor h2{font-size:19px;margin:12px 0 8px;color:var(--text)}
+#stNotesEditor h3{font-size:16px;margin:10px 0 6px;color:var(--text)}
 #stNotesEditor a{color:var(--accent)}
 .pos{color:var(--green)}
 .neg{color:var(--red)}
@@ -196,7 +200,7 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 .patRow .patBar{position:absolute;inset:0;z-index:0;opacity:.4;pointer-events:none}
 .patRow.bad .patBar{background:linear-gradient(90deg,var(--red),transparent 85%)}
 .patRow.good .patBar{background:linear-gradient(90deg,var(--green),transparent 85%)}
-.patRow.neutral .patBar{background:linear-gradient(90deg,#8b98a9,transparent 85%)}
+.patRow.neutral .patBar{background:linear-gradient(90deg,var(--muted),transparent 85%)}
 .patRow .patContent{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .patRow .patText{font-size:14px;line-height:1.4}
 .patRow .patStat{text-align:right;white-space:nowrap}
@@ -282,7 +286,7 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
       <div class="patLegend">
         <span><i style="background:var(--green)"></i>Silná stránka</span>
         <span><i style="background:var(--red)"></i>Priestor na zlepšenie</span>
-        <span><i style="background:#8b98a9"></i>Neutrálny vzor</span>
+        <span><i style="background:var(--muted)"></i>Neutrálny vzor</span>
       </div>
     </div>
     <div id="patternsBody" style="margin-top:14px"></div>
@@ -407,14 +411,14 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
   </div>
   <div class="panel" id="mapPanel" style="display:none">
     <h3>Mapovanie stĺpcov</h3>
-    <div id="brokerConvertBox" class="hint" style="display:none;background:#1c2430;border:1px solid #5b8def;border-radius:8px;padding:10px 14px;margin-bottom:14px">
+    <div id="brokerConvertBox" class="hint" style="display:none;background:var(--bg3);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;margin-bottom:14px">
       ⚡ Toto vyzerá ako export objednávok (Tradovate a pod.) – jeden riadok = jedna objednávka/fill, nie hotový obchod. Vstupy a výstupy treba spárovať.
       <div style="margin-top:8px">
         <label style="cursor:pointer;text-decoration:underline" id="cashFileLabel">📎 Priložiť Cash History.csv (voliteľné, doplní poplatky)<input type="file" id="cashFile" accept=".csv,.txt,.tsv" style="display:none"></label>
       </div>
       <div style="margin-top:10px">
         <button class="btn" onclick="convertAndRebuild()">Spárovať do obchodov</button>
-        <button class="btn" style="margin-left:6px;background:transparent;border:1px solid #2a3441" onclick="$('brokerConvertBox').style.display='none'">Mapovať ručne</button>
+        <button class="btn" style="margin-left:6px;background:transparent;border:1px solid var(--border)" onclick="$('brokerConvertBox').style.display='none'">Mapovať ručne</button>
       </div>
     </div>
     <div id="mapRows"></div>
@@ -684,6 +688,7 @@ let currentStrategyId=null;
 let strategyDetailId=null;
 let strategyDetailTab='rules';
 let settings={lang:'sk',theme:'dark',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:'',aiChatModel:'claude-sonnet-5',aiInsightModel:'claude-haiku-4-5-20251001'};
+function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
 function applyTheme(){
   document.documentElement.dataset.theme=settings.theme==='light'?'light':'dark';
   const btn=$('themeToggle');
@@ -692,6 +697,7 @@ function applyTheme(){
 function toggleTheme(){
   settings.theme=settings.theme==='light'?'dark':'light';
   applyTheme();
+  if(gBootDone)renderDashboard();
   saveSettings();
   scheduleAutoSync();
 }
@@ -784,8 +790,8 @@ function renderNotesHTML(text,imgMap){
   return out;
 }
 const DEFAULT_STRATEGIES=[
-  {name:"iFVG Model",description:"Stratégia iFVG (Inverse Fair Value Gap) stojí na jednej jednoduchej myšlienke: ak bola vyčistená likvidita a fair value gap je následne prerazený opačným smerom, cena bude pravdepodobne pokračovať v pohybe týmto smerom.",rules:["Potvrdený bias na vyššom timeframe (draw on liquidity)", "Nastal jasný liquidity sweep", "SMT divergencia ako dodatočné potvrdenie (voliteľné, ale výrazne zvyšuje confluenciu)", "Po sweepe sa vytvoril jeden čistý Fair Value Gap", "Cena sa uzavrela späť cez FVG (aktivácia inverzie)", "Vstup po iFVG so správnou štruktúrou", "Stop loss pod FVG alebo pod low daného pohybu.", "Čiastočné uzavretie pozície na internej likvidite", "Presun stopu na breakeven po dosiahnutí prvého cieľa"],notes:"VYTVORENÉ PRE\n\nNástroje: Futures\nŠtýl obchodovania: Day Trading\n\nPREHĽAD STRATÉGIE\n\nTáto stratégia stojí na myšlienke, že keď cena vyčistí likviditu a agresívne sa presunie cez Fair Value Gap (FVG) opačným smerom, často to signalizuje začiatok smerového pohybu. Model iFVG identifikuje tieto momenty zvratu kombináciou kľúčových ICT konceptov: SMT divergencie a iFVG po likviditnej udalosti. Je to vysoko pravdepodobnostná, na pravidlách založená intradenná stratégia, najlepšie použiteľná na korelované aktíva, najefektívnejšie na NQ a ES počas New York session.\n\nKĽÚČOVÉ KONCEPTY\n\nAby si model iFVG naplno pochopil, je dôležité najprv zvládnuť dva kľúčové koncepty, na ktorých stojí: Inverse Fair Value Gaps (iFVG) a SMT Divergenciu. Tieto nástroje pomáhajú identifikovať, kedy sa trh môže s vysokou pravdepodobnosťou otáčať.\n\nInverse Fair Value Gap (iFVG)\n\nFair Value Gap (FVG) vzniká, keď je medzera medzi knôtmi troch po sebe idúcich sviečok, zvyčajne v dôsledku agresívneho nákupu alebo predaja, ktorý za sebou zanechá nerovnováhu. V tradičnej ICT teórii sú FVG vnímané ako oblasti, kam sa cena môže vrátiť, aby sa \"vybalansovala\" predtým, než bude pokračovať v pôvodnom smere.\n\nInverse Fair Value Gap setup tento koncept obracia.\n\nV modeli iFVG hľadáš:\n\n- Liquidity sweep – cena vyčistí stopy nad high alebo pod low.\n- Následne sa cena silno presunie opačným smerom a prerazí existujúci FVG namiesto toho, aby ho rešpektovala.\n- Táto inverzia (čisté prerazenie FVG) naznačuje, že trh už nemá záujem o vybalansovanie – smer sa mení.\n\nTento zvrat je často skorým signálom väčšieho pohybu a iFVG sa stáva tvojím vstupným triggerom po potvrdení.\n\nSMT Divergencia\n\nSMT Divergencia nastáva, keď sa dva korelované nástroje rozídu – čo odhaľuje skrytú stopu o skutočnom smere alebo o riadenej likvidite.\n\nSMT Divergencia nastáva, keď:\n\n- Dve korelované aktíva (napr. ES & NQ, SPY & QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.\n- Jedno vytvorí vyšší high (alebo nižší low), zatiaľ čo druhé nie – čo signalizuje divergenciu.\n\nPovedzme, že obchoduješ NQ a sleduješ ES ako potvrdenie.\n\n- NQ vyčistí low a vytvorí nižší low.\n- ES to isté neurobí – drží svoj predchádzajúci low (vyšší low).\n\nToto ukazuje bullish SMT divergenciu – smart money pravdepodobne vyčistilo likviditu na NQ, zatiaľ čo ES držalo. Vďaka tomu má tvoj iFVG long oveľa vyššiu pravdepodobnosť úspechu.\n\nPREHĽAD SETUPU\n\nSymboly: NQ a ES. Tieto korelované futures nástroje sa používajú spolu na identifikáciu SMT divergencie a realizáciu vysoko pravdepodobnostných obchodov.\n\nTimeframy: Na presné vstupy použi 1-minútový, 2-minútový, 3-minútový alebo 5-minútový graf. Vyššie timeframy ako 1-hodinový a 4-hodinový slúžia len na určenie smerového biasu a liquidity cieľov.\n\nSession: Iba New York session. Model je navrhnutý na použitie počas NY open (od 9:30 EST), keď sú objem, volatilita a liquidity sweepy najaktívnejšie.\n\nPRAVIDLÁ STRATÉGIE\n\nKontext (nastavenie biasu)\n- Začni so 4H alebo 1H grafom, aby si určil, či cena pravdepodobne pôjde hore alebo dole.\n- Identifikuj draw on liquidity. Cielime na highs alebo lows?\n- Označ kľúčové swing highs/lows a otvorenia session.\n\nLiquidity Sweep\n- Cena musí vyčistiť zjavný interný high/low.\n- Malo by to byť jasné – čistá, zjavná, na trhovej štruktúre založená likvidita.\n- Ak po sweepe dostaneš SMT, výrazne to zvyšuje pravdepodobnosť fungovania inverzného setupu.\n\nFormácia FVG\n- Hľadaj čistý fair value gap po sweepe.\n- Ideálne jeden jediný FVG – viacero FVG v rámci pohybu znižuje presnosť.\n\nInverzia (potvrdenie)\n- Počkaj, kým sa cena uzavrie späť cez FVG z opačného smeru.\n- Tým sa FVG mení na inverse FVG.\n\nVstup\n- Vstup pri návrate k iFVG (limitný alebo market vstup).\n- Vstup pri uzavretí sviečky cez iFVG, ak je jasná displacement.\n- Na vstup použi rovnaký timeframe ako pri inverzii – napr. 3M iFVG potrebuje 3M close cez neho.\n\nTake Profit\n- Prvý cieľ = interná likvidita (nedávny high/low).\n- Finálny cieľ = hlavný swing high/low alebo draw on liquidity.\n\nPravidlo breakeven\n\nAk je zasiahnutá prvá interná likvidita a nedôjde k ďalšej displacement, predpokladaj, že sa trh len rotuje, a chráň kapitál.\n\nViac než jeden FVG v pohybe?\n\nSetup radšej vynechaj alebo sa pozri na vyšší timeframe – viacero FVG znamená neistotu.\n\nROZBOR OBCHODOV\n\nPríklad obchodu 1 (Short)\n\nLiquidity Sweep\nCena vyčistí predchádzajúci swing high, čím spustí buy-side liquidity grab. Ide o kľúčový stop-hunt nad známym highom.\n\nFormácia Fair Value Gap (FVG)\nPočas tohto agresívneho pohybu vzniká Fair Value Gap (FVG), keďže cena za sebou necháva nerovnováhu medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG so silnou medvedou displacement, čo naznačuje, že trh odmietol nerovnováhu a momentum je teraz smerom dole. Toto čisté prerazenie potvrdzuje iFVG setup.\n\nVstup\nVstup sa realizuje pri retest FVG zospodu, kde sa cena vráti do zóny iFVG pred ďalším pádom.\n\nStop Loss\nStop je umiestnený tesne nad iFVG alebo nad high sviečky, ktorá spôsobila sweep.\n\nCieľ\nPrvý cieľ je najbližšia oblasť sell-side likvidity, označená rovnakými lows nižšie. Rozšírený cieľ je demand zóna (sivý box), kde cena nakoniec zareaguje.\n\nPríklad obchodu 2 (Long)\n\nSMT Divergencia\nNa low pohybu je prítomná SMT divergencia – jedno korelované aktívum (napr. ES) vytvorí nižší low, zatiaľ čo druhé (napr. NQ) drží vyššie. Toto signalizuje narušenie korelácie a naznačuje možný zvrat.\n\nLiquidity Sweep\nCena vyčistí predchádzajúci low, čím spustí sell-side liquidity grab. Stopy sú vyčistené pod týmto low pred prudkým zvratom.\n\nFormácia Fair Value Gap (FVG)\nPočas agresívneho pohybu dole vzniká FVG. Táto medzera sa tvorí medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG smerom hore a odmietne nerovnováhu. Toto potvrdzuje, že cena sa už nevybalansováva – mení smer. Pohyb spĺňa podmienky iFVG setupu.\n\nVstup\nVstup sa realizuje pri retest iFVG, keď sa cena vráti do zóny a udrží sa.\n\nStop Loss\nStop je umiestnený tesne pod FVG alebo pod swing low vytvoreným sweepom.\n\nPrvý cieľ je interný high. Finálny cieľ je buy-side likvidita nad predchádzajúcim highom."},
-  {name:"Break & Retest",description:"Break & Retest je jedna z najzákladnejších a najspoľahlivejších technických stratégií. Stojí na jednoduchej myšlienke: keď cena presvedčivo prelomí kľúčovú úroveň, táto úroveň sa často zmení z odporu na podporu (alebo naopak) a cena sa k nej neskôr vráti, aby ju \"otestovala\", než bude pokračovať ďalej. Namiesto naháňania breakoutu čakáme na tento návrat a vstupujeme až po jeho potvrdení – čím eliminujeme väčšinu falošných signálov a naháňania ceny.",rules:["Označená jasná kľúčová úroveň (predchádzajúci deň high/low, výrazný swing high/low alebo iná zjavná zóna)", "Cena prelomí úroveň presvedčivo – silná sviečka so zatvorením zreteľne za úrovňou, nie len knôtom", "Cena sa vráti späť k prelomenej úrovni (retest) namiesto toho, aby okamžite pokračovala ďalej", "Úroveň sa pri retest drží ako nová podpora/odpor – žiadne spätné prerazenie na druhú stranu", "Prvý cieľ = najbližší swing high/low, časť pozície sa uzatvára (trim)", "Stop je umiestnený tesne za retest zónou, mimo bežného trhového šumu"],notes:"VYTVORENÉ PRE\n\nNástroje: Akcie, futures, forex\nŠtýl obchodovania: Intradenný aj swingový\n\nPREHĽAD STRATÉGIE\n\nBreak & Retest je jedna z najstarších a najspoľahlivejších technických stratégií, založená na čítaní price action a kľúčových úrovní. Namiesto naháňania ceny hneď po breakoute čakáme na jej návrat k prelomenej úrovni – tam, kde je pomer risk/reward najvýhodnejší a signál najčistejší.\n\nZÁKLADNÝ KONCEPT: Zlomenie štruktúry\n\nKaždá kľúčová úroveň (predchádzajúci high/low dňa, výrazný swing bod, alebo psychologická cena) funguje ako bariéra, kde sa história obchodovania hromadí – objednávky, stopy, limitné príkazy. Keď cena túto úroveň presvedčivo prelomí (silná sviečka, jasné zatvorenie za úrovňou, nie len tieň knôtu), znamená to posun v rovnováhe medzi kupujúcimi a predávajúcimi.\n\nDôležité je rozlíšiť skutočný breakout od falošného. Slabý breakout (dlhý knôt, uzavretie späť pod úrovňou) často signalizuje pascu na retailových obchodníkov – radšej počkaj na presvedčivé zatvorenie.\n\nZÁKLADNÝ KONCEPT: Retest a vstup\n\nPo breakoute sa cena veľmi často vráti späť k prelomenej úrovni – nie preto, že sa \"mýlila\", ale pretože táto úroveň sa teraz stáva novou podporou (pri breakoute nahor) alebo odporom (pri breakoute nadol). Toto je presne ten moment, na ktorý Break & Retest trader čaká.\n\nVstup nastáva až vtedy, keď cena úroveň pri retest zreteľne rešpektuje – napríklad malou sviečkou s dlhým knôtom smerom k úrovni a zatvorením naspäť v smere pôvodného breakoutu. Ak cena namiesto toho prerazí späť cez úroveň, setup je neplatný a treba ho vynechať.\n\nRIADENIE RIZIKA: Stop a ciele\n\nStop loss patrí tesne za retest zónu (za low retest sviečky pri long vstupe, za high pri short vstupe) – dostatočne blízko, aby bol pomer risk/reward priaznivý, ale dostatočne ďaleko, aby ho nevyradil bežný trhový šum.\n\nPrvý cieľ je najbližší výrazný swing high/low – tu je vhodné časť pozície uzavrieť (trim) a zvyšok nechať bežať s presunutým stopom na breakeven. Druhý, rozšírený cieľ sa hľadá pri ďalšej významnej štruktúrnej úrovni, ak trend pokračuje.\n\nKEDY SETUP VYNECHAŤ\n\n- Breakout bez objemu alebo s dlhými knôtmi namiesto pevného zatvorenia.\n- Retest, ktorý preráža späť cez úroveň namiesto toho, aby sa od nej odrazil.\n- Príliš veľa predchádzajúcich testov tej istej úrovne – čím viackrát je úroveň testovaná, tým je slabšia."},
+  {name:"iFVG Model",description:"Stratégia iFVG (Inverse Fair Value Gap) stojí na jednej jednoduchej myšlienke: ak bola vyčistená likvidita a fair value gap je následne prerazený opačným smerom, cena bude pravdepodobne pokračovať v pohybe týmto smerom.",rules:["Potvrdený bias na vyššom timeframe (draw on liquidity)", "Nastal jasný liquidity sweep", "SMT divergencia ako dodatočné potvrdenie (voliteľné, ale výrazne zvyšuje confluenciu)", "Po sweepe sa vytvoril jeden čistý Fair Value Gap", "Cena sa uzavrela späť cez FVG (aktivácia inverzie)", "Vstup po iFVG so správnou štruktúrou", "Stop loss pod FVG alebo pod low daného pohybu.", "Čiastočné uzavretie pozície na internej likvidite", "Presun stopu na breakeven po dosiahnutí prvého cieľa"],notes:"<h2>VYTVORENÉ PRE</h2><p>Nástroje: Futures<br>Štýl obchodovania: Day Trading</p><h2>PREHĽAD STRATÉGIE</h2><p>Táto stratégia stojí na myšlienke, že keď cena vyčistí likviditu a agresívne sa presunie cez Fair Value Gap (FVG) opačným smerom, často to signalizuje začiatok smerového pohybu. Model iFVG identifikuje tieto momenty zvratu kombináciou kľúčových ICT konceptov: SMT divergencie a iFVG po likviditnej udalosti. Je to vysoko pravdepodobnostná, na pravidlách založená intradenná stratégia, najlepšie použiteľná na korelované aktíva, najefektívnejšie na NQ a ES počas New York session.</p><h2>KĽÚČOVÉ KONCEPTY</h2><p>Aby si model iFVG naplno pochopil, je dôležité najprv zvládnuť dva kľúčové koncepty, na ktorých stojí: Inverse Fair Value Gaps (iFVG) a SMT Divergenciu. Tieto nástroje pomáhajú identifikovať, kedy sa trh môže s vysokou pravdepodobnosťou otáčať.</p><p>Inverse Fair Value Gap (iFVG)</p><p>Fair Value Gap (FVG) vzniká, keď je medzera medzi knôtmi troch po sebe idúcich sviečok, zvyčajne v dôsledku agresívneho nákupu alebo predaja, ktorý za sebou zanechá nerovnováhu. V tradičnej ICT teórii sú FVG vnímané ako oblasti, kam sa cena môže vrátiť, aby sa &quot;vybalansovala&quot; predtým, než bude pokračovať v pôvodnom smere.</p><p>Inverse Fair Value Gap setup tento koncept obracia.</p><p>V modeli iFVG hľadáš:</p><ul><li>Liquidity sweep – cena vyčistí stopy nad high alebo pod low.</li><li>Následne sa cena silno presunie opačným smerom a prerazí existujúci FVG namiesto toho, aby ho rešpektovala.</li><li>Táto inverzia (čisté prerazenie FVG) naznačuje, že trh už nemá záujem o vybalansovanie – smer sa mení.</li></ul><p>Tento zvrat je často skorým signálom väčšieho pohybu a iFVG sa stáva tvojím vstupným triggerom po potvrdení.</p><p>SMT Divergencia</p><p>SMT Divergencia nastáva, keď sa dva korelované nástroje rozídu – čo odhaľuje skrytú stopu o skutočnom smere alebo o riadenej likvidite.</p><p>SMT Divergencia nastáva, keď:</p><ul><li>Dve korelované aktíva (napr. ES &amp; NQ, SPY &amp; QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.</li><li>Jedno vytvorí vyšší high (alebo nižší low), zatiaľ čo druhé nie – čo signalizuje divergenciu.</li></ul><p>Povedzme, že obchoduješ NQ a sleduješ ES ako potvrdenie.</p><ul><li>NQ vyčistí low a vytvorí nižší low.</li><li>ES to isté neurobí – drží svoj predchádzajúci low (vyšší low).</li></ul><p>Toto ukazuje bullish SMT divergenciu – smart money pravdepodobne vyčistilo likviditu na NQ, zatiaľ čo ES držalo. Vďaka tomu má tvoj iFVG long oveľa vyššiu pravdepodobnosť úspechu.</p><h2>PREHĽAD SETUPU</h2><p>Symboly: NQ a ES. Tieto korelované futures nástroje sa používajú spolu na identifikáciu SMT divergencie a realizáciu vysoko pravdepodobnostných obchodov.</p><p>Timeframy: Na presné vstupy použi 1-minútový, 2-minútový, 3-minútový alebo 5-minútový graf. Vyššie timeframy ako 1-hodinový a 4-hodinový slúžia len na určenie smerového biasu a liquidity cieľov.</p><p>Session: Iba New York session. Model je navrhnutý na použitie počas NY open (od 9:30 EST), keď sú objem, volatilita a liquidity sweepy najaktívnejšie.</p><h2>PRAVIDLÁ STRATÉGIE</h2><p>Kontext (nastavenie biasu)<br>- Začni so 4H alebo 1H grafom, aby si určil, či cena pravdepodobne pôjde hore alebo dole.<br>- Identifikuj draw on liquidity. Cielime na highs alebo lows?<br>- Označ kľúčové swing highs/lows a otvorenia session.</p><p>Liquidity Sweep<br>- Cena musí vyčistiť zjavný interný high/low.<br>- Malo by to byť jasné – čistá, zjavná, na trhovej štruktúre založená likvidita.<br>- Ak po sweepe dostaneš SMT, výrazne to zvyšuje pravdepodobnosť fungovania inverzného setupu.</p><p>Formácia FVG<br>- Hľadaj čistý fair value gap po sweepe.<br>- Ideálne jeden jediný FVG – viacero FVG v rámci pohybu znižuje presnosť.</p><p>Inverzia (potvrdenie)<br>- Počkaj, kým sa cena uzavrie späť cez FVG z opačného smeru.<br>- Tým sa FVG mení na inverse FVG.</p><p>Vstup<br>- Vstup pri návrate k iFVG (limitný alebo market vstup).<br>- Vstup pri uzavretí sviečky cez iFVG, ak je jasná displacement.<br>- Na vstup použi rovnaký timeframe ako pri inverzii – napr. 3M iFVG potrebuje 3M close cez neho.</p><p>Take Profit<br>- Prvý cieľ = interná likvidita (nedávny high/low).<br>- Finálny cieľ = hlavný swing high/low alebo draw on liquidity.</p><p>Pravidlo breakeven</p><p>Ak je zasiahnutá prvá interná likvidita a nedôjde k ďalšej displacement, predpokladaj, že sa trh len rotuje, a chráň kapitál.</p><p>Viac než jeden FVG v pohybe?</p><p>Setup radšej vynechaj alebo sa pozri na vyšší timeframe – viacero FVG znamená neistotu.</p><h2>ROZBOR OBCHODOV</h2><p>Príklad obchodu 1 (Short)</p><p>Liquidity Sweep<br>Cena vyčistí predchádzajúci swing high, čím spustí buy-side liquidity grab. Ide o kľúčový stop-hunt nad známym highom.</p><p>Formácia Fair Value Gap (FVG)<br>Počas tohto agresívneho pohybu vzniká Fair Value Gap (FVG), keďže cena za sebou necháva nerovnováhu medzi knôtmi troch po sebe idúcich sviečok.</p><p>Potvrdenie iFVG<br>Cena prerazí FVG so silnou medvedou displacement, čo naznačuje, že trh odmietol nerovnováhu a momentum je teraz smerom dole. Toto čisté prerazenie potvrdzuje iFVG setup.</p><p>Vstup<br>Vstup sa realizuje pri retest FVG zospodu, kde sa cena vráti do zóny iFVG pred ďalším pádom.</p><p>Stop Loss<br>Stop je umiestnený tesne nad iFVG alebo nad high sviečky, ktorá spôsobila sweep.</p><p>Cieľ<br>Prvý cieľ je najbližšia oblasť sell-side likvidity, označená rovnakými lows nižšie. Rozšírený cieľ je demand zóna (sivý box), kde cena nakoniec zareaguje.</p><p>Príklad obchodu 2 (Long)</p><p>SMT Divergencia<br>Na low pohybu je prítomná SMT divergencia – jedno korelované aktívum (napr. ES) vytvorí nižší low, zatiaľ čo druhé (napr. NQ) drží vyššie. Toto signalizuje narušenie korelácie a naznačuje možný zvrat.</p><p>Liquidity Sweep<br>Cena vyčistí predchádzajúci low, čím spustí sell-side liquidity grab. Stopy sú vyčistené pod týmto low pred prudkým zvratom.</p><p>Formácia Fair Value Gap (FVG)<br>Počas agresívneho pohybu dole vzniká FVG. Táto medzera sa tvorí medzi knôtmi troch po sebe idúcich sviečok.</p><p>Potvrdenie iFVG<br>Cena prerazí FVG smerom hore a odmietne nerovnováhu. Toto potvrdzuje, že cena sa už nevybalansováva – mení smer. Pohyb spĺňa podmienky iFVG setupu.</p><p>Vstup<br>Vstup sa realizuje pri retest iFVG, keď sa cena vráti do zóny a udrží sa.</p><p>Stop Loss<br>Stop je umiestnený tesne pod FVG alebo pod swing low vytvoreným sweepom.</p><p>Prvý cieľ je interný high. Finálny cieľ je buy-side likvidita nad predchádzajúcim highom.</p>"},
+  {name:"Break & Retest",description:"Break & Retest je jedna z najzákladnejších a najspoľahlivejších technických stratégií. Stojí na jednoduchej myšlienke: keď cena presvedčivo prelomí kľúčovú úroveň, táto úroveň sa často zmení z odporu na podporu (alebo naopak) a cena sa k nej neskôr vráti, aby ju \"otestovala\", než bude pokračovať ďalej. Namiesto naháňania breakoutu čakáme na tento návrat a vstupujeme až po jeho potvrdení – čím eliminujeme väčšinu falošných signálov a naháňania ceny.",rules:["Označená jasná kľúčová úroveň (predchádzajúci deň high/low, výrazný swing high/low alebo iná zjavná zóna)", "Cena prelomí úroveň presvedčivo – silná sviečka so zatvorením zreteľne za úrovňou, nie len knôtom", "Cena sa vráti späť k prelomenej úrovni (retest) namiesto toho, aby okamžite pokračovala ďalej", "Úroveň sa pri retest drží ako nová podpora/odpor – žiadne spätné prerazenie na druhú stranu", "Prvý cieľ = najbližší swing high/low, časť pozície sa uzatvára (trim)", "Stop je umiestnený tesne za retest zónou, mimo bežného trhového šumu"],notes:"<h2>VYTVORENÉ PRE</h2><p>Nástroje: Akcie, futures, forex<br>Štýl obchodovania: Intradenný aj swingový</p><h2>PREHĽAD STRATÉGIE</h2><p>Break &amp; Retest je jedna z najstarších a najspoľahlivejších technických stratégií, založená na čítaní price action a kľúčových úrovní. Namiesto naháňania ceny hneď po breakoute čakáme na jej návrat k prelomenej úrovni – tam, kde je pomer risk/reward najvýhodnejší a signál najčistejší.</p><p>ZÁKLADNÝ KONCEPT: Zlomenie štruktúry</p><p>Každá kľúčová úroveň (predchádzajúci high/low dňa, výrazný swing bod, alebo psychologická cena) funguje ako bariéra, kde sa história obchodovania hromadí – objednávky, stopy, limitné príkazy. Keď cena túto úroveň presvedčivo prelomí (silná sviečka, jasné zatvorenie za úrovňou, nie len tieň knôtu), znamená to posun v rovnováhe medzi kupujúcimi a predávajúcimi.</p><p>Dôležité je rozlíšiť skutočný breakout od falošného. Slabý breakout (dlhý knôt, uzavretie späť pod úrovňou) často signalizuje pascu na retailových obchodníkov – radšej počkaj na presvedčivé zatvorenie.</p><p>ZÁKLADNÝ KONCEPT: Retest a vstup</p><p>Po breakoute sa cena veľmi často vráti späť k prelomenej úrovni – nie preto, že sa &quot;mýlila&quot;, ale pretože táto úroveň sa teraz stáva novou podporou (pri breakoute nahor) alebo odporom (pri breakoute nadol). Toto je presne ten moment, na ktorý Break &amp; Retest trader čaká.</p><p>Vstup nastáva až vtedy, keď cena úroveň pri retest zreteľne rešpektuje – napríklad malou sviečkou s dlhým knôtom smerom k úrovni a zatvorením naspäť v smere pôvodného breakoutu. Ak cena namiesto toho prerazí späť cez úroveň, setup je neplatný a treba ho vynechať.</p><p>RIADENIE RIZIKA: Stop a ciele</p><p>Stop loss patrí tesne za retest zónu (za low retest sviečky pri long vstupe, za high pri short vstupe) – dostatočne blízko, aby bol pomer risk/reward priaznivý, ale dostatočne ďaleko, aby ho nevyradil bežný trhový šum.</p><p>Prvý cieľ je najbližší výrazný swing high/low – tu je vhodné časť pozície uzavrieť (trim) a zvyšok nechať bežať s presunutým stopom na breakeven. Druhý, rozšírený cieľ sa hľadá pri ďalšej významnej štruktúrnej úrovni, ak trend pokračuje.</p><h2>KEDY SETUP VYNECHAŤ</h2><ul><li>Breakout bez objemu alebo s dlhými knôtmi namiesto pevného zatvorenia.</li><li>Retest, ktorý preráža späť cez úroveň namiesto toho, aby sa od nej odrazil.</li><li>Príliš veľa predchádzajúcich testov tej istej úrovne – čím viackrát je úroveň testovaná, tým je slabšia.</li></ul>"},
 ];
 async function seedDefaultStrategies(){
   const flag=await idbGet('kv','defaultStrategiesSeeded');
@@ -1045,9 +1051,8 @@ document.addEventListener('click',e=>{
 });
 function toggleStrategyRulesEdit(){strategyRulesEdit=!strategyRulesEdit;renderStrategies();}
 function ruleEditRowHTML(text){
-  return `<div class="ruleRow">
-    <button type="button" class="btn secondary small" onclick="moveDetailRule(this,-1)" title="${esc(tr('Posunúť hore'))}">↑</button>
-    <button type="button" class="btn secondary small" onclick="moveDetailRule(this,1)" title="${esc(tr('Posunúť dole'))}">↓</button>
+  return `<div class="ruleRow" ondragover="ruleDragOver(event)" ondrop="event.preventDefault()">
+    <span class="ruleHandle" draggable="true" ondragstart="ruleDragStart(event)" ondragend="ruleDragEnd(event)" ontouchstart="ruleTouchStart(event)" ontouchmove="ruleTouchMove(event)" ontouchend="ruleTouchEnd(event)" ontouchcancel="ruleTouchEnd(event)" title="${esc(tr('Presunúť ťahaním'))}">⠿</span>
     <input type="text" class="stRuleTextD" value="${esc(text||'')}" placeholder="napr. Cena nad VWAP, potvrdenie objemom...">
     <button type="button" class="btn secondary small" onclick="this.parentElement.remove()">✕</button>
   </div>`;
@@ -1056,11 +1061,52 @@ function addDetailRuleRow(text){
   const box=$('stRulesEditList');
   if(box)box.insertAdjacentHTML('beforeend',ruleEditRowHTML(text));
 }
-function moveDetailRule(btn,dir){
-  const row=btn.closest('.ruleRow');
+let draggedRuleRow=null;
+function ruleDragStart(e){
+  draggedRuleRow=e.target.closest('.ruleRow');
+  if(!draggedRuleRow)return;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('text/plain','');
+  try{e.dataTransfer.setDragImage(draggedRuleRow,20,20);}catch(err){}
+  setTimeout(()=>draggedRuleRow&&draggedRuleRow.classList.add('dragging'),0);
+}
+function ruleDragOver(e){
+  if(!draggedRuleRow)return;
+  e.preventDefault();
+  const row=e.currentTarget;
+  if(row===draggedRuleRow)return;
+  const rect=row.getBoundingClientRect();
+  const before=(e.clientY-rect.top)<rect.height/2;
+  row.parentElement.insertBefore(draggedRuleRow,before?row:row.nextSibling);
+}
+function ruleDragEnd(){
+  if(draggedRuleRow)draggedRuleRow.classList.remove('dragging');
+  draggedRuleRow=null;
+}
+let touchDragRow=null;
+function ruleTouchStart(e){
+  const handle=e.target.closest('.ruleHandle');
+  const row=handle&&handle.closest('.ruleRow');
   if(!row)return;
-  if(dir<0&&row.previousElementSibling)row.parentElement.insertBefore(row,row.previousElementSibling);
-  else if(dir>0&&row.nextElementSibling)row.parentElement.insertBefore(row.nextElementSibling,row);
+  e.preventDefault();
+  touchDragRow=row;
+  row.classList.add('dragging');
+}
+function ruleTouchMove(e){
+  if(!touchDragRow)return;
+  e.preventDefault();
+  const touch=e.touches[0];
+  if(!touch)return;
+  const el=document.elementFromPoint(touch.clientX,touch.clientY);
+  const row=el&&el.closest('.ruleRow');
+  if(!row||row===touchDragRow||row.parentElement!==touchDragRow.parentElement)return;
+  const rect=row.getBoundingClientRect();
+  const before=(touch.clientY-rect.top)<rect.height/2;
+  row.parentElement.insertBefore(touchDragRow,before?row:row.nextSibling);
+}
+function ruleTouchEnd(){
+  if(touchDragRow)touchDragRow.classList.remove('dragging');
+  touchDragRow=null;
 }
 async function saveStrategyRules(id){
   const s=strategyById(id);
@@ -1337,7 +1383,7 @@ const I18N_EN={
 'Predvolená':'Default','Sivá':'Gray','Hnedá':'Brown','Oranžová':'Orange','Žltá':'Yellow','Zelená':'Green','Modrá':'Blue','Fialová':'Purple','Ružová':'Pink','Červená':'Red','Čierna':'Black',
 'Vlastná farba...':'Custom color...','Do bloku':'Justify','Vľavo':'Left','Na stred':'Center','Vpravo':'Right',
 'Prepnúť tému':'Toggle theme',
-'Posunúť hore':'Move up','Posunúť dole':'Move down','Upraviť pravidlá':'Edit rules','+ Pridať pravidlá':'+ Add rules',
+'Upraviť pravidlá':'Edit rules','+ Pridať pravidlá':'+ Add rules','Presunúť ťahaním':'Drag to reorder',
 'Uprav text, zoraď šípkami, pridaj alebo odober pravidlá. Premenovanie pravidla nezmení históriu už zaznamenaných obchodov – tie zostanú priradené k pôvodnému zneniu.':'Edit the text, reorder with the arrows, add or remove rules. Renaming a rule will not change the history of already-logged trades – they stay linked to the original wording.',
 '😌 Pokoj / disciplína':'😌 Calm / disciplined','💪 Sebadôvera':'💪 Confidence','😰 FOMO':'😰 FOMO','😨 Strach':'😨 Fear','🤑 Chamtivosť':'🤑 Greed','😤 Netrpezlivosť':'😤 Impatience','😡 Frustrácia / revenge':'😡 Frustration / revenge','🥱 Nuda':'🥱 Boredom','– (nezadané)':'– (not set)',
 'Počet obchodov':'Number of trades','Očak. hodnota / trade':'Expected value / trade','Najlepší deň':'Best day','Najhorší deň':'Worst day','Žiadne dáta':'No data',
@@ -1674,11 +1720,11 @@ function gaugeSVG(wN,bN,lN){
     segs=seg(fw,0,'#26a69a')+seg(fb,fw,'#5b8def')+seg(fl,fw+fb,'#ef5350');
   }
   return `<svg viewBox="0 0 100 55" width="88" height="49">
-    <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="#2a3441" stroke-width="9"/>${segs}</svg>`;
+    <path d="M10 50 A40 40 0 0 1 90 50" fill="none" stroke="${cssVar('--border')}" stroke-width="9"/>${segs}</svg>`;
 }
 function donutSVG(frac,hasData){
   const C=(2*Math.PI*16).toFixed(2);
-  if(!hasData)return `<svg viewBox="0 0 44 44" width="54" height="54"><circle cx="22" cy="22" r="16" fill="none" stroke="#2a3441" stroke-width="7"/></svg>`;
+  if(!hasData)return `<svg viewBox="0 0 44 44" width="54" height="54"><circle cx="22" cy="22" r="16" fill="none" stroke="${cssVar('--border')}" stroke-width="7"/></svg>`;
   return `<svg viewBox="0 0 44 44" width="54" height="54" style="transform:rotate(-90deg)">
     <circle cx="22" cy="22" r="16" fill="none" stroke="#ef5350" stroke-width="7"/>
     <circle cx="22" cy="22" r="16" fill="none" stroke="#26a69a" stroke-width="7" stroke-dasharray="${(frac*C).toFixed(2)} 999" stroke-linecap="round"/>
@@ -1771,13 +1817,14 @@ function renderDashboard(){
     const labels=ts.map((t,i)=>i+1);
     let c=activeStartBalance(),eq=ts.map((t,i)=>{c+=pnls[i];return c;});
     if(eqChartObj)eqChartObj.destroy();
-    eqChartObj=new Chart($('eqChart'),{type:'line',data:{labels,datasets:[{data:eq,borderColor:'#5b8def',backgroundColor:'rgba(91,141,239,.12)',fill:true,pointRadius:0,tension:.2,borderWidth:2}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:'#2a3441'},ticks:{color:'#8b98a9'}}}}});
+    const gridColor=cssVar('--border'),tickColor=cssVar('--muted'),accentColor=cssVar('--accent'),greenColor=cssVar('--green'),redColor=cssVar('--red');
+    eqChartObj=new Chart($('eqChart'),{type:'line',data:{labels,datasets:[{data:eq,borderColor:accentColor,backgroundColor:accentColor+'1f',fill:true,pointRadius:0,tension:.2,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:gridColor},ticks:{color:tickColor}}}}});
     // daily
     const dkeys=Object.keys(daily).sort();
     if(dailyChartObj)dailyChartObj.destroy();
-    dailyChartObj=new Chart($('dailyChart'),{type:'bar',data:{labels:dkeys.map(k=>k.slice(5)),datasets:[{data:dkeys.map(k=>daily[k]),backgroundColor:dkeys.map(k=>daily[k]>=0?'#26a69a':'#ef5350')}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#8b98a9',maxTicksLimit:12}},y:{grid:{color:'#2a3441'},ticks:{color:'#8b98a9'}}}}});
+    dailyChartObj=new Chart($('dailyChart'),{type:'bar',data:{labels:dkeys.map(k=>k.slice(5)),datasets:[{data:dkeys.map(k=>daily[k]),backgroundColor:dkeys.map(k=>daily[k]>=0?greenColor:redColor)}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickColor,maxTicksLimit:12}},y:{grid:{color:gridColor},ticks:{color:tickColor}}}}});
   }
   // breakdowns
   renderBreakdown('bySymbol',ts,t=>String(t.symbol).toUpperCase());
@@ -2718,10 +2765,10 @@ function renderModalChart(){
   if(!hasVolume)modalIndicators.vwap=false;
   renderIndBar(hasVolume);
   modalChart=LightweightCharts.createChart($('tChart'),{
-    layout:{background:{color:'#0d1117'},textColor:'#8b98a9'},
-    grid:{vertLines:{color:'#1c2430'},horzLines:{color:'#1c2430'}},
-    timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#2a3441'},
-    rightPriceScale:{borderColor:'#2a3441',scaleMargins:{top:0.1,bottom:0.08}},
+    layout:{background:{color:cssVar('--bg')},textColor:cssVar('--muted')},
+    grid:{vertLines:{color:cssVar('--bg3')},horzLines:{color:cssVar('--bg3')}},
+    timeScale:{timeVisible:true,secondsVisible:false,borderColor:cssVar('--border')},
+    rightPriceScale:{borderColor:cssVar('--border'),scaleMargins:{top:0.1,bottom:0.08}},
     autoSize:true,
   });
   const series=modalChart.addCandlestickSeries({
@@ -2760,16 +2807,16 @@ function renderModalChart(){
   if(modalIndicators.rsi){
     $('tChartRsi').style.display='block';
     modalChartRsi=LightweightCharts.createChart($('tChartRsi'),{
-      layout:{background:{color:'#0d1117'},textColor:'#8b98a9'},
-      grid:{vertLines:{color:'#1c2430'},horzLines:{color:'#1c2430'}},
-      timeScale:{timeVisible:true,secondsVisible:false,borderColor:'#2a3441'},
-      rightPriceScale:{borderColor:'#2a3441',scaleMargins:{top:0.15,bottom:0.15}},
+      layout:{background:{color:cssVar('--bg')},textColor:cssVar('--muted')},
+      grid:{vertLines:{color:cssVar('--bg3')},horzLines:{color:cssVar('--bg3')}},
+      timeScale:{timeVisible:true,secondsVisible:false,borderColor:cssVar('--border')},
+      rightPriceScale:{borderColor:cssVar('--border'),scaleMargins:{top:0.15,bottom:0.15}},
       autoSize:true,
     });
     const rsiSeries=modalChartRsi.addLineSeries({color:'#e91e63',lineWidth:1.5,priceLineVisible:false,lastValueVisible:false});
     rsiSeries.setData(calcRSI(barsAll,modalIndicators.rsiPeriod));
-    rsiSeries.createPriceLine({price:70,color:'#8b98a9',lineWidth:1,lineStyle:3,title:'70'});
-    rsiSeries.createPriceLine({price:30,color:'#8b98a9',lineWidth:1,lineStyle:3,title:'30'});
+    rsiSeries.createPriceLine({price:70,color:cssVar('--muted'),lineWidth:1,lineStyle:3,title:'70'});
+    rsiSeries.createPriceLine({price:30,color:cssVar('--muted'),lineWidth:1,lineStyle:3,title:'30'});
     modalChartRsi.timeScale().setVisibleRange({from:tzOff(t1-pad),to:tzOff(t2+pad)});
     modalChart.timeScale().subscribeVisibleLogicalRangeChange(r=>{
       if(modalSyncing||!r||!modalChartRsi)return;modalSyncing=true;
