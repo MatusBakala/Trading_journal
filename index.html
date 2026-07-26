@@ -13,6 +13,10 @@
   --text:#e6edf3; --muted:#8b98a9; --green:#26a69a; --red:#ef5350;
   --accent:#5b8def; --accent2:#7c5bef;
 }
+:root[data-theme="light"]{
+  --bg:#f4f5f7; --bg2:#ffffff; --bg3:#eef0f3; --border:#dde1e7;
+  --text:#161b22; --muted:#5b6472;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
 header{display:flex;align-items:center;gap:16px;padding:0 24px;height:58px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
@@ -66,6 +70,49 @@ main{max-width:1280px;margin:0 auto;padding:24px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
 @media(max-width:900px){.grid2,.grid3{grid-template-columns:1fr}}
+.stratGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.stratCard{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px}
+.stratCard h3{font-size:15px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.stratDesc{color:var(--muted);font-size:12.5px;line-height:1.5;margin-bottom:12px;white-space:pre-wrap}
+.stratStats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.stratStats div{background:var(--bg3);border-radius:8px;padding:8px 10px}
+.stratStats .lbl{color:var(--muted);font-size:11px;margin-bottom:3px}
+.stratStats .val{font-size:15px;font-weight:700}
+.ruleAdh{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-top:1px solid var(--border)}
+.ruleAdh .bar{flex:1;height:6px;background:var(--bg3);border-radius:3px;margin:0 8px;align-self:center;overflow:hidden}
+.ruleAdh .bar i{display:block;height:100%;background:var(--accent)}
+.ruleRow{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.ruleRow input[type=text]{flex:1}
+.checkRow{display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;font-size:13px;line-height:1.4}
+.checkRow input{margin-top:3px}
+.stratDiagram{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin:12px 0}
+.notesView{line-height:1.6}
+.notesView img{max-width:100%;border-radius:6px}
+.notesView h1{font-size:22px;margin:16px 0 8px}
+.notesView h2{font-size:19px;margin:14px 0 8px}
+.notesView h3{font-size:16px;margin:12px 0 6px}
+.notesView p{margin:6px 0}
+.notesView a{color:var(--accent)}
+.rtToolbar{display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px 8px 0 0;padding:6px 8px}
+.rtToolbar button{background:none;border:none;color:var(--text);min-width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:13px;padding:0 4px}
+.rtToolbar button:hover{background:var(--bg2)}
+.rtToolbar select{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 4px;font-size:12.5px;max-width:110px}
+.rtToolbar input[type=color]{width:24px;height:24px;border:none;background:none;padding:0;cursor:pointer}
+.rtToolbar input[type=number]{width:44px;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 4px;font-size:12.5px;text-align:center}
+.rtSep{width:1px;height:20px;background:var(--border);margin:0 2px}
+.rtDropWrap{position:relative;display:inline-block}
+.rtDropdown{display:none;position:absolute;top:32px;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:60}
+.rtColorRow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:6px;cursor:pointer;font-size:13px;color:var(--text);white-space:nowrap}
+.rtColorRow:hover{background:var(--bg3)}
+.rtColorRow.on{background:var(--bg3)}
+.rtSwatch{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;font-weight:700;font-size:12px;flex-shrink:0}
+.rtDropSep{height:1px;background:var(--border);margin:5px 2px}
+#stNotesEditor{border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:14px;min-height:320px;background:var(--bg3);line-height:1.6;outline:none}
+#stNotesEditor img{max-width:100%;border-radius:6px}
+#stNotesEditor h1{font-size:22px;margin:14px 0 8px}
+#stNotesEditor h2{font-size:19px;margin:12px 0 8px}
+#stNotesEditor h3{font-size:16px;margin:10px 0 6px}
+#stNotesEditor a{color:var(--accent)}
 .pos{color:var(--green)}
 .neg{color:var(--red)}
 table{width:100%;border-collapse:collapse}
@@ -179,6 +226,7 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
       <button data-tab="calendar">Kalendár</button>
       <button data-tab="stats">Štatistiky</button>
       <button data-tab="trades">Obchody</button>
+      <button data-tab="strategies">Stratégie</button>
       <button data-tab="reports">Reporty</button>
       <button data-tab="import">Import CSV</button>
       <button data-tab="data">Dáta grafu</button>
@@ -187,6 +235,7 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <div class="headerSide">
       <select id="accSelect" onchange="switchAccount(this.value)" style="max-width:170px;font-weight:600"></select>
       <button class="btn" onclick="openTrade(null)">+ Pridať obchod</button>
+      <button class="btn secondary" id="themeToggle" onclick="toggleTheme()" title="Prepnúť tému" style="width:40px;flex-shrink:0">🌙</button>
       <select id="langSelect" onchange="switchLang(this.value)" title="Jazyk / Language" style="width:70px;font-weight:600">
         <option value="sk">🌐 SK</option><option value="en">🌐 EN</option>
       </select>
@@ -213,9 +262,16 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <div class="panel"><h3>Denný P&L</h3><div class="chartbox"><canvas id="dailyChart"></canvas></div></div>
   </div>
   <div class="grid3">
-    <div class="panel"><h3>Podľa symbolu</h3><div id="bySymbol"></div></div>
+    <div class="panel">
+      <h3>Podľa symbolu</h3><div id="bySymbol"></div>
+      <h3 style="margin-top:16px">Podľa session</h3><div id="bySession"></div>
+    </div>
     <div class="panel"><h3>Podľa dňa v týždni</h3><div id="byDow"></div></div>
     <div class="panel"><h3>Podľa hodiny vstupu</h3><div id="byHour"></div></div>
+  </div>
+  <div class="grid3">
+    <div class="panel"><h3>Podľa emócie pri vstupe</h3><div id="byEmotionIn"></div></div>
+    <div class="panel"><h3>Podľa emócie pri výstupe</h3><div id="byEmotionOut"></div></div>
   </div>
   <div class="panel">
     <div class="patHead">
@@ -289,6 +345,16 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
     <select id="fDir" onchange="renderTrades()">
       <option value="">Long + Short</option><option value="1">Long</option><option value="-1">Short</option>
     </select>
+    <select id="fSession" onchange="renderTrades()">
+      <option value="">Všetky session</option>
+      <option value="Ázia">Ázia</option>
+      <option value="Londýn">Londýn</option>
+      <option value="New York">New York</option>
+      <option value="Mimo session">Mimo session</option>
+    </select>
+    <select id="fStrategy" onchange="renderTrades()">
+      <option value="">Všetky stratégie</option>
+    </select>
     <input type="date" id="fFrom" onchange="renderTrades()">
     <input type="date" id="fTo" onchange="renderTrades()">
     <input type="text" id="fSearch" placeholder="Hľadať v poznámkach/tagoch..." oninput="renderTrades()" style="flex:1;min-width:160px">
@@ -297,10 +363,19 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
   <div class="filters" id="tagBar" style="display:none"></div>
   <div class="panel" style="overflow-x:auto">
     <table>
-      <thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Tagy</th><th></th></tr></thead>
+      <thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Session</th><th>Stratégia</th><th>Tagy</th><th></th></tr></thead>
       <tbody id="tradesBody"></tbody>
     </table>
   </div>
+</section>
+
+<!-- STRATEGIES -->
+<section id="tab-strategies" class="tab">
+  <div class="filters">
+    <button class="btn small" onclick="openStrategy(null)">+ Pridať stratégiu</button>
+    <span class="hint">Definuj si obchodné stratégie s pravidlami vstupu a sleduj, ako ich dodržiavaš a ako sa im darí.</span>
+  </div>
+  <div class="stratGrid" id="strategyCards"></div>
 </section>
 
 <!-- REPORTS -->
@@ -473,6 +548,33 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
       <label class="f">Čas vstupu *<input id="tTimeIn" type="datetime-local" step="60"></label>
       <label class="f">Čas výstupu<input id="tTimeOut" type="datetime-local" step="60"></label>
       <label class="f">P&L manuálne (prepíše výpočet)<input id="tPnl" type="number" step="any" placeholder="auto"></label>
+      <label class="f">Emócia pri vstupe<select id="tEmotionIn">
+        <option value="">–</option>
+        <option value="pokoj">😌 Pokoj / disciplína</option>
+        <option value="sebadovera">💪 Sebadôvera</option>
+        <option value="fomo">😰 FOMO</option>
+        <option value="strach">😨 Strach</option>
+        <option value="chamtivost">🤑 Chamtivosť</option>
+        <option value="netrpezlivost">😤 Netrpezlivosť</option>
+        <option value="frustracia">😡 Frustrácia / revenge</option>
+        <option value="nuda">🥱 Nuda</option>
+      </select></label>
+      <label class="f">Emócia pri výstupe<select id="tEmotionOut">
+        <option value="">–</option>
+        <option value="pokoj">😌 Pokoj / disciplína</option>
+        <option value="sebadovera">💪 Sebadôvera</option>
+        <option value="fomo">😰 FOMO</option>
+        <option value="strach">😨 Strach</option>
+        <option value="chamtivost">🤑 Chamtivosť</option>
+        <option value="netrpezlivost">😤 Netrpezlivosť</option>
+        <option value="frustracia">😡 Frustrácia / revenge</option>
+        <option value="nuda">🥱 Nuda</option>
+      </select></label>
+      <label class="f">Stratégia<select id="tStrategy" onchange="renderTradeRuleChecklist()"><option value="">– žiadna –</option></select></label>
+    </div>
+    <div id="tRuleChecklistWrap" style="display:none;margin:2px 0 14px">
+      <label class="f" style="margin-bottom:8px">Dodržal(a) si pravidlá tejto stratégie?</label>
+      <div id="tRuleChecklist"></div>
     </div>
     <div style="margin:2px 0 12px">
       <label class="f" style="color:var(--green)">🟢 Pozitívne tagy – čo bolo dobré (odd. čiarkou)<input id="tTags" placeholder="A+ setup, dodržaný plán, trpezlivosť..."></label>
@@ -501,6 +603,23 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
       <button class="btn danger" id="tDelete" onclick="deleteCurrentTrade()">Vymazať</button>
       <button class="btn secondary" onclick="closeTrade()">Zavrieť</button>
       <button class="btn" onclick="saveTrade()">Uložiť obchod</button>
+    </div>
+  </div>
+</div>
+
+<!-- STRATEGY MODAL -->
+<div class="overlay" id="strategyOverlay">
+  <div class="modal" style="max-width:640px">
+    <h2 id="stmTitle">Stratégia</h2>
+    <label class="f" style="margin-bottom:12px">Názov *<input id="stName" placeholder="napr. VWAP Reversal, ORB Breakout..."></label>
+    <label class="f" style="margin-bottom:14px">Popis / kontext<textarea id="stDesc" rows="3" placeholder="Kedy a prečo túto stratégiu používaš, na akých symboloch/timeframe..."></textarea></label>
+    <label class="f" style="margin-bottom:8px">Pravidlá vstupu (checklist)</label>
+    <div id="stRules"></div>
+    <button class="btn secondary small" onclick="addStrategyRuleRow('')">+ Pridať pravidlo</button>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+      <button class="btn danger" id="stDelete" onclick="deleteCurrentStrategy()">Vymazať</button>
+      <button class="btn secondary" onclick="closeStrategy()">Zavrieť</button>
+      <button class="btn" onclick="saveStrategy()">Uložiť stratégiu</button>
     </div>
   </div>
 </div>
@@ -535,12 +654,14 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 /* ================= IndexedDB ================= */
 const DB={db:null};
 function idbOpen(){return new Promise((res,rej)=>{
-  const r=indexedDB.open('tjournal',1);
+  const r=indexedDB.open('tjournal',3);
   r.onupgradeneeded=e=>{const d=e.target.result;
     if(!d.objectStoreNames.contains('trades'))d.createObjectStore('trades',{keyPath:'id',autoIncrement:true});
     if(!d.objectStoreNames.contains('shots')){const s=d.createObjectStore('shots',{keyPath:'id',autoIncrement:true});s.createIndex('tradeId','tradeId');}
     if(!d.objectStoreNames.contains('ohlc'))d.createObjectStore('ohlc',{keyPath:'key'});
     if(!d.objectStoreNames.contains('kv'))d.createObjectStore('kv',{keyPath:'k'});
+    if(!d.objectStoreNames.contains('strategies'))d.createObjectStore('strategies',{keyPath:'id',autoIncrement:true});
+    if(!d.objectStoreNames.contains('stratShots')){const s=d.createObjectStore('stratShots',{keyPath:'id',autoIncrement:true});s.createIndex('strategyId','strategyId');}
   };
   r.onsuccess=()=>{DB.db=r.result;res();};
   r.onerror=()=>rej(r.error);
@@ -553,11 +674,27 @@ const idbAdd=(n,v)=>pReq(store(n,'readwrite').add(v));
 const idbDel=(n,k)=>pReq(store(n,'readwrite').delete(k));
 const idbGet=(n,k)=>pReq(store(n).get(k));
 const shotsByTrade=id=>pReq(store('shots').index('tradeId').getAll(id));
+const stratShotsByStrategy=id=>pReq(store('stratShots').index('strategyId').getAll(id));
 function idbClear(n){return pReq(store(n,'readwrite').clear());}
 
 /* ================= State ================= */
 let trades=[];
-let settings={lang:'sk',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:'',aiChatModel:'claude-sonnet-5',aiInsightModel:'claude-haiku-4-5-20251001'};
+let strategies=[];
+let currentStrategyId=null;
+let strategyDetailId=null;
+let strategyDetailTab='rules';
+let settings={lang:'sk',theme:'dark',balance:0,accounts:[{id:1,name:'Účet 1',balance:0}],activeAccount:1,mults:{NQ:20,MNQ:2,ES:50,MES:5,YM:5,MYM:0.5,RTY:50,M2K:5,GC:100,MGC:10,SI:5000,SIL:1000,CL:1000,MCL:100,NG:10000,XAUUSD:100,XAGUSD:5000},gClientId:'',gConnected:false,gLastSync:null,anthropicKey:'',aiChatModel:'claude-sonnet-5',aiInsightModel:'claude-haiku-4-5-20251001'};
+function applyTheme(){
+  document.documentElement.dataset.theme=settings.theme==='light'?'light':'dark';
+  const btn=$('themeToggle');
+  if(btn)btn.textContent=settings.theme==='light'?'☀️':'🌙';
+}
+function toggleTheme(){
+  settings.theme=settings.theme==='light'?'dark':'light';
+  applyTheme();
+  saveSettings();
+  scheduleAutoSync();
+}
 let ohlcSets=[];
 let calDate=new Date();
 let eqChartObj=null,dailyChartObj=null;
@@ -608,6 +745,522 @@ function computePnl(t){
   if(!isFinite(t.entry)||!isFinite(t.exit))return 0;
   return (t.exit-t.entry)*t.dir*(t.qty||1)*multFor(t.symbol)-(t.fees||0);
 }
+const EMOTIONS={pokoj:'😌 Pokoj / disciplína',sebadovera:'💪 Sebadôvera',fomo:'😰 FOMO',strach:'😨 Strach',chamtivost:'🤑 Chamtivosť',netrpezlivost:'😤 Netrpezlivosť',frustracia:'😡 Frustrácia / revenge',nuda:'🥱 Nuda'};
+function emotionLabel(k){return k?(EMOTIONS[k]||k):'– (nezadané)';}
+function sessionOf(t){
+  const d=new Date((t.tEntry||tTime(t))*1000);
+  const h=d.getHours()+d.getMinutes()/60;
+  if(h>=2&&h<9)return 'Ázia';
+  if(h>=9&&h<14)return 'Londýn';
+  if(h>=14&&h<22)return 'New York';
+  return 'Mimo session';
+}
+/* ================= Strategy notes: formatting + inline images ================= */
+function renderNotesHTML(text,imgMap){
+  imgMap=imgMap||{};
+  const blocks=String(text||'').split(/\n\s*\n/);
+  let out='';
+  for(const block of blocks){
+    const t=block.trim();
+    if(!t)continue;
+    const imgMatch=t.match(/^\[IMG:(\d+)\]$/);
+    if(imgMatch){
+      const url=imgMap[imgMatch[1]];
+      out+=url?`<div class="stratDiagram"><img src="${url}" style="max-width:100%;display:block;border-radius:6px"></div>`
+        :`<div class="hint">${esc(tr('(obrázok bol odstránený)'))}</div>`;
+      continue;
+    }
+    const lines=t.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length===1&&lines[0]===lines[0].toUpperCase()&&/[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/.test(lines[0])&&lines[0].length<60){
+      out+=`<h3 style="margin-top:18px;margin-bottom:8px;color:var(--text);font-size:15px">${esc(lines[0])}</h3>`;
+      continue;
+    }
+    if(lines.every(l=>l.startsWith('- '))){
+      out+=`<ul style="margin:6px 0 6px 20px;line-height:1.6">${lines.map(l=>`<li>${esc(l.slice(2))}</li>`).join('')}</ul>`;
+      continue;
+    }
+    out+=`<p style="margin:6px 0;line-height:1.6">${esc(t).replace(/\n/g,'<br>')}</p>`;
+  }
+  return out;
+}
+const DEFAULT_STRATEGIES=[
+  {name:"iFVG Model",description:"Stratégia iFVG (Inverse Fair Value Gap) stojí na jednej jednoduchej myšlienke: ak bola vyčistená likvidita a fair value gap je následne prerazený opačným smerom, cena bude pravdepodobne pokračovať v pohybe týmto smerom.",rules:["Potvrdený bias na vyššom timeframe (draw on liquidity)", "Nastal jasný liquidity sweep", "SMT divergencia ako dodatočné potvrdenie (voliteľné, ale výrazne zvyšuje confluenciu)", "Po sweepe sa vytvoril jeden čistý Fair Value Gap", "Cena sa uzavrela späť cez FVG (aktivácia inverzie)", "Vstup po iFVG so správnou štruktúrou", "Stop loss pod FVG alebo pod low daného pohybu.", "Čiastočné uzavretie pozície na internej likvidite", "Presun stopu na breakeven po dosiahnutí prvého cieľa"],notes:"VYTVORENÉ PRE\n\nNástroje: Futures\nŠtýl obchodovania: Day Trading\n\nPREHĽAD STRATÉGIE\n\nTáto stratégia stojí na myšlienke, že keď cena vyčistí likviditu a agresívne sa presunie cez Fair Value Gap (FVG) opačným smerom, často to signalizuje začiatok smerového pohybu. Model iFVG identifikuje tieto momenty zvratu kombináciou kľúčových ICT konceptov: SMT divergencie a iFVG po likviditnej udalosti. Je to vysoko pravdepodobnostná, na pravidlách založená intradenná stratégia, najlepšie použiteľná na korelované aktíva, najefektívnejšie na NQ a ES počas New York session.\n\nKĽÚČOVÉ KONCEPTY\n\nAby si model iFVG naplno pochopil, je dôležité najprv zvládnuť dva kľúčové koncepty, na ktorých stojí: Inverse Fair Value Gaps (iFVG) a SMT Divergenciu. Tieto nástroje pomáhajú identifikovať, kedy sa trh môže s vysokou pravdepodobnosťou otáčať.\n\nInverse Fair Value Gap (iFVG)\n\nFair Value Gap (FVG) vzniká, keď je medzera medzi knôtmi troch po sebe idúcich sviečok, zvyčajne v dôsledku agresívneho nákupu alebo predaja, ktorý za sebou zanechá nerovnováhu. V tradičnej ICT teórii sú FVG vnímané ako oblasti, kam sa cena môže vrátiť, aby sa \"vybalansovala\" predtým, než bude pokračovať v pôvodnom smere.\n\nInverse Fair Value Gap setup tento koncept obracia.\n\nV modeli iFVG hľadáš:\n\n- Liquidity sweep – cena vyčistí stopy nad high alebo pod low.\n- Následne sa cena silno presunie opačným smerom a prerazí existujúci FVG namiesto toho, aby ho rešpektovala.\n- Táto inverzia (čisté prerazenie FVG) naznačuje, že trh už nemá záujem o vybalansovanie – smer sa mení.\n\nTento zvrat je často skorým signálom väčšieho pohybu a iFVG sa stáva tvojím vstupným triggerom po potvrdení.\n\nSMT Divergencia\n\nSMT Divergencia nastáva, keď sa dva korelované nástroje rozídu – čo odhaľuje skrytú stopu o skutočnom smere alebo o riadenej likvidite.\n\nSMT Divergencia nastáva, keď:\n\n- Dve korelované aktíva (napr. ES & NQ, SPY & QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.\n- Jedno vytvorí vyšší high (alebo nižší low), zatiaľ čo druhé nie – čo signalizuje divergenciu.\n\nPovedzme, že obchoduješ NQ a sleduješ ES ako potvrdenie.\n\n- NQ vyčistí low a vytvorí nižší low.\n- ES to isté neurobí – drží svoj predchádzajúci low (vyšší low).\n\nToto ukazuje bullish SMT divergenciu – smart money pravdepodobne vyčistilo likviditu na NQ, zatiaľ čo ES držalo. Vďaka tomu má tvoj iFVG long oveľa vyššiu pravdepodobnosť úspechu.\n\nPREHĽAD SETUPU\n\nSymboly: NQ a ES. Tieto korelované futures nástroje sa používajú spolu na identifikáciu SMT divergencie a realizáciu vysoko pravdepodobnostných obchodov.\n\nTimeframy: Na presné vstupy použi 1-minútový, 2-minútový, 3-minútový alebo 5-minútový graf. Vyššie timeframy ako 1-hodinový a 4-hodinový slúžia len na určenie smerového biasu a liquidity cieľov.\n\nSession: Iba New York session. Model je navrhnutý na použitie počas NY open (od 9:30 EST), keď sú objem, volatilita a liquidity sweepy najaktívnejšie.\n\nPRAVIDLÁ STRATÉGIE\n\nKontext (nastavenie biasu)\n- Začni so 4H alebo 1H grafom, aby si určil, či cena pravdepodobne pôjde hore alebo dole.\n- Identifikuj draw on liquidity. Cielime na highs alebo lows?\n- Označ kľúčové swing highs/lows a otvorenia session.\n\nLiquidity Sweep\n- Cena musí vyčistiť zjavný interný high/low.\n- Malo by to byť jasné – čistá, zjavná, na trhovej štruktúre založená likvidita.\n- Ak po sweepe dostaneš SMT, výrazne to zvyšuje pravdepodobnosť fungovania inverzného setupu.\n\nFormácia FVG\n- Hľadaj čistý fair value gap po sweepe.\n- Ideálne jeden jediný FVG – viacero FVG v rámci pohybu znižuje presnosť.\n\nInverzia (potvrdenie)\n- Počkaj, kým sa cena uzavrie späť cez FVG z opačného smeru.\n- Tým sa FVG mení na inverse FVG.\n\nVstup\n- Vstup pri návrate k iFVG (limitný alebo market vstup).\n- Vstup pri uzavretí sviečky cez iFVG, ak je jasná displacement.\n- Na vstup použi rovnaký timeframe ako pri inverzii – napr. 3M iFVG potrebuje 3M close cez neho.\n\nTake Profit\n- Prvý cieľ = interná likvidita (nedávny high/low).\n- Finálny cieľ = hlavný swing high/low alebo draw on liquidity.\n\nPravidlo breakeven\n\nAk je zasiahnutá prvá interná likvidita a nedôjde k ďalšej displacement, predpokladaj, že sa trh len rotuje, a chráň kapitál.\n\nViac než jeden FVG v pohybe?\n\nSetup radšej vynechaj alebo sa pozri na vyšší timeframe – viacero FVG znamená neistotu.\n\nROZBOR OBCHODOV\n\nPríklad obchodu 1 (Short)\n\nLiquidity Sweep\nCena vyčistí predchádzajúci swing high, čím spustí buy-side liquidity grab. Ide o kľúčový stop-hunt nad známym highom.\n\nFormácia Fair Value Gap (FVG)\nPočas tohto agresívneho pohybu vzniká Fair Value Gap (FVG), keďže cena za sebou necháva nerovnováhu medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG so silnou medvedou displacement, čo naznačuje, že trh odmietol nerovnováhu a momentum je teraz smerom dole. Toto čisté prerazenie potvrdzuje iFVG setup.\n\nVstup\nVstup sa realizuje pri retest FVG zospodu, kde sa cena vráti do zóny iFVG pred ďalším pádom.\n\nStop Loss\nStop je umiestnený tesne nad iFVG alebo nad high sviečky, ktorá spôsobila sweep.\n\nCieľ\nPrvý cieľ je najbližšia oblasť sell-side likvidity, označená rovnakými lows nižšie. Rozšírený cieľ je demand zóna (sivý box), kde cena nakoniec zareaguje.\n\nPríklad obchodu 2 (Long)\n\nSMT Divergencia\nNa low pohybu je prítomná SMT divergencia – jedno korelované aktívum (napr. ES) vytvorí nižší low, zatiaľ čo druhé (napr. NQ) drží vyššie. Toto signalizuje narušenie korelácie a naznačuje možný zvrat.\n\nLiquidity Sweep\nCena vyčistí predchádzajúci low, čím spustí sell-side liquidity grab. Stopy sú vyčistené pod týmto low pred prudkým zvratom.\n\nFormácia Fair Value Gap (FVG)\nPočas agresívneho pohybu dole vzniká FVG. Táto medzera sa tvorí medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG smerom hore a odmietne nerovnováhu. Toto potvrdzuje, že cena sa už nevybalansováva – mení smer. Pohyb spĺňa podmienky iFVG setupu.\n\nVstup\nVstup sa realizuje pri retest iFVG, keď sa cena vráti do zóny a udrží sa.\n\nStop Loss\nStop je umiestnený tesne pod FVG alebo pod swing low vytvoreným sweepom.\n\nPrvý cieľ je interný high. Finálny cieľ je buy-side likvidita nad predchádzajúcim highom."},
+  {name:"Break & Retest",description:"Break & Retest je jedna z najzákladnejších a najspoľahlivejších technických stratégií. Stojí na jednoduchej myšlienke: keď cena presvedčivo prelomí kľúčovú úroveň, táto úroveň sa často zmení z odporu na podporu (alebo naopak) a cena sa k nej neskôr vráti, aby ju \"otestovala\", než bude pokračovať ďalej. Namiesto naháňania breakoutu čakáme na tento návrat a vstupujeme až po jeho potvrdení – čím eliminujeme väčšinu falošných signálov a naháňania ceny.",rules:["Označená jasná kľúčová úroveň (predchádzajúci deň high/low, výrazný swing high/low alebo iná zjavná zóna)", "Cena prelomí úroveň presvedčivo – silná sviečka so zatvorením zreteľne za úrovňou, nie len knôtom", "Cena sa vráti späť k prelomenej úrovni (retest) namiesto toho, aby okamžite pokračovala ďalej", "Úroveň sa pri retest drží ako nová podpora/odpor – žiadne spätné prerazenie na druhú stranu", "Prvý cieľ = najbližší swing high/low, časť pozície sa uzatvára (trim)", "Stop je umiestnený tesne za retest zónou, mimo bežného trhového šumu"],notes:"VYTVORENÉ PRE\n\nNástroje: Akcie, futures, forex\nŠtýl obchodovania: Intradenný aj swingový\n\nPREHĽAD STRATÉGIE\n\nBreak & Retest je jedna z najstarších a najspoľahlivejších technických stratégií, založená na čítaní price action a kľúčových úrovní. Namiesto naháňania ceny hneď po breakoute čakáme na jej návrat k prelomenej úrovni – tam, kde je pomer risk/reward najvýhodnejší a signál najčistejší.\n\nZÁKLADNÝ KONCEPT: Zlomenie štruktúry\n\nKaždá kľúčová úroveň (predchádzajúci high/low dňa, výrazný swing bod, alebo psychologická cena) funguje ako bariéra, kde sa história obchodovania hromadí – objednávky, stopy, limitné príkazy. Keď cena túto úroveň presvedčivo prelomí (silná sviečka, jasné zatvorenie za úrovňou, nie len tieň knôtu), znamená to posun v rovnováhe medzi kupujúcimi a predávajúcimi.\n\nDôležité je rozlíšiť skutočný breakout od falošného. Slabý breakout (dlhý knôt, uzavretie späť pod úrovňou) často signalizuje pascu na retailových obchodníkov – radšej počkaj na presvedčivé zatvorenie.\n\nZÁKLADNÝ KONCEPT: Retest a vstup\n\nPo breakoute sa cena veľmi často vráti späť k prelomenej úrovni – nie preto, že sa \"mýlila\", ale pretože táto úroveň sa teraz stáva novou podporou (pri breakoute nahor) alebo odporom (pri breakoute nadol). Toto je presne ten moment, na ktorý Break & Retest trader čaká.\n\nVstup nastáva až vtedy, keď cena úroveň pri retest zreteľne rešpektuje – napríklad malou sviečkou s dlhým knôtom smerom k úrovni a zatvorením naspäť v smere pôvodného breakoutu. Ak cena namiesto toho prerazí späť cez úroveň, setup je neplatný a treba ho vynechať.\n\nRIADENIE RIZIKA: Stop a ciele\n\nStop loss patrí tesne za retest zónu (za low retest sviečky pri long vstupe, za high pri short vstupe) – dostatočne blízko, aby bol pomer risk/reward priaznivý, ale dostatočne ďaleko, aby ho nevyradil bežný trhový šum.\n\nPrvý cieľ je najbližší výrazný swing high/low – tu je vhodné časť pozície uzavrieť (trim) a zvyšok nechať bežať s presunutým stopom na breakeven. Druhý, rozšírený cieľ sa hľadá pri ďalšej významnej štruktúrnej úrovni, ak trend pokračuje.\n\nKEDY SETUP VYNECHAŤ\n\n- Breakout bez objemu alebo s dlhými knôtmi namiesto pevného zatvorenia.\n- Retest, ktorý preráža späť cez úroveň namiesto toho, aby sa od nej odrazil.\n- Príliš veľa predchádzajúcich testov tej istej úrovne – čím viackrát je úroveň testovaná, tým je slabšia."},
+];
+async function seedDefaultStrategies(){
+  const flag=await idbGet('kv','defaultStrategiesSeeded');
+  if(flag)return;
+  for(const s of DEFAULT_STRATEGIES){
+    const id=await idbAdd('strategies',Object.assign({},s));
+    strategies.push(Object.assign({},s,{id}));
+  }
+  await idbPut('kv',{k:'defaultStrategiesSeeded',v:true});
+}
+function strategyById(id){return id==null?null:strategies.find(s=>s.id===id)||null;}
+function strategyNameOf(t){const s=strategyById(t.strategyId);return s?s.name:'– (bez stratégie)';}
+function refreshStrategySelects(){
+  const opts=strategies.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  const fSel=$('fStrategy');
+  if(fSel){const cur=fSel.value;fSel.innerHTML='<option value="">Všetky stratégie</option>'+opts;fSel.value=cur;}
+  const tSel=$('tStrategy');
+  if(tSel){const cur=tSel.value;tSel.innerHTML='<option value="">– žiadna –</option>'+opts;tSel.value=cur;}
+}
+function strategyStats(s){
+  const ts=trades.filter(t=>t.strategyId===s.id&&t.tExit&&isFinite(computePnl(t)));
+  const pnls=ts.map(computePnl);
+  const net=pnls.reduce((a,b)=>a+b,0);
+  const wins=pnls.filter(p=>p>0).length;
+  const wr=ts.length?wins/ts.length*100:0;
+  const rs=ts.map(riskR).filter(r=>r!=null);
+  const avgR=rs.length?avg(rs):null;
+  const rules=s.rules||[];
+  const withChecklist=ts.filter(t=>Array.isArray(t.checkedRules));
+  const avgAdherence=(rules.length&&withChecklist.length)?avg(withChecklist.map(t=>t.checkedRules.length/rules.length))*100:null;
+  return {count:ts.length,net,wr,avgR,avgAdherence,ts};
+}
+function ruleOutcomeStats(ts,rule){
+  const total=ts.length;
+  const followed=ts.filter(t=>Array.isArray(t.checkedRules)&&t.checkedRules.includes(rule));
+  const followRate=total?followed.length/total*100:0;
+  const pnls=followed.map(computePnl);
+  const net=pnls.reduce((a,b)=>a+b,0);
+  const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0);
+  const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
+  const pf=gl>0?gw/gl:(gw>0?Infinity:null);
+  const wr=followed.length?wins.length/followed.length*100:null;
+  return {followRate,net,pf,wr,n:followed.length};
+}
+function strategyRuleTable(s,ts){return (s.rules||[]).map(r=>Object.assign({rule:r},ruleOutcomeStats(ts,r)));}
+function renderStrategies(){
+  refreshStrategySelects();
+  const box=$('strategyCards');
+  if(!box)return;
+  if(strategyDetailId!=null){renderStrategyDetail(box);return;}
+  box.className='stratGrid';
+  if(!strategies.length){box.innerHTML='<div class="hint">Zatiaľ žiadne stratégie. Klikni na "+ Pridať stratégiu" a definuj si prvý playbook – pravidlá vstupu, ktoré chceš dodržiavať.</div>';return;}
+  box.innerHTML=strategies.map(s=>{
+    const st=strategyStats(s);
+    return `<div class="stratCard" style="cursor:pointer" onclick="openStrategyDetail(${s.id})">
+      <h3><span>${esc(s.name)}</span><span>
+        <button class="btn secondary small" onclick="event.stopPropagation();openStrategy(${s.id})">Upraviť</button>
+      </span></h3>
+      ${s.description?`<div class="stratDesc">${esc(tr(s.description))}</div>`:''}
+      <div class="stratStats">
+        <div><div class="lbl">Obchodov</div><div class="val">${st.count}</div></div>
+        <div><div class="lbl">Winrate</div><div class="val">${st.count?st.wr.toFixed(0)+'%':'–'}</div></div>
+        <div><div class="lbl">Priem. R</div><div class="val">${st.avgR!=null?st.avgR.toFixed(2)+'R':'–'}</div></div>
+        <div><div class="lbl">Net P&L</div><div class="val ${moneyCls(st.net)}">${st.count?fmtMoney(st.net):'–'}</div></div>
+        <div><div class="lbl">Dodrž. pravidiel</div><div class="val">${st.avgAdherence!=null?st.avgAdherence.toFixed(0)+'%':'–'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+let strategyNotesEdit=false;
+let strategyRulesEdit=false;
+function isHtmlNotes(text){return /<[a-z][\s\S]*>/i.test(String(text||''));}
+async function legacyNotesToHTML(text,strategyId){
+  const shots=await stratShotsByStrategy(strategyId);
+  const shotMap={};
+  for(const sh of shots)shotMap[sh.id]=await blobToB64(sh.blob);
+  const blocks=String(text||'').split(/\n\s*\n/);
+  let out='';
+  for(const block of blocks){
+    const t=block.trim();
+    if(!t)continue;
+    const imgMatch=t.match(/^\[IMG:(\d+)\]$/);
+    if(imgMatch){
+      const data=shotMap[imgMatch[1]];
+      if(data)out+=`<img src="${data}">`;
+      continue;
+    }
+    const lines=t.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length===1&&lines[0]===lines[0].toUpperCase()&&/[A-ZÁÄČĎÉÍĹĽŇÓÔŔŠŤÚÝŽ]/.test(lines[0])&&lines[0].length<60){
+      out+=`<h2>${esc(lines[0])}</h2>`;
+      continue;
+    }
+    if(lines.every(l=>l.startsWith('- '))){
+      out+=`<ul>${lines.map(l=>`<li>${esc(l.slice(2))}</li>`).join('')}</ul>`;
+      continue;
+    }
+    out+=`<p>${esc(t).replace(/\n/g,'<br>')}</p>`;
+  }
+  return out;
+}
+function openStrategyDetail(id){strategyDetailId=id;strategyDetailTab='rules';strategyNotesEdit=false;strategyRulesEdit=false;renderStrategies();}
+function closeStrategyDetail(){strategyDetailId=null;renderStrategies();}
+function switchStrategyDetailTab(tab){strategyDetailTab=tab;strategyNotesEdit=false;strategyRulesEdit=false;renderStrategies();}
+async function toggleStrategyNotesEdit(){
+  if(!strategyNotesEdit&&strategyDetailId!=null){
+    const s=strategyById(strategyDetailId);
+    if(s&&!isHtmlNotes(s.notes)){
+      const html=await legacyNotesToHTML(s.notes,strategyDetailId);
+      s.notes=html;
+      await idbPut('strategies',s);
+      strategies=strategies.map(x=>x.id===s.id?s:x);
+    }
+  }
+  strategyNotesEdit=!strategyNotesEdit;
+  renderStrategies();
+}
+let stNotesSavedRange=null;
+function stNotesSaveRange(){
+  const ed=$('stNotesEditor');
+  const sel=window.getSelection();
+  if(ed&&sel.rangeCount&&ed.contains(sel.anchorNode)&&ed.contains(sel.focusNode))stNotesSavedRange=sel.getRangeAt(0).cloneRange();
+}
+document.addEventListener('selectionchange',stNotesSaveRange);
+function stNotesRestoreRange(){
+  const ed=$('stNotesEditor');
+  if(!ed)return;
+  ed.focus();
+  if(stNotesSavedRange){
+    const sel=window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(stNotesSavedRange);
+  }
+}
+function rtExec(cmd,val){
+  stNotesRestoreRange();
+  document.execCommand(cmd,false,val);
+  stNotesSaveRange();
+}
+function rtLink(){
+  stNotesRestoreRange();
+  const url=prompt(tr('URL odkazu:'),'https://');
+  if(url)document.execCommand('createLink',false,url);
+  stNotesSaveRange();
+}
+function rtSetFontSize(px){
+  px=Math.max(8,Math.min(96,parseInt(px,10)||16));
+  const box=$('rtFontSizeBox');
+  if(box)box.value=px;
+  stNotesRestoreRange();
+  const sel=window.getSelection();
+  if(!sel.rangeCount||sel.isCollapsed)return;
+  const range=sel.getRangeAt(0);
+  const span=document.createElement('span');
+  span.style.fontSize=px+'px';
+  try{range.surroundContents(span);}
+  catch(e){const frag=range.extractContents();span.appendChild(frag);range.insertNode(span);}
+  sel.removeAllRanges();
+  const nr=document.createRange();
+  nr.selectNodeContents(span);
+  sel.addRange(nr);
+  stNotesSaveRange();
+}
+function rtFontSizeStep(delta){
+  const box=$('rtFontSizeBox');
+  rtSetFontSize((box?parseInt(box.value,10):16||16)+delta);
+}
+function rtInsertImageAtCursor(dataUrl){
+  stNotesRestoreRange();
+  const ed=$('stNotesEditor');
+  ed.focus();
+  const img=document.createElement('img');
+  img.src=dataUrl;
+  const sel=window.getSelection();
+  if(sel.rangeCount){
+    const range=sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(img);
+    range.setStartAfter(img);range.collapse(true);
+    sel.removeAllRanges();sel.addRange(range);
+  }else{
+    ed.appendChild(img);
+  }
+  stNotesSaveRange();
+}
+async function rtInsertImageFile(files){
+  const f=files&&files[0];
+  if(!f||!f.type||!f.type.startsWith('image/'))return;
+  const dataUrl=await blobToB64(f);
+  rtInsertImageAtCursor(dataUrl);
+}
+function rtHandlePaste(e){
+  const items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(const it of items){
+    if(it.type&&it.type.startsWith('image/')){
+      e.preventDefault();
+      const file=it.getAsFile();
+      blobToB64(file).then(dataUrl=>rtInsertImageAtCursor(dataUrl));
+      return;
+    }
+  }
+}
+function rtHandleDrop(e){
+  const files=e.dataTransfer&&e.dataTransfer.files;
+  if(!files||!files.length)return;
+  const f=[...files].find(x=>x.type&&x.type.startsWith('image/'));
+  if(!f)return;
+  e.preventDefault();
+  blobToB64(f).then(dataUrl=>rtInsertImageAtCursor(dataUrl));
+}
+const RT_COLORS=[
+  {name:'Predvolená',fg:'inherit',bg:'transparent'},
+  {name:'Sivá',fg:'#9B9A97',bg:'#3a3f47'},
+  {name:'Hnedá',fg:'#b08968',bg:'#4a3b30'},
+  {name:'Oranžová',fg:'#e8935a',bg:'#4a3520'},
+  {name:'Žltá',fg:'#e0c14d',bg:'#4a4420'},
+  {name:'Zelená',fg:'#4dbd9c',bg:'#1f3a34'},
+  {name:'Modrá',fg:'#5b9bd9',bg:'#1f333f'},
+  {name:'Fialová',fg:'#a685e2',bg:'#332a47'},
+  {name:'Ružová',fg:'#e07fb0',bg:'#452c3a'},
+  {name:'Červená',fg:'#e25c5c',bg:'#452525'},
+  {name:'Čierna',fg:'#000000',bg:'#000000'},
+];
+function rtColorPanelHTML(kind){
+  const rows=RT_COLORS.map(c=>{
+    const val=kind==='fg'?c.fg:c.bg;
+    const swatchStyle=kind==='fg'?`color:${val};background:var(--bg3)`:`background:${val};border:1px solid var(--border)`;
+    return `<div class="rtColorRow" onmousedown="event.preventDefault()" onclick="rtApplyColor('${kind==='fg'?'foreColor':'hiliteColor'}','${val}')">
+      <span class="rtSwatch" style="${swatchStyle}">${kind==='fg'?'A':''}</span><span>${esc(tr(c.name))}</span>
+    </div>`;
+  }).join('');
+  return rows+`<div class="rtDropSep"></div><div class="rtColorRow" onmousedown="event.preventDefault()" onclick="$('rtCustomColor_${kind}').click()">
+      <span class="rtSwatch" style="background:var(--bg3)">🎨</span><span>${esc(tr('Vlastná farba...'))}</span>
+    </div><input type="color" id="rtCustomColor_${kind}" style="display:none" onchange="rtApplyColor('${kind==='fg'?'foreColor':'hiliteColor'}',this.value)">`;
+}
+function rtApplyColor(cmd,value){
+  stNotesRestoreRange();
+  document.execCommand(cmd,false,value);
+  stNotesSaveRange();
+  rtCloseDropdowns();
+}
+function rtToggleDropdown(id,e){
+  if(e)e.stopPropagation();
+  const el=$(id);
+  if(!el)return;
+  const willOpen=el.style.display!=='block';
+  rtCloseDropdowns();
+  if(willOpen)el.style.display='block';
+}
+function rtCloseDropdowns(){document.querySelectorAll('.rtDropdown').forEach(d=>d.style.display='none');}
+function rtAlignPanelHTML(){
+  const opts=[['justifyLeft','Vľavo'],['justifyCenter','Na stred'],['justifyRight','Vpravo'],['justifyFull','Do bloku']];
+  return opts.map(([cmd,label])=>`<div class="rtColorRow" onmousedown="event.preventDefault()" onclick="rtExec('${cmd}');rtCloseDropdowns()">${esc(tr(label))}</div>`).join('');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.rtDropWrap'))rtCloseDropdowns();
+});
+function toggleStrategyRulesEdit(){strategyRulesEdit=!strategyRulesEdit;renderStrategies();}
+function ruleEditRowHTML(text){
+  return `<div class="ruleRow">
+    <button type="button" class="btn secondary small" onclick="moveDetailRule(this,-1)" title="${esc(tr('Posunúť hore'))}">↑</button>
+    <button type="button" class="btn secondary small" onclick="moveDetailRule(this,1)" title="${esc(tr('Posunúť dole'))}">↓</button>
+    <input type="text" class="stRuleTextD" value="${esc(text||'')}" placeholder="napr. Cena nad VWAP, potvrdenie objemom...">
+    <button type="button" class="btn secondary small" onclick="this.parentElement.remove()">✕</button>
+  </div>`;
+}
+function addDetailRuleRow(text){
+  const box=$('stRulesEditList');
+  if(box)box.insertAdjacentHTML('beforeend',ruleEditRowHTML(text));
+}
+function moveDetailRule(btn,dir){
+  const row=btn.closest('.ruleRow');
+  if(!row)return;
+  if(dir<0&&row.previousElementSibling)row.parentElement.insertBefore(row,row.previousElementSibling);
+  else if(dir>0&&row.nextElementSibling)row.parentElement.insertBefore(row.nextElementSibling,row);
+}
+async function saveStrategyRules(id){
+  const s=strategyById(id);
+  if(!s)return;
+  const rules=[...document.querySelectorAll('#stRulesEditList .stRuleTextD')].map(i=>i.value.trim()).filter(Boolean);
+  s.rules=rules;
+  await idbPut('strategies',s);
+  strategies=strategies.map(x=>x.id===s.id?s:x);
+  strategyRulesEdit=false;
+  renderStrategies();
+  scheduleAutoSync();
+  toast('Pravidlá uložené');
+}
+function renderStrategyDetail(box){
+  const s=strategyById(strategyDetailId);
+  if(!s){strategyDetailId=null;renderStrategies();return;}
+  box.className='';
+  const st=strategyStats(s);
+  const tabs=[['rules','Pravidlá'],['notes','Notes'],['trades','Obchody ('+st.count+')']];
+  const tabBtns=tabs.map(([k,label])=>`<button class="btn ${strategyDetailTab===k?'':'secondary'} small" onclick="switchStrategyDetailTab('${k}')">${esc(label)}</button>`).join('');
+  let body;
+  if(strategyDetailTab==='rules'){
+    if(strategyRulesEdit){
+      body=`<div class="hint" style="margin-bottom:8px">${esc(tr('Uprav text, zoraď šípkami, pridaj alebo odober pravidlá. Premenovanie pravidla nezmení históriu už zaznamenaných obchodov – tie zostanú priradené k pôvodnému zneniu.'))}</div>
+        <div id="stRulesEditList">${(s.rules||[]).map(r=>ruleEditRowHTML(r)).join('')}</div>
+        <button class="btn secondary small" onclick="addDetailRuleRow('')">+ Pridať pravidlo</button>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn small" onclick="saveStrategyRules(${s.id})">Uložiť pravidlá</button>
+          <button class="btn secondary small" onclick="toggleStrategyRulesEdit()">${esc(tr('Zobraziť'))}</button>
+        </div>`;
+    }else{
+      const rows=strategyRuleTable(s,st.ts);
+      body=rows.length?`<div style="margin-bottom:10px"><button class="btn secondary small" onclick="toggleStrategyRulesEdit()">${esc(tr('Upraviť pravidlá'))}</button></div><div style="overflow-x:auto"><table><thead><tr><th>Pravidlo</th><th>Follow rate</th><th>Net P&L</th><th>Profit factor</th><th>Win rate</th></tr></thead><tbody>${
+        rows.map(r=>`<tr style="cursor:default"><td>${esc(tr(r.rule))}</td><td>${r.followRate.toFixed(0)}%</td><td class="${r.n?moneyCls(r.net):''}">${r.n?fmtMoney(r.net):'–'}</td><td>${r.pf==null?'–':(r.pf===Infinity?'∞':r.pf.toFixed(2))}</td><td>${r.wr==null?'–':r.wr.toFixed(0)+'%'}</td></tr>`).join('')
+      }</tbody></table></div><div class="hint" style="margin-top:10px">Follow rate = ako často toto pravidlo dodržíš. Ostatné stĺpce = výkonnosť obchodov, kde bolo toto pravidlo dodržané.</div>`
+        :`<div class="hint" style="margin-bottom:10px">Táto stratégia nemá zadané žiadne pravidlá.</div><button class="btn small" onclick="toggleStrategyRulesEdit()">${esc(tr('+ Pridať pravidlá'))}</button>`;
+    }
+  }else if(strategyDetailTab==='notes'){
+    if(strategyNotesEdit){
+      body=`<div class="rtToolbar">
+          <select onmousedown="event.stopPropagation()" onchange="rtExec('formatBlock',this.value);this.selectedIndex=0" title="${esc(tr('Nadpis'))}">
+            <option value="p">¶</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
+          <span class="rtSep"></span>
+          <select onchange="rtExec('fontName',this.value)" title="${esc(tr('Písmo'))}">
+            <option value="">${esc(tr('Písmo'))}</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            <option value="'Courier New',monospace">Courier New</option>
+            <option value="'Times New Roman',serif">Times New Roman</option>
+          </select>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtFontSizeStep(-2)">−</button>
+          <input type="number" id="rtFontSizeBox" value="16" min="8" max="96" onchange="rtSetFontSize(this.value)">
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtFontSizeStep(2)">+</button>
+          <span class="rtSep"></span>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtExec('bold')" title="Bold"><b>B</b></button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtExec('italic')" title="Italic"><i>I</i></button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtExec('strikeThrough')" title="Strikethrough"><s>S</s></button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtExec('underline')" title="Underline"><u>U</u></button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtLink()" title="${esc(tr('Vložiť odkaz'))}">🔗</button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="rtExec('removeFormat')" title="${esc(tr('Vymazať formátovanie'))}">✗</button>
+          <span class="rtSep"></span>
+          <div class="rtDropWrap">
+            <button type="button" onmousedown="event.preventDefault()" onclick="rtToggleDropdown('rtDropFg',event)" title="${esc(tr('Farba textu'))}"><b style="text-decoration:underline">A</b></button>
+            <div class="rtDropdown" id="rtDropFg">${rtColorPanelHTML('fg')}</div>
+          </div>
+          <div class="rtDropWrap">
+            <button type="button" onmousedown="event.preventDefault()" onclick="rtToggleDropdown('rtDropBg',event)" title="${esc(tr('Farba zvýraznenia'))}">🖍</button>
+            <div class="rtDropdown" id="rtDropBg">${rtColorPanelHTML('bg')}</div>
+          </div>
+          <span class="rtSep"></span>
+          <div class="rtDropWrap">
+            <button type="button" onmousedown="event.preventDefault()" onclick="rtToggleDropdown('rtDropAlign',event)" title="${esc(tr('Zarovnanie'))}">≡ ▾</button>
+            <div class="rtDropdown" id="rtDropAlign">${rtAlignPanelHTML()}</div>
+          </div>
+          <span class="rtSep"></span>
+          <button type="button" onmousedown="event.preventDefault()" onclick="$('rtImgFile').click()" title="${esc(tr('Vložiť obrázok'))}">+</button>
+          <input type="file" id="rtImgFile" accept="image/*" style="display:none" onchange="rtInsertImageFile(this.files);this.value=''">
+        </div>
+        <div id="stNotesEditor" contenteditable="true" onblur="stNotesSaveRange()" onpaste="rtHandlePaste(event)" ondrop="rtHandleDrop(event)" ondragover="event.preventDefault()">${s.notes||''}</div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn small" onclick="saveStrategyNotes(${s.id})">Uložiť poznámky</button>
+          <button class="btn secondary small" onclick="toggleStrategyNotesEdit()">${esc(tr('Zobraziť'))}</button>
+        </div>`;
+    }else{
+      const htmlNotes=isHtmlNotes(s.notes);
+      body=(s.notes||'').trim()
+        ?`<div style="margin-bottom:10px"><button class="btn secondary small" onclick="toggleStrategyNotesEdit()">Upraviť</button></div><div class="notesView">${htmlNotes?s.notes:renderNotesHTML(tr(s.notes),{})}</div>`
+        :`<div class="hint" style="margin-bottom:10px">Táto stratégia zatiaľ nemá poznámky.</div><button class="btn small" onclick="toggleStrategyNotesEdit()">+ Pridať poznámky</button>`;
+    }
+  }else{
+    body=st.ts.length?tradeTableHTML(st.ts.sort((a,b)=>tTime(b)-tTime(a))):'<div class="hint">Táto stratégia zatiaľ nemá priradené žiadne obchody. Priraď ju obchodu v jeho detaile.</div>';
+  }
+  box.innerHTML=`
+    <button class="btn secondary small" onclick="closeStrategyDetail()">← Späť na zoznam</button>
+    <div class="panel" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div>
+          <h2 style="font-size:19px;margin-bottom:6px">${esc(s.name)}</h2>
+          ${s.description?`<div class="stratDesc" style="margin-bottom:0">${esc(tr(s.description))}</div>`:''}
+        </div>
+        <button class="btn secondary small" onclick="openStrategy(${s.id})">Upraviť</button>
+      </div>
+      <div class="stratStats" style="margin-top:16px">
+        <div><div class="lbl">Obchodov</div><div class="val">${st.count}</div></div>
+        <div><div class="lbl">Winrate</div><div class="val">${st.count?st.wr.toFixed(0)+'%':'–'}</div></div>
+        <div><div class="lbl">Priem. R</div><div class="val">${st.avgR!=null?st.avgR.toFixed(2)+'R':'–'}</div></div>
+        <div><div class="lbl">Net P&L</div><div class="val ${moneyCls(st.net)}">${st.count?fmtMoney(st.net):'–'}</div></div>
+        <div><div class="lbl">Dodrž. pravidiel</div><div class="val">${st.avgAdherence!=null?st.avgAdherence.toFixed(0)+'%':'–'}</div></div>
+      </div>
+    </div>
+    <div class="filters" style="margin-top:16px">${tabBtns}</div>
+    <div class="panel" style="margin-top:12px">${body}</div>
+  `;
+}
+async function saveStrategyNotes(id){
+  const s=strategyById(id);
+  if(!s)return;
+  const ed=$('stNotesEditor');
+  s.notes=ed?ed.innerHTML:(s.notes||'');
+  await idbPut('strategies',s);
+  strategies=strategies.map(x=>x.id===s.id?s:x);
+  strategyNotesEdit=false;
+  renderStrategies();
+  scheduleAutoSync();
+  toast('Poznámky uložené');
+}
+function goToTradesForStrategy(id){
+  goToTab('trades');
+  const sel=$('fStrategy');
+  if(sel){sel.value=String(id);renderTrades();}
+}
+function addStrategyRuleRow(text){
+  const div=document.createElement('div');
+  div.className='ruleRow';
+  div.innerHTML=`<input type="text" class="stRuleText" value="${esc(text)}" placeholder="napr. Cena nad VWAP, potvrdenie objemom...">
+    <button class="btn secondary small" onclick="this.parentElement.remove()">✕</button>`;
+  $('stRules').appendChild(div);
+}
+function openStrategy(id){
+  currentStrategyId=id;
+  const s=id!=null?strategyById(id):null;
+  $('stmTitle').textContent=s?'Upraviť stratégiu':'Nová stratégia';
+  $('stDelete').style.display=s?'':'none';
+  $('stName').value=s?s.name:'';
+  $('stDesc').value=s?(s.description||''):'';
+  $('stRules').innerHTML='';
+  (s&&s.rules||[]).forEach(r=>addStrategyRuleRow(r));
+  $('strategyOverlay').classList.add('open');
+}
+function closeStrategy(){
+  $('strategyOverlay').classList.remove('open');
+  currentStrategyId=null;
+}
+async function saveStrategy(){
+  const name=$('stName').value.trim();
+  if(!name){toast('Zadaj názov stratégie');return;}
+  const rules=[...document.querySelectorAll('#stRules .stRuleText')].map(i=>i.value.trim()).filter(Boolean);
+  const existing=currentStrategyId!=null?strategyById(currentStrategyId):null;
+  const s=Object.assign({},existing,{name,description:$('stDesc').value.trim(),rules});
+  if(currentStrategyId!=null){
+    s.id=currentStrategyId;
+    await idbPut('strategies',s);
+    strategies=strategies.map(x=>x.id===s.id?s:x);
+  }else{
+    const id=await idbAdd('strategies',s);
+    s.id=id;strategies.push(s);
+  }
+  closeStrategy();
+  renderStrategies();
+  renderTrades();
+  scheduleAutoSync();
+  toast('Stratégia uložená');
+}
+async function deleteCurrentStrategy(){
+  if(currentStrategyId==null)return;
+  if(!ask('Vymazať túto stratégiu? Obchody, ktoré ju používajú, ostanú zachované, len stratia priradenie.'))return;
+  await idbDel('strategies',currentStrategyId);
+  strategies=strategies.filter(x=>x.id!==currentStrategyId);
+  if(strategyDetailId===currentStrategyId)strategyDetailId=null;
+  closeStrategy();
+  renderStrategies();
+  renderTrades();
+  scheduleAutoSync();
+  toast('Stratégia vymazaná');
+}
+function renderTradeRuleChecklist(){
+  const sid=parseInt($('tStrategy').value,10);
+  const s=isFinite(sid)?strategyById(sid):null;
+  const wrap=$('tRuleChecklistWrap');
+  if(!s||!(s.rules||[]).length){wrap.style.display='none';$('tRuleChecklist').innerHTML='';return;}
+  wrap.style.display='';
+  const t=currentTradeId!=null?trades.find(x=>x.id===currentTradeId):null;
+  const checked=(t&&t.strategyId===s.id&&Array.isArray(t.checkedRules))?t.checkedRules:[];
+  $('tRuleChecklist').innerHTML=s.rules.map((r,i)=>`<label class="checkRow"><input type="checkbox" class="tRuleCheck" value="${esc(r)}" ${checked.includes(r)?'checked':''}>${esc(r)}</label>`).join('');
+}
 function riskR(t){
   const pnl=computePnl(t);
   if(t.stop==null||!isFinite(t.stop)||!isFinite(t.entry))return null;
@@ -657,6 +1310,36 @@ const I18N_EN={
 '+ Pridať obchod':'+ Add trade','Všetky účty':'All accounts',
 'Celé obdobie':'All time','Tento mesiac':'This month','Posledných 30 dní':'Last 30 days','Posledných 90 dní':'Last 90 days','Tento rok':'This year',
 'Equity krivka':'Equity curve','Denný P&L':'Daily P&L','Podľa symbolu':'By symbol','Podľa dňa v týždni':'By day of week','Podľa hodiny vstupu':'By entry hour',
+'Podľa emócie pri vstupe':'By entry emotion','Podľa emócie pri výstupe':'By exit emotion','Emócia pri vstupe':'Emotion at entry','Emócia pri výstupe':'Emotion at exit',
+'Ázia':'Asia','Londýn':'London','Mimo session':'Off session','Podľa session':'By session','Všetky session':'All sessions',
+'Stratégie':'Strategies','Stratégia':'Strategy','+ Pridať stratégiu':'+ Add strategy','Všetky stratégie':'All strategies','– žiadna –':'– none –','– (bez stratégie)':'– (no strategy)',
+'Definuj si obchodné stratégie s pravidlami vstupu a sleduj, ako ich dodržiavaš a ako sa im darí.':'Define your trading strategies with entry rules and track how well you follow them and how they perform.',
+'Nová stratégia':'New strategy','Upraviť stratégiu':'Edit strategy','Názov *':'Name *','napr. VWAP Reversal, ORB Breakout...':'e.g. VWAP Reversal, ORB Breakout...',
+'Popis / kontext':'Description / context','Kedy a prečo túto stratégiu používaš, na akých symboloch/timeframe...':'When and why you use this strategy, on which symbols/timeframe...',
+'Pravidlá vstupu (checklist)':'Entry rules (checklist)','+ Pridať pravidlo':'+ Add rule','napr. Cena nad VWAP, potvrdenie objemom...':'e.g. Price above VWAP, volume confirmation...',
+'Uložiť stratégiu':'Save strategy','Zadaj názov stratégie':'Enter a strategy name','Stratégia uložená':'Strategy saved',
+'Vymazať túto stratégiu? Obchody, ktoré ju používajú, ostanú zachované, len stratia priradenie.':'Delete this strategy? Trades using it will be kept, they will just lose the assignment.','Stratégia vymazaná':'Strategy deleted',
+'Zatiaľ žiadne stratégie. Klikni na "+ Pridať stratégiu" a definuj si prvý playbook – pravidlá vstupu, ktoré chceš dodržiavať.':'No strategies yet. Click "+ Add strategy" to define your first playbook – entry rules you want to follow.',
+'Upraviť':'Edit','Obchody →':'Trades →','Obchodov':'Trades','Priem. R':'Avg R','Dodrž. pravidiel':'Rule adherence','Dodržiavanosť jednotlivých pravidiel:':'Adherence per rule:','Dodržal(a) si pravidlá tejto stratégie?':'Did you follow this strategy\'s rules?',
+'Pravidlá':'Rules','Pravidlo':'Rule','← Späť na zoznam':'← Back to list',
+'Follow rate = ako často toto pravidlo dodržíš. Ostatné stĺpce = výkonnosť obchodov, kde bolo toto pravidlo dodržané.':'Follow rate = how often you follow this rule. The other columns = performance of trades where this rule was followed.',
+'Táto stratégia nemá zadané žiadne pravidlá. Klikni na "Upraviť" a pridaj checklist vstupu.':'This strategy has no rules yet. Click "Edit" to add an entry checklist.',
+'Dlhší popis stratégie – kontext, presné pravidlá, príklady obchodov, čo funguje a čo nie...':'Longer strategy writeup – context, precise rules, trade examples, what works and what doesn\'t...',
+'Uložiť poznámky':'Save notes','Poznámky uložené':'Notes saved',
+'Táto stratégia zatiaľ nemá priradené žiadne obchody. Priraď ju obchodu v jeho detaile.':'This strategy has no trades assigned yet. Assign it to a trade from the trade detail.',
+'predchádzajúci high':'previous high','Entry':'Entry','nižší low – sweep':'lower low – sweep','vyšší low – drží':'higher low – holds',
+'PDH / kľúčová úroveň':'PDH / key level','Breakout':'Breakout','zlomená úroveň (teraz support)':'broken level (now support)','Entry na retest':'Entry on retest',
+'Stop':'Stop','Target 1':'Target 1','Target 2':'Target 2','Zobraziť':'View',
+'Prázdny riadok = nový odsek. Riadok VEĽKÝMI PÍSMENAMI = nadpis. Riadky začínajúce "- " = zoznam.':'Blank line = new paragraph. A line in ALL CAPS = heading. Lines starting with "- " = list.',
+'Klikni pre vloženie do textu':'Click to insert into text','Obrázky – klikni na náhľad pre vloženie značky do textu na mieste kurzora':'Images – click a thumbnail to insert a marker into the text at the cursor position',
+'(obrázok bol odstránený)':'(image was removed)',
+'Táto stratégia zatiaľ nemá poznámky.':'This strategy has no notes yet.','+ Pridať poznámky':'+ Add notes',
+'Predvolená':'Default','Sivá':'Gray','Hnedá':'Brown','Oranžová':'Orange','Žltá':'Yellow','Zelená':'Green','Modrá':'Blue','Fialová':'Purple','Ružová':'Pink','Červená':'Red','Čierna':'Black',
+'Vlastná farba...':'Custom color...','Do bloku':'Justify','Vľavo':'Left','Na stred':'Center','Vpravo':'Right',
+'Prepnúť tému':'Toggle theme',
+'Posunúť hore':'Move up','Posunúť dole':'Move down','Upraviť pravidlá':'Edit rules','+ Pridať pravidlá':'+ Add rules',
+'Uprav text, zoraď šípkami, pridaj alebo odober pravidlá. Premenovanie pravidla nezmení históriu už zaznamenaných obchodov – tie zostanú priradené k pôvodnému zneniu.':'Edit the text, reorder with the arrows, add or remove rules. Renaming a rule will not change the history of already-logged trades – they stay linked to the original wording.',
+'😌 Pokoj / disciplína':'😌 Calm / disciplined','💪 Sebadôvera':'💪 Confidence','😰 FOMO':'😰 FOMO','😨 Strach':'😨 Fear','🤑 Chamtivosť':'🤑 Greed','😤 Netrpezlivosť':'😤 Impatience','😡 Frustrácia / revenge':'😡 Frustration / revenge','🥱 Nuda':'🥱 Boredom','– (nezadané)':'– (not set)',
 'Počet obchodov':'Number of trades','Očak. hodnota / trade':'Expected value / trade','Najlepší deň':'Best day','Najhorší deň':'Worst day','Žiadne dáta':'No data',
 'Najlepší mesiac':'Best month','Najhorší mesiac':'Worst month','Priemer / mesiac':'Average / month',
 'Dni':'Days','Celkový P&L':'Total P&L','Priemerný P&L / obchod':'Average P&L / trade','Priemerný ziskový obchod':'Average winning trade','Priemerný stratový obchod':'Average losing trade',
@@ -752,6 +1435,31 @@ const I18N_EN={
 'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
 'Obchodoval si s výrazne vyšším objemom než zvyčajne':'You traded with significantly higher volume than usual',
 };
+Object.assign(I18N_EN,{
+'Stratégia iFVG (Inverse Fair Value Gap) stojí na jednej jednoduchej myšlienke: ak bola vyčistená likvidita a fair value gap je následne prerazený opačným smerom, cena bude pravdepodobne pokračovať v pohybe týmto smerom.':'The IFVG (Inverse Fair Value Gap) strategy is built around one simple idea: If liquidity has been swept and a fair value gap is broken in the opposite direction, price is likely to continue to rally.',
+'Potvrdený bias na vyššom timeframe (draw on liquidity)':'HTF bias confirmed (draw on liquidity)',
+'Nastal jasný liquidity sweep':'Clear liquidity sweep occurred',
+'SMT divergencia ako dodatočné potvrdenie (voliteľné, ale výrazne zvyšuje confluenciu)':'SMT divergence for extra confirmation (optional but high confluence)',
+'Po sweepe sa vytvoril jeden čistý Fair Value Gap':'Clean, singular Fair Value Gap formed after the sweep',
+'Cena sa uzavrela späť cez FVG (aktivácia inverzie)':'Price closed back through the FVG (activating the inversion)',
+'Vstup po iFVG so správnou štruktúrou':'Entry after the IFVG with proper structure',
+'Stop loss pod FVG alebo pod low daného pohybu.':'Stop loss below the FVG or low of the leg.',
+'Čiastočné uzavretie pozície na internej likvidite':'Scale partial at internal liquidity',
+'Presun stopu na breakeven po dosiahnutí prvého cieľa':'Move stop to break-even after first target hit',
+'VYTVORENÉ PRE\n\nNástroje: Futures\nŠtýl obchodovania: Day Trading\n\nPREHĽAD STRATÉGIE\n\nTáto stratégia stojí na myšlienke, že keď cena vyčistí likviditu a agresívne sa presunie cez Fair Value Gap (FVG) opačným smerom, často to signalizuje začiatok smerového pohybu. Model iFVG identifikuje tieto momenty zvratu kombináciou kľúčových ICT konceptov: SMT divergencie a iFVG po likviditnej udalosti. Je to vysoko pravdepodobnostná, na pravidlách založená intradenná stratégia, najlepšie použiteľná na korelované aktíva, najefektívnejšie na NQ a ES počas New York session.\n\nKĽÚČOVÉ KONCEPTY\n\nAby si model iFVG naplno pochopil, je dôležité najprv zvládnuť dva kľúčové koncepty, na ktorých stojí: Inverse Fair Value Gaps (iFVG) a SMT Divergenciu. Tieto nástroje pomáhajú identifikovať, kedy sa trh môže s vysokou pravdepodobnosťou otáčať.\n\nInverse Fair Value Gap (iFVG)\n\nFair Value Gap (FVG) vzniká, keď je medzera medzi knôtmi troch po sebe idúcich sviečok, zvyčajne v dôsledku agresívneho nákupu alebo predaja, ktorý za sebou zanechá nerovnováhu. V tradičnej ICT teórii sú FVG vnímané ako oblasti, kam sa cena môže vrátiť, aby sa "vybalansovala" predtým, než bude pokračovať v pôvodnom smere.\n\nInverse Fair Value Gap setup tento koncept obracia.\n\nV modeli iFVG hľadáš:\n\n- Liquidity sweep – cena vyčistí stopy nad high alebo pod low.\n- Následne sa cena silno presunie opačným smerom a prerazí existujúci FVG namiesto toho, aby ho rešpektovala.\n- Táto inverzia (čisté prerazenie FVG) naznačuje, že trh už nemá záujem o vybalansovanie – smer sa mení.\n\nTento zvrat je často skorým signálom väčšieho pohybu a iFVG sa stáva tvojím vstupným triggerom po potvrdení.\n\nSMT Divergencia\n\nSMT Divergencia nastáva, keď sa dva korelované nástroje rozídu – čo odhaľuje skrytú stopu o skutočnom smere alebo o riadenej likvidite.\n\nSMT Divergencia nastáva, keď:\n\n- Dve korelované aktíva (napr. ES & NQ, SPY & QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.\n- Jedno vytvorí vyšší high (alebo nižší low), zatiaľ čo druhé nie – čo signalizuje divergenciu.\n\nPovedzme, že obchoduješ NQ a sleduješ ES ako potvrdenie.\n\n- NQ vyčistí low a vytvorí nižší low.\n- ES to isté neurobí – drží svoj predchádzajúci low (vyšší low).\n\nToto ukazuje bullish SMT divergenciu – smart money pravdepodobne vyčistilo likviditu na NQ, zatiaľ čo ES držalo. Vďaka tomu má tvoj iFVG long oveľa vyššiu pravdepodobnosť úspechu.\n\nPREHĽAD SETUPU\n\nSymboly: NQ a ES. Tieto korelované futures nástroje sa používajú spolu na identifikáciu SMT divergencie a realizáciu vysoko pravdepodobnostných obchodov.\n\nTimeframy: Na presné vstupy použi 1-minútový, 2-minútový, 3-minútový alebo 5-minútový graf. Vyššie timeframy ako 1-hodinový a 4-hodinový slúžia len na určenie smerového biasu a liquidity cieľov.\n\nSession: Iba New York session. Model je navrhnutý na použitie počas NY open (od 9:30 EST), keď sú objem, volatilita a liquidity sweepy najaktívnejšie.\n\nPRAVIDLÁ STRATÉGIE\n\nKontext (nastavenie biasu)\n- Začni so 4H alebo 1H grafom, aby si určil, či cena pravdepodobne pôjde hore alebo dole.\n- Identifikuj draw on liquidity. Cielime na highs alebo lows?\n- Označ kľúčové swing highs/lows a otvorenia session.\n\nLiquidity Sweep\n- Cena musí vyčistiť zjavný interný high/low.\n- Malo by to byť jasné – čistá, zjavná, na trhovej štruktúre založená likvidita.\n- Ak po sweepe dostaneš SMT, výrazne to zvyšuje pravdepodobnosť fungovania inverzného setupu.\n\nFormácia FVG\n- Hľadaj čistý fair value gap po sweepe.\n- Ideálne jeden jediný FVG – viacero FVG v rámci pohybu znižuje presnosť.\n\nInverzia (potvrdenie)\n- Počkaj, kým sa cena uzavrie späť cez FVG z opačného smeru.\n- Tým sa FVG mení na inverse FVG.\n\nVstup\n- Vstup pri návrate k iFVG (limitný alebo market vstup).\n- Vstup pri uzavretí sviečky cez iFVG, ak je jasná displacement.\n- Na vstup použi rovnaký timeframe ako pri inverzii – napr. 3M iFVG potrebuje 3M close cez neho.\n\nTake Profit\n- Prvý cieľ = interná likvidita (nedávny high/low).\n- Finálny cieľ = hlavný swing high/low alebo draw on liquidity.\n\nPravidlo breakeven\n\nAk je zasiahnutá prvá interná likvidita a nedôjde k ďalšej displacement, predpokladaj, že sa trh len rotuje, a chráň kapitál.\n\nViac než jeden FVG v pohybe?\n\nSetup radšej vynechaj alebo sa pozri na vyšší timeframe – viacero FVG znamená neistotu.\n\nROZBOR OBCHODOV\n\nPríklad obchodu 1 (Short)\n\nLiquidity Sweep\nCena vyčistí predchádzajúci swing high, čím spustí buy-side liquidity grab. Ide o kľúčový stop-hunt nad známym highom.\n\nFormácia Fair Value Gap (FVG)\nPočas tohto agresívneho pohybu vzniká Fair Value Gap (FVG), keďže cena za sebou necháva nerovnováhu medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG so silnou medvedou displacement, čo naznačuje, že trh odmietol nerovnováhu a momentum je teraz smerom dole. Toto čisté prerazenie potvrdzuje iFVG setup.\n\nVstup\nVstup sa realizuje pri retest FVG zospodu, kde sa cena vráti do zóny iFVG pred ďalším pádom.\n\nStop Loss\nStop je umiestnený tesne nad iFVG alebo nad high sviečky, ktorá spôsobila sweep.\n\nCieľ\nPrvý cieľ je najbližšia oblasť sell-side likvidity, označená rovnakými lows nižšie. Rozšírený cieľ je demand zóna (sivý box), kde cena nakoniec zareaguje.\n\nPríklad obchodu 2 (Long)\n\nSMT Divergencia\nNa low pohybu je prítomná SMT divergencia – jedno korelované aktívum (napr. ES) vytvorí nižší low, zatiaľ čo druhé (napr. NQ) drží vyššie. Toto signalizuje narušenie korelácie a naznačuje možný zvrat.\n\nLiquidity Sweep\nCena vyčistí predchádzajúci low, čím spustí sell-side liquidity grab. Stopy sú vyčistené pod týmto low pred prudkým zvratom.\n\nFormácia Fair Value Gap (FVG)\nPočas agresívneho pohybu dole vzniká FVG. Táto medzera sa tvorí medzi knôtmi troch po sebe idúcich sviečok.\n\nPotvrdenie iFVG\nCena prerazí FVG smerom hore a odmietne nerovnováhu. Toto potvrdzuje, že cena sa už nevybalansováva – mení smer. Pohyb spĺňa podmienky iFVG setupu.\n\nVstup\nVstup sa realizuje pri retest iFVG, keď sa cena vráti do zóny a udrží sa.\n\nStop Loss\nStop je umiestnený tesne pod FVG alebo pod swing low vytvoreným sweepom.\n\nPrvý cieľ je interný high. Finálny cieľ je buy-side likvidita nad predchádzajúcim highom.':
+'BUILT FOR\n\nInstruments: Futures\nTrading Style: Day Trading\n\nPLAYBOOK OVERVIEW\n\nThis strategy is built around the idea that when price sweeps liquidity and aggressively displaces through a Fair Value Gap (FVG) in the opposite direction, it often signals the start of a directional move. The IFVG model identifies these moments of reversal by combining key ICT concepts: SMT divergence and IFVGs after a liquidity event. It is a high-probability, rule-based intraday strategy best applied to correlated assets, most effectively used on NQ and ES during the New York session.\n\nCORE CONCEPTS\n\nTo fully understand how the IFVG model works, it’s important to first grasp the two key concepts it relies on: Inverse Fair Value Gaps (IFVGs) and SMT Divergence. These tools help identify when the market may be reversing direction with high probability.\n\nInverse Fair Value Gap (IFVG)\n\nA Fair Value Gap (FVG) forms when there’s a gap between the wicks of three consecutive candles, usually due to aggressive buying or selling that leaves behind an imbalance. In traditional ICT theory, FVGs are seen as areas where price may return to “rebalance” before continuing in the original direction.\n\nAn Inverse Fair Value Gap setup flips this concept.\n\nIn the IFVG model, you’re looking for:\n\n- A liquidity sweep - price runs stops above a high or below a low.\n- Then, price displaces strongly in the opposite direction, breaking through an existing FVG instead of respecting it.\n- This inversion (breaking cleanly through the FVG) suggests the market is no longer interested in rebalancing, it’s shifting direction.\n\nThis shift is often the early signal of a larger move, and the IFVG becomes your entry trigger after confirmation.\n\nSMT Divergence\n\nSMT Divergence refers to when two correlated instruments diverge - revealing a hidden clue about true direction or liquidity being engineered.\n\nSMT Divergence happens when:\n\n- Two correlated assets (e.g. ES & NQ, SPY & QQQ, EURUSD and GBPUSD) behave differently at key levels.\n- One makes a higher high (or lower low), while the other fails to - signaling divergence.\n\nLet\'s say you\'re trading NQ and watching ES as confirmation.\n\n- NQ sweeps a low, making a lower low.\n- ES does not — it holds its previous low (a higher low).\n\nThis shows SMT Bullish Divergence, smart money likely swept NQ liquidity while holding ES. This makes your IFVG Long much higher probability.\n\nSETUP OVERVIEW\n\nSymbols: NQ and ES. These correlated futures instruments are used together to spot SMT divergence and execute high-probability trades.\n\nTimeframes: Use the 1-minute, 2-minute, 3-minute, or 5-minute chart for precision entries. Higher timeframes like the 1-hour and 4-hour are used only for directional bias and liquidity targets.\n\nSessions: New York Session only. The model is designed to be used during the NY open (9:30 AM EST onward), when volume, volatility, and liquidity sweeps are most active.\n\nPLAYBOOK RULES\n\nContext (Bias Setup)\n- Start with a 4H or 1H chart to determine if the price is likely to go up or down.\n- Identify draw on liquidity. Are we targeting highs or lows?\n- Mark key swing highs/lows and session opens.\n\nLiquidity Sweep\n- Price must sweep an obvious internal high/low.\n- This should be clear - clean, obvious, market-structure-based liquidity.\n- If you get SMT after the sweep, this significantly increases the probability of the inversion setup working.\n\nFormation of FVG\n- Look for a clean fair value gap after the sweep.\n- Preferably a singular FVG, multiple FVGs in the leg reduce accuracy.\n\nThe Inversion (Confirmation)\n- Wait for price to close back through the FVG from the opposite direction.\n- This transforms the FVG into an inverse FVG.\n\nEntry\n- Enter on a return to the IFVG (limit or market entry).\n- Entry on candle closure through IFVG if there is clear displacement.\n- Use the same timeframe for entry as the inversion — e.g, a 3M IFVG needs a 3M close through it.\n\nTake Profit\n- First Target = Internal Liquidity (recent high/low).\n- Final Target = Major Swing High/Low or Draw on Liquidity.\n\nBreakeven Rule\n\nIf the first internal liquidity is hit and no further displacement occurs, assume we\'re rotating and protect capital.\n\nMore than one FVG in the move?\n\nAvoid the setup or zoom out, multiple FVGs = uncertainty.\n\nTRADE BREAKDOWN\n\nTrade Example 1 (Short Trade)\n\nLiquidity Sweep\nPrice takes out a previous swing high, triggering a buy-side liquidity grab. This is a key stop-hunt above a known high.\n\nFair Value Gap (FVG) Formation\nA Fair Value Gap (FVG) forms during this aggressive move as the price leaves behind an imbalance between the wicks of three consecutive candles.\n\nIFVG Confirmation\nPrice breaks through the FVG with strong bearish displacement, indicating that the market has rejected the imbalance and momentum is now to the downside. This clean break confirms the IFVG setup.\n\nEntry\nEntry is taken on the retest of the FVG from below, where price returns to the IFVG zone before continuing lower.\n\nStop Loss\nStop is placed just above the IFVG or the high of the candle that created the sweep.\n\nTarget\nThe first target is the next area of sell-side liquidity, marked by the equal lows below. Extended target sits at the demand zone (grey box) where price eventually reacts.\n\nTrade Example 2 (Long Trade)\n\nSMT Divergence\nAt the low of the move, SMT divergence is present — one correlated asset (e.g., ES) makes a lower low, while the other (e.g., NQ) holds higher. This signals a break in correlation and hints at a reversal.\n\nLiquidity Sweep\nPrice takes out a previous low, triggering a sell-side liquidity grab. Stops are cleared below this low before a sharp reversal.\n\nFair Value Gap (FVG) Formation\nIt creates a FVG during the aggressive move down. This gap forms between the wicks of three consecutive candles.\n\nIFVG Confirmation\nPrice breaks through the FVG to the upside, rejecting the imbalance. This confirms that price is no longer rebalancing — it’s shifting direction. The move qualifies as an IFVG setup.\n\nEntry\nEntry is taken on the retest of the IFVG, as price returns to the zone and holds.\n\nStop Loss\nStop is placed just below the FVG or the swing low created by the sweep.\n\nFirst target is the internal high. Final target is the buy-side liquidity above the prior high.',
+});
+Object.assign(I18N_EN,{
+"Break & Retest je jedna z najzákladnejších a najspoľahlivejších technických stratégií. Stojí na jednoduchej myšlienke: keď cena presvedčivo prelomí kľúčovú úroveň, táto úroveň sa často zmení z odporu na podporu (alebo naopak) a cena sa k nej neskôr vráti, aby ju \"otestovala\", než bude pokračovať ďalej. Namiesto naháňania breakoutu čakáme na tento návrat a vstupujeme až po jeho potvrdení – čím eliminujeme väčšinu falošných signálov a naháňania ceny.":"Break & Retest is one of the most fundamental and reliable technical strategies. It is built on a simple idea: when price convincingly breaks a key level, that level often flips from resistance to support (or vice versa), and price later returns to \"test\" it before continuing. Instead of chasing the breakout, we wait for that return and enter only after it is confirmed – which eliminates most false signals and chasing.",
+"Označená jasná kľúčová úroveň (predchádzajúci deň high/low, výrazný swing high/low alebo iná zjavná zóna)":"A clear key level is marked (previous day high/low, a significant swing high/low, or another obvious zone)",
+"Cena prelomí úroveň presvedčivo – silná sviečka so zatvorením zreteľne za úrovňou, nie len knôtom":"Price breaks the level convincingly – a strong candle closing clearly beyond the level, not just a wick",
+"Cena sa vráti späť k prelomenej úrovni (retest) namiesto toho, aby okamžite pokračovala ďalej":"Price returns to the broken level (retest) instead of immediately continuing",
+"Úroveň sa pri retest drží ako nová podpora/odpor – žiadne spätné prerazenie na druhú stranu":"The level holds as new support/resistance on the retest – no break back to the other side",
+"Prvý cieľ = najbližší swing high/low, časť pozície sa uzatvára (trim)":"First target = nearest swing high/low, part of the position is trimmed",
+"Stop je umiestnený tesne za retest zónou, mimo bežného trhového šumu":"Stop is placed just beyond the retest zone, outside normal market noise",
+"VYTVORENÉ PRE\n\nNástroje: Akcie, futures, forex\nŠtýl obchodovania: Intradenný aj swingový\n\nPREHĽAD STRATÉGIE\n\nBreak & Retest je jedna z najstarších a najspoľahlivejších technických stratégií, založená na čítaní price action a kľúčových úrovní. Namiesto naháňania ceny hneď po breakoute čakáme na jej návrat k prelomenej úrovni – tam, kde je pomer risk/reward najvýhodnejší a signál najčistejší.\n\nZÁKLADNÝ KONCEPT: Zlomenie štruktúry\n\nKaždá kľúčová úroveň (predchádzajúci high/low dňa, výrazný swing bod, alebo psychologická cena) funguje ako bariéra, kde sa história obchodovania hromadí – objednávky, stopy, limitné príkazy. Keď cena túto úroveň presvedčivo prelomí (silná sviečka, jasné zatvorenie za úrovňou, nie len tieň knôtu), znamená to posun v rovnováhe medzi kupujúcimi a predávajúcimi.\n\nDôležité je rozlíšiť skutočný breakout od falošného. Slabý breakout (dlhý knôt, uzavretie späť pod úrovňou) často signalizuje pascu na retailových obchodníkov – radšej počkaj na presvedčivé zatvorenie.\n\nZÁKLADNÝ KONCEPT: Retest a vstup\n\nPo breakoute sa cena veľmi často vráti späť k prelomenej úrovni – nie preto, že sa \"mýlila\", ale pretože táto úroveň sa teraz stáva novou podporou (pri breakoute nahor) alebo odporom (pri breakoute nadol). Toto je presne ten moment, na ktorý Break & Retest trader čaká.\n\nVstup nastáva až vtedy, keď cena úroveň pri retest zreteľne rešpektuje – napríklad malou sviečkou s dlhým knôtom smerom k úrovni a zatvorením naspäť v smere pôvodného breakoutu. Ak cena namiesto toho prerazí späť cez úroveň, setup je neplatný a treba ho vynechať.\n\nRIADENIE RIZIKA: Stop a ciele\n\nStop loss patrí tesne za retest zónu (za low retest sviečky pri long vstupe, za high pri short vstupe) – dostatočne blízko, aby bol pomer risk/reward priaznivý, ale dostatočne ďaleko, aby ho nevyradil bežný trhový šum.\n\nPrvý cieľ je najbližší výrazný swing high/low – tu je vhodné časť pozície uzavrieť (trim) a zvyšok nechať bežať s presunutým stopom na breakeven. Druhý, rozšírený cieľ sa hľadá pri ďalšej významnej štruktúrnej úrovni, ak trend pokračuje.\n\nKEDY SETUP VYNECHAŤ\n\n- Breakout bez objemu alebo s dlhými knôtmi namiesto pevného zatvorenia.\n- Retest, ktorý preráža späť cez úroveň namiesto toho, aby sa od nej odrazil.\n- Príliš veľa predchádzajúcich testov tej istej úrovne – čím viackrát je úroveň testovaná, tým je slabšia.":
+"BUILT FOR\n\nInstruments: Stocks, futures, forex\nTrading Style: Intraday and swing\n\nPLAYBOOK OVERVIEW\n\nBreak & Retest is one of the oldest and most reliable technical strategies, grounded in reading price action and key levels. Instead of chasing price right after the breakout, we wait for it to return to the broken level – where the risk/reward is most favorable and the signal is cleanest.\n\nCORE CONCEPT: Break of Structure\n\nEvery key level (previous day's high/low, a significant swing point, or a psychological price) acts as a barrier where trading history accumulates – orders, stops, limit orders. When price convincingly breaks through it (a strong candle, a clear close beyond the level, not just a wick), it signals a shift in the balance between buyers and sellers.\n\nIt's important to distinguish a real breakout from a fake one. A weak breakout (long wick, closing back below the level) often signals a trap for retail traders – better to wait for a convincing close.\n\nCORE CONCEPT: Retest and Entry\n\nAfter the breakout, price very often returns to the broken level – not because it was \"wrong,\" but because this level now becomes new support (on a breakout up) or resistance (on a breakout down). This is exactly the moment a Break & Retest trader waits for.\n\nEntry only comes once price clearly respects the level on the retest – for example, a small candle with a long wick toward the level, closing back in the direction of the original breakout. If price instead breaks back through the level, the setup is invalid and should be skipped.\n\nRISK MANAGEMENT: Stop and Targets\n\nThe stop loss belongs just beyond the retest zone (below the retest candle's low on a long entry, above its high on a short entry) – close enough to keep risk/reward favorable, but far enough not to get taken out by normal market noise.\n\nThe first target is the nearest significant swing high/low – a good spot to trim part of the position and let the rest run with the stop moved to breakeven. A second, extended target is sought at the next major structural level if the trend continues.\n\nWHEN TO SKIP THE SETUP\n\n- A breakout without volume or with long wicks instead of a solid close.\n- A retest that breaks back through the level instead of bouncing off it.\n- Too many previous tests of the same level – the more a level gets tested, the weaker it becomes.",
+});
 const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
@@ -768,6 +1476,7 @@ const I18N_RULES=[
 [/^(.+) \((\d+) sviečok\)$/,'$1 ($2 candles)'],
 [/^Obchod #(\d+) – (.+)$/,'Trade #$1 – $2'],
 [/^Obchody (\d.+)$/,'Trades $1'],
+[/^Obchody \((\d+)\)$/,'Trades ($1)'],
 [/^(\d+) mes\.$/,'$1 mo.'],
 [/^Účet: (.+)$/,'Account: $1'],
 [/^Účet "(.+)" má obchody\. Presunúť ich do účtu "(.+)"\?$/,'Account "$1" has trades. Move them to account "$2"?'],
@@ -841,17 +1550,21 @@ async function init(){
     if(s.v.accounts&&s.v.accounts.length)settings.accounts=s.v.accounts;
     if(s.v.activeAccount!=null)settings.activeAccount=s.v.activeAccount;
     if(s.v.lang)settings.lang=s.v.lang;
+    if(s.v.theme)settings.theme=s.v.theme;
     if(s.v.gClientId)settings.gClientId=s.v.gClientId;
     settings.gConnected=!!s.v.gConnected;
     settings.gLastSync=s.v.gLastSync||null;
     if(s.v.anthropicKey)settings.anthropicKey=s.v.anthropicKey;
     if(s.v.aiChatModel)settings.aiChatModel=s.v.aiChatModel;
     if(s.v.aiInsightModel)settings.aiInsightModel=s.v.aiInsightModel;}
+  applyTheme();
   // migrácia: starý settings.balance -> prvý účet
   if(settings.accounts.length===1&&!settings.accounts[0].balance&&settings.balance)settings.accounts[0].balance=settings.balance;
   if(settings.activeAccount!=='all'&&!settings.accounts.some(a=>a.id===settings.activeAccount))settings.activeAccount=settings.accounts[0].id;
   trades=await idbAll('trades');
   ohlcSets=await idbAll('ohlc');
+  strategies=await idbAll('strategies');
+  await seedDefaultStrategies();
   renderAll();
   bindGlobal();
   $('langSelect').value=settings.lang||'sk';
@@ -862,8 +1575,8 @@ async function init(){
     setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
   }
 }
-function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync,anthropicKey:settings.anthropicKey,aiChatModel:settings.aiChatModel,aiInsightModel:settings.aiInsightModel}});}
-function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();}
+function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:settings.balance,mults:settings.mults,multsExact:true,accounts:settings.accounts,activeAccount:settings.activeAccount,lang:settings.lang,theme:settings.theme,gClientId:settings.gClientId,gConnected:settings.gConnected,gLastSync:settings.gLastSync,anthropicKey:settings.anthropicKey,aiChatModel:settings.aiChatModel,aiInsightModel:settings.aiInsightModel}});}
+function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();}
 
 /* ================= Účty ================= */
 function defaultAccId(){return settings.accounts[0].id;}
@@ -1071,6 +1784,9 @@ function renderDashboard(){
   const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
   renderBreakdown('byDow',ts,t=>dows[new Date(tTime(t)*1000).getDay()]);
   renderBreakdown('byHour',ts,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00');
+  renderBreakdown('bySession',ts,t=>sessionOf(t));
+  renderBreakdown('byEmotionIn',ts,t=>emotionLabel(t.emotionIn));
+  renderBreakdown('byEmotionOut',ts,t=>emotionLabel(t.emotionOut));
   renderPatterns(ts);
 }
 /* ================= Trading patterns ================= */
@@ -1564,10 +2280,12 @@ function renderTagBar(){
   if(tc)tc.onclick=()=>{tagFilter.clear();renderTrades();};
 }
 function filteredTrades(){
-  const sym=$('fSymbol').value,dir=$('fDir').value,from=$('fFrom').value,to=$('fTo').value,q=$('fSearch').value.toLowerCase();
+  const sym=$('fSymbol').value,dir=$('fDir').value,session=$('fSession').value,strat=$('fStrategy').value,from=$('fFrom').value,to=$('fTo').value,q=$('fSearch').value.toLowerCase();
   return accTrades().filter(t=>{
     if(sym&&String(t.symbol).toUpperCase()!==sym)return false;
     if(dir&&String(t.dir)!==dir)return false;
+    if(session&&sessionOf(t)!==session)return false;
+    if(strat&&String(t.strategyId)!==strat)return false;
     if(tagFilter.size){
       const match=[...tagFilter].some(k=>{
         const name=k.slice(2);
@@ -1596,17 +2314,19 @@ function tradeRowHTML(t){
     <td>${fmtDur(dur)}</td>
     <td class="${moneyCls(pnl)}"><b>${fmtMoney(pnl)}</b></td>
     <td>${r==null?'–':r.toFixed(2)+'R'}</td>
+    <td>${esc(tr(sessionOf(t)))}</td>
+    <td>${t.strategyId!=null?esc(strategyNameOf(t)):'–'}</td>
     <td>${(t.tags||[]).map(x=>`<span class="tag g">${esc(x)}</span>`).join('')}${(t.tagsNeg||[]).map(x=>`<span class="tag r">${esc(x)}</span>`).join('')}</td>
     <td><button class="btn secondary small" onclick="event.stopPropagation();delTrade(${t.id})">✕</button></td>
   </tr>`;
 }
 function tradeTableHTML(list){
-  return `<div style="overflow-x:auto"><table><thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Tagy</th><th></th></tr></thead><tbody>${list.map(tradeRowHTML).join('')}</tbody></table></div>`;
+  return `<div style="overflow-x:auto"><table><thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Session</th><th>Stratégia</th><th>Tagy</th><th></th></tr></thead><tbody>${list.map(tradeRowHTML).join('')}</tbody></table></div>`;
 }
 function renderTrades(){
   renderTagBar();
   const list=filteredTrades();
-  $('tradesBody').innerHTML=list.length?list.map(tradeRowHTML).join(''):'<tr><td colspan="11" class="hint" style="cursor:default">Žiadne obchody. Pridaj ručne alebo importuj CSV.</td></tr>';
+  $('tradesBody').innerHTML=list.length?list.map(tradeRowHTML).join(''):'<tr><td colspan="13" class="hint" style="cursor:default">Žiadne obchody. Pridaj ručne alebo importuj CSV.</td></tr>';
   $('fCount').textContent=list.length+' obchodov';
 }
 function commentedTrades(){
@@ -1666,6 +2386,10 @@ async function openTrade(id){
   $('tPnl').value=t&&t.pnlOverride!=null?t.pnlOverride:'';
   $('tTags').value=t?(t.tags||[]).join(', '):'';
   $('tTagsNeg').value=t?(t.tagsNeg||[]).join(', '):'';
+  $('tEmotionIn').value=t?(t.emotionIn||''):'';
+  $('tEmotionOut').value=t?(t.emotionOut||''):'';
+  refreshStrategySelects();
+  $('tStrategy').value=t&&t.strategyId!=null?String(t.strategyId):'';
   $('tNotes').value=t?(t.notes||''):'';
   if(t){
     const shots=await shotsByTrade(t.id);
@@ -1673,6 +2397,7 @@ async function openTrade(id){
   }
   renderShots();
   renderTagSuggest();
+  renderTradeRuleChecklist();
   updatePnlPreview();
   $('tradeOverlay').classList.add('open');
   renderModalChart();
@@ -1700,6 +2425,10 @@ function formTrade(){
     pnlOverride:$('tPnl').value.trim()===''?null:num($('tPnl').value),
     tags:$('tTags').value.split(',').map(s=>s.trim()).filter(Boolean),
     tagsNeg:$('tTagsNeg').value.split(',').map(s=>s.trim()).filter(Boolean),
+    emotionIn:$('tEmotionIn').value||null,
+    emotionOut:$('tEmotionOut').value||null,
+    strategyId:$('tStrategy').value?parseInt($('tStrategy').value,10):null,
+    checkedRules:$('tStrategy').value?[...document.querySelectorAll('#tRuleChecklist .tRuleCheck:checked')].map(i=>i.value):null,
     notes:$('tNotes').value,
   };
   return t;
@@ -2129,9 +2858,21 @@ function convertBrokerOrdersToTrades(headers,rows,commissionMap){
   const iQty=idx('Filled Qty')>=0?idx('Filled Qty'):idx('filledQty');
   const iPrice=idx('Avg Fill Price')>=0?idx('Avg Fill Price'):idx('avgPrice');
   const iTime=idx('Fill Time')>=0?idx('Fill Time'):idx('Timestamp');
+  const iType=idx('Type'),iStopPrice=idx('Stop Price'),iTimestamp=idx('Timestamp');
   const fills=[];
+  const stopOrders=[];
   for(const r of rows){
     const status=String(r[iStatus]||'').trim().toLowerCase();
+    const typeRaw=iType>=0?String(r[iType]||'').trim().toLowerCase():'';
+    if(typeRaw==='stop'){
+      const sideRaw=String(r[iSide]||'').trim().toLowerCase();
+      const side=sideRaw.startsWith('b')?1:-1;
+      const symbol=String(r[iContract]||'').trim();
+      const account=iAcc>=0?String(r[iAcc]||''):'';
+      const stopPrice=iStopPrice>=0?num(r[iStopPrice]):NaN;
+      const ts=iTimestamp>=0?parseDT(r[iTimestamp]):null;
+      if(symbol&&isFinite(stopPrice)&&ts)stopOrders.push({account,symbol,side,stopPrice,t:ts});
+    }
     if(status!=='filled')continue;
     const qty=num(r[iQty]),price=num(r[iPrice]),t=parseDT(r[iTime]);
     const sideRaw=String(r[iSide]||'').trim().toLowerCase();
@@ -2143,17 +2884,19 @@ function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     fills.push({account,symbol,side,qty,price,t,fee});
   }
   fills.sort((a,b)=>a.t-b.t);
+  stopOrders.sort((a,b)=>a.t-b.t);
   const groups={};
   for(const f of fills){(groups[f.account+'|'+f.symbol]=groups[f.account+'|'+f.symbol]||[]).push(f);}
   const trades=[];
   for(const k in groups){
+    const account=k.split('|')[0];
     let position=0,cur=null;
     for(const f of groups[k]){
       let remaining=f.qty;
       const feePerUnit=f.fee/f.qty;
       while(remaining>0){
         if(position===0){
-          cur={dir:f.side,symbol:f.symbol,entryQty:0,entryNotional:0,exitQty:0,exitNotional:0,fees:0,tEntry:f.t,tExit:null};
+          cur={dir:f.side,symbol:f.symbol,account,entryQty:0,entryNotional:0,exitQty:0,exitNotional:0,fees:0,tEntry:f.t,tExit:null};
           cur.entryQty+=remaining;cur.entryNotional+=remaining*f.price;cur.fees+=feePerUnit*remaining;
           position=f.side*remaining;remaining=0;
         }else if(Math.sign(position)===f.side){
@@ -2171,8 +2914,13 @@ function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     if(cur)trades.push(cur);
   }
   trades.sort((a,b)=>a.tEntry-b.tEntry);
+  // best-effort match: first protective Stop order (opposite side, same account+symbol) placed between entry and exit
+  for(const t of trades){
+    const cands=stopOrders.filter(s=>s.account===t.account&&s.symbol===t.symbol&&s.side===-t.dir&&s.t>=t.tEntry-1&&(!t.tExit||s.t<=t.tExit+1));
+    if(cands.length)t.stopPrice=cands[0].stopPrice;
+  }
   const rnd=x=>Math.round(x*1e6)/1e6;
-  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees'];
+  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees','Stop loss'];
   const outRows=trades.map(t=>[
     t.symbol,
     t.dir===1?'Buy':'Sell',
@@ -2182,6 +2930,7 @@ function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     tsToLocalInput(t.tEntry),
     t.tExit?tsToLocalInput(t.tExit):'',
     String(rnd(t.fees||0)),
+    t.stopPrice!=null?String(rnd(t.stopPrice)):'',
   ]);
   return {headers:outHeaders,rows:outRows,openCount:trades.filter(t=>!t.tExit).length};
 }
@@ -2236,7 +2985,7 @@ async function doImport(){
   if(map.symbol<0||map.tEntry<0){toast('Namapuj minimálne Symbol a Čas vstupu');return;}
   const get=(r,k)=>map[k]>=0?r[map[k]]:null;
   const account=parseInt($('importAccount').value,10)||defaultAccId();
-  let ok=0,skip=0,dup=0;
+  let ok=0,skip=0,dup=0,backfilled=0;
   for(const r of csvRows){
     const symbol=String(get(r,'symbol')||'').trim();
     const tEntry=parseDT(get(r,'tEntry'));
@@ -2245,10 +2994,19 @@ async function doImport(){
     const pnlRaw=get(r,'pnl');
     const pnlOverride=(pnlRaw!=null&&String(pnlRaw).trim()!=='')?num(pnlRaw):null;
     if(!isFinite(entry)&&(pnlOverride==null||!isFinite(pnlOverride))){skip++;continue;}
-    const isDup=trades.some(x=>x.account===account&&x.tEntry===tEntry&&
+    const existing=trades.find(x=>x.account===account&&x.tEntry===tEntry&&
       String(x.symbol||'').toUpperCase()===symbol.toUpperCase()&&
       (!isFinite(entry)||!isFinite(x.entry)||Math.abs(x.entry-entry)<1e-9));
-    if(isDup){dup++;continue;}
+    if(existing){
+      dup++;
+      const stopRaw=num(get(r,'stop'));
+      if((existing.stop==null||!isFinite(existing.stop))&&isFinite(stopRaw)){
+        existing.stop=stopRaw;
+        await idbPut('trades',existing);
+        backfilled++;
+      }
+      continue;
+    }
     const t={
       symbol,
       account,
@@ -2270,10 +3028,10 @@ async function doImport(){
     const id=await idbAdd('trades',t);
     t.id=id;trades.push(t);ok++;
   }
-  $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`;
+  $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+(backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'');
   renderAll();
   scheduleAutoSync();
-  toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:''));
+  toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+(backfilled?`, doplnený stop pri ${backfilled}`:''));
 }
 
 /* ================= Online fetch (Yahoo Finance) ================= */
@@ -2578,13 +3336,16 @@ async function buildBackupPayload(){
   const shots=await idbAll('shots');
   const shotsOut=[];
   for(const s of shots)shotsOut.push({tradeId:s.tradeId,data:await blobToB64(s.blob)});
+  const stratShots=await idbAll('stratShots');
+  const stratShotsOut=[];
+  for(const s of stratShots)stratShotsOut.push({strategyId:s.strategyId,data:await blobToB64(s.blob)});
   const settingsOut=Object.assign({},settings);
   delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
   delete settingsOut.anthropicKey; // API kľúč sa nezálohuje (citlivý údaj, len pre toto zariadenie)
-  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades,ohlc:ohlcSets,shots:shotsOut};
+  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades,ohlc:ohlcSets,shots:shotsOut,strategies,stratShots:stratShotsOut};
 }
 async function applyBackupPayload(p){
-  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
+  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');await idbClear('strategies');await idbClear('stratShots');
   const idMap={};
   for(const t of (p.trades||[])){
     const oldId=t.id;delete t.id;
@@ -2596,6 +3357,8 @@ async function applyBackupPayload(p){
     if(tid!=null)await idbAdd('shots',{tradeId:tid,blob:b64ToBlob(s.data),added:Date.now()});
   }
   for(const d of (p.ohlc||[]))await idbPut('ohlc',d);
+  for(const st of (p.strategies||[]))await idbPut('strategies',st);
+  for(const s of (p.stratShots||[]))await idbAdd('stratShots',{strategyId:s.strategyId,blob:b64ToBlob(s.data),added:Date.now()});
   if(p.settings){
     const keepClientId=settings.gClientId,keepAnthropicKey=settings.anthropicKey;
     settings=Object.assign(settings,p.settings);
@@ -2605,6 +3368,7 @@ async function applyBackupPayload(p){
   }
   trades=await idbAll('trades');
   ohlcSets=await idbAll('ohlc');
+  strategies=await idbAll('strategies');
 }
 async function exportBackup(){
   const payload=await buildBackupPayload();
