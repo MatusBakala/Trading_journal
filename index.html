@@ -815,12 +815,23 @@ const DEFAULT_STRATEGIES=[
 ];
 async function seedDefaultStrategies(){
   const flag=await idbGet('kv','defaultStrategiesSeeded');
-  if(flag)return;
+  if(!flag){
+    for(const s of DEFAULT_STRATEGIES){
+      const id=await idbAdd('strategies',Object.assign({},s));
+      strategies.push(Object.assign({},s,{id}));
+    }
+    await idbPut('kv',{k:'defaultStrategiesSeeded',v:true});
+    return;
+  }
+  // Inštalácie zo staršej verzie appky už majú seedovanie odbavené, takže si
+  // nevšimnú nové položky pribudnuté do DEFAULT_STRATEGIES odvtedy – domiešaj
+  // len tie, čo tu chýbajú podľa mena, existujúce stratégie nechaj netknuté.
+  const existingNames=new Set(strategies.map(s=>s.name));
   for(const s of DEFAULT_STRATEGIES){
+    if(existingNames.has(s.name))continue;
     const id=await idbAdd('strategies',Object.assign({},s));
     strategies.push(Object.assign({},s,{id}));
   }
-  await idbPut('kv',{k:'defaultStrategiesSeeded',v:true});
 }
 function strategyById(id){return id==null?null:strategies.find(s=>s.id===id)||null;}
 function strategyNameOf(t){const s=strategyById(t.strategyId);return s?s.name:'– (bez stratégie)';}
