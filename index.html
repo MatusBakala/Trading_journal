@@ -543,6 +543,16 @@ window.__TJ_BOOT__=(async function(){
 <div id="lightbox"><img id="lightboxImg"></div>
 <div id="toast"></div>
 
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:420px">
+    <p id="confirmMessage" style="margin:0 0 18px;white-space:pre-wrap"></p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button type="button" class="btn secondary" id="confirmCancelBtn">Zrušiť</button>
+      <button type="button" class="btn" id="confirmOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT -->
 <div class="overlay" id="aiChatOverlay">
   <div class="modal" style="max-width:680px">

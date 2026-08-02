@@ -57,7 +57,7 @@ export function renderOhlcList(){
       <td><button type="button" class="btn secondary small" data-action="delOhlc" data-key="${esc(d.key)}">Vymazať</button></td></tr>`).join('')+'</tbody></table>';
 }
 export async function delOhlc(key){
-  if(!ask('Vymazať tento dataset?'))return;
+  if(!await ask('Vymazať tento dataset?'))return;
   await idbDel('ohlc',key);
   state.ohlcSets=state.ohlcSets.filter(d=>d.key!==key);
   renderOhlcList();

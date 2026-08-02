@@ -59,7 +59,7 @@ export async function saveAccounts(){
   const newIds=new Set(newAccs.map(a=>a.id));
   const removedWithTrades=state.settings.accounts.filter(a=>!newIds.has(a.id)&&state.trades.some(t=>(t.account??defaultAccId())===a.id));
   if(removedWithTrades.length){
-    if(!ask(`Účet "${removedWithTrades.map(a=>a.name).join(', ')}" má obchody. Presunúť ich do účtu "${newAccs[0].name}"?`))return;
+    if(!await ask(`Účet "${removedWithTrades.map(a=>a.name).join(', ')}" má obchody. Presunúť ich do účtu "${newAccs[0].name}"?`))return;
     for(const t of state.trades){
       const acc=t.account??defaultAccId();
       if(removedWithTrades.some(a=>a.id===acc)){t.account=newAccs[0].id;await idbPut('trades',t);}
