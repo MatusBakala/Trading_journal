@@ -1,9 +1,10 @@
 import { tr } from './i18n.js';
 import { esc, fmtDT } from './utils.js';
 import { parseCSV } from './csv-parser.js';
-import { idbDel, idbPut } from './db.js';
+import { idbDel } from './db.js';
 import { ask } from './i18n.js';
 import { normH } from './import-csv.js';
+import { saveBars } from './ohlc-fetch.js';
 import { barsForTrade } from './patterns.js';
 import { state } from './state.js';
 import { goToTab } from './tabs.js';
@@ -42,22 +43,8 @@ export function importOHLC(){
       if(t&&isFinite(o)&&isFinite(h)&&isFinite(l)&&isFinite(c))bars.push(isFinite(v)?{t,o,h,l,c,v}:{t,o,h,l,c});
     }
     if(!bars.length){toast('Nepodarilo sa načítať žiadne sviečky – skontroluj formát');return;}
-    bars.sort((a,b)=>a.t-b.t);
-    const dedup=[];let last=null;
-    for(const b of bars){if(b.t!==last){dedup.push(b);last=b.t;}}
-    const key=sym+'|'+tf;
-    const existing=state.ohlcSets.find(d=>d.key===key);
-    let merged=dedup;
-    if(existing){
-      const map=new Map(existing.bars.map(b=>[b.t,b]));
-      for(const b of dedup)map.set(b.t,b);
-      merged=[...map.values()].sort((a,b)=>a.t-b.t);
-    }
-    const ds={key,symbol:sym,tf,bars:merged,updated:Date.now()};
-    await idbPut('ohlc',ds);
-    state.ohlcSets=state.ohlcSets.filter(d=>d.key!==key);state.ohlcSets.push(ds);
-    $('ohlcResult').textContent=`Uložených ${merged.length} sviečok pre ${sym} (${tf}), pokrytie ${fmtDT(merged[0].t)} – ${fmtDT(merged[merged.length-1].t)}`;
-    renderOhlcList();
+    const ds=await saveBars(sym,tf,bars);
+    $('ohlcResult').textContent=`Uložených ${ds.bars.length} sviečok pre ${sym} (${tf}), pokrytie ${fmtDT(ds.bars[0].t)} – ${fmtDT(ds.bars[ds.bars.length-1].t)}`;
     toast('OHLC dáta nahrané');
     $('ohlcFile').value='';
   };

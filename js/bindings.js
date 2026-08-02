@@ -6,7 +6,7 @@ import { renderPatterns } from './patterns.js';
 import { state } from './state.js';
 import { ruleEditRowHTML } from './strategy-notes.js';
 import { reportRowHTML, tradeRowHTML } from './trades-list.js';
-import { $ } from './utils.js';
+import { $, debounce } from './utils.js';
 import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
 import { calMove, showDay } from './calendar.js';
@@ -46,7 +46,7 @@ document.getElementById('fStrategy').addEventListener('change', function(event){
 document.getElementById('fHour').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fFrom').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fTo').addEventListener('change', function(event){ renderTrades(); });
-document.getElementById('fSearch').addEventListener('input', function(event){ renderTrades(); });
+document.getElementById('fSearch').addEventListener('input', debounce(function(event){ renderTrades(); }, 250));
 document.getElementById('btnAddStrategy').addEventListener('click', function(event){ openStrategy(null); });
 document.getElementById('rSymbol').addEventListener('change', function(event){ renderReports(); });
 document.getElementById('rDir').addEventListener('change', function(event){ renderReports(); });
@@ -54,7 +54,7 @@ document.getElementById('rSession').addEventListener('change', function(event){ 
 document.getElementById('rStrategy').addEventListener('change', function(event){ renderReports(); });
 document.getElementById('rFrom').addEventListener('change', function(event){ renderReports(); });
 document.getElementById('rTo').addEventListener('change', function(event){ renderReports(); });
-document.getElementById('rSearch').addEventListener('input', function(event){ renderReports(); });
+document.getElementById('rSearch').addEventListener('input', debounce(function(event){ renderReports(); }, 250));
 document.getElementById('btnConvertRebuild').addEventListener('click', function(event){ convertAndRebuild(); });
 document.getElementById('btnMapManually').addEventListener('click', function(event){ $('brokerConvertBox').style.display='none'; });
 document.getElementById('btnDoImport').addEventListener('click', function(event){ doImport(); });

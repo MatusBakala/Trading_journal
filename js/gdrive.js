@@ -1,4 +1,3 @@
-import { DEFAULT_STRATEGIES } from './data/default-strategies.js';
 import { ask } from './i18n.js';
 import { renderAll, saveSettings } from './init.js';
 import { applyBackupPayload, buildBackupPayload } from './settings.js';
@@ -112,7 +111,8 @@ export async function gdriveSyncNow(isInitial){
         const remote=await gdriveDownload(remoteMeta.id);
         const remoteUpdated=remote.updatedAt||0;
         const localChanged=gdriveLastLocalChange();
-        const builtInNames=new Set((typeof DEFAULT_STRATEGIES!=='undefined'?DEFAULT_STRATEGIES:[]).map(s=>s.name));
+        const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
+        const builtInNames=new Set(DEFAULT_STRATEGIES.map(s=>s.name));
         const hasUserData=state.trades.length>0||state.strategies.some(s=>!builtInNames.has(s.name));
         // Fresh install / reset often has only built-in strategies and localChanged=0.
         // Don't let an older Drive backup overwrite newly seeded defaults from code.

@@ -2,9 +2,9 @@ import { tr } from './i18n.js';
 import { esc } from './utils.js';
 import { defaultAccId } from './accounts.js';
 import { parseCSV } from './csv-parser.js';
-import { idbAdd, idbPut } from './db.js';
+import { idbAddMany, idbPut } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
-import { renderAll } from './init.js';
+import { renderAfterTradeChange } from './init.js';
 import { state } from './state.js';
 import { $, num, parseDT, toast, tsToLocalInput } from './utils.js';
 
@@ -212,6 +212,14 @@ export async function doImport(){
   const get=(r,k)=>map[k]>=0?r[map[k]]:null;
   const account=parseInt($('importAccount').value,10)||defaultAccId();
   let ok=0,skip=0,dup=0,backfilled=0;
+  const dupKey=(acc,tEntry,sym)=>acc+'|'+tEntry+'|'+sym.toUpperCase();
+  const dupIndex=new Map();
+  for(const x of state.trades){
+    const k=dupKey(x.account,x.tEntry,String(x.symbol||''));
+    if(!dupIndex.has(k))dupIndex.set(k,[]);
+    dupIndex.get(k).push(x);
+  }
+  const newTrades=[];
   for(const r of csvRows){
     const symbol=String(get(r,'symbol')||'').trim();
     const tEntry=parseDT(get(r,'tEntry'));
@@ -220,8 +228,9 @@ export async function doImport(){
     const pnlRaw=get(r,'pnl');
     const pnlOverride=(pnlRaw!=null&&String(pnlRaw).trim()!=='')?num(pnlRaw):null;
     if(!isFinite(entry)&&(pnlOverride==null||!isFinite(pnlOverride))){skip++;continue;}
-    const existing=state.trades.find(x=>x.account===account&&x.tEntry===tEntry&&
-      String(x.symbol||'').toUpperCase()===symbol.toUpperCase()&&
+    const key=dupKey(account,tEntry,symbol);
+    const candidates=dupIndex.get(key);
+    const existing=candidates&&candidates.find(x=>
       (!isFinite(entry)||!isFinite(x.entry)||Math.abs(x.entry-entry)<1e-9));
     if(existing){
       dup++;
@@ -251,11 +260,17 @@ export async function doImport(){
       tagsNeg:String(get(r,'tagsNeg')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
       createdAt:Date.now(),
     };
-    const id=await idbAdd('trades',t);
-    t.id=id;state.trades.push(t);ok++;
+    newTrades.push(t);
+    if(!dupIndex.has(key))dupIndex.set(key,[]);
+    dupIndex.get(key).push(t);
+    ok++;
+  }
+  if(newTrades.length){
+    const ids=await idbAddMany('trades',newTrades);
+    newTrades.forEach((t,i)=>{t.id=ids[i];state.trades.push(t);});
   }
   $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+(backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'');
-  renderAll();
+  renderAfterTradeChange();
   scheduleAutoSync();
   toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+(backfilled?`, doplnený stop pri ${backfilled}`:''));
 }

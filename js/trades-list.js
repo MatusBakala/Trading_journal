@@ -5,7 +5,7 @@ import { accTrades } from './accounts.js';
 import { idbDel, shotsByTrade } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
 import { ask } from './i18n.js';
-import { renderAll } from './init.js';
+import { renderAfterTradeChange } from './init.js';
 import { state } from './state.js';
 import { riskR, tTime } from './strategy-notes.js';
 import { $, computePnl, esc, sessionOf, toast } from './utils.js';
@@ -24,15 +24,16 @@ export function refreshSymbolFilter(){
 }
 let tagFilter=new Set(); // kľúče 'g:nazov' / 'r:nazov'
 let reportTagFilter=new Set();
-export function allTagsOf(field){
+export function allTagsOf(field,trades){
   const s=new Set();
-  accTrades().forEach(t=>(t[field]||[]).forEach(x=>s.add(x)));
+  (trades||accTrades()).forEach(t=>(t[field]||[]).forEach(x=>s.add(x)));
   return [...s].sort((a,b)=>a.localeCompare(b));
 }
 export function renderTagBarGeneric(elId,filterSet,onChange){
   const el=$(elId);
   if(!el)return;
-  const gTags=allTagsOf('tags'),rTags=allTagsOf('tagsNeg');
+  const trades=accTrades();
+  const gTags=allTagsOf('tags',trades),rTags=allTagsOf('tagsNeg',trades);
   const valid=new Set([...gTags.map(x=>'g:'+x),...rTags.map(x=>'r:'+x)]);
   [...filterSet].forEach(k=>{if(!valid.has(k))filterSet.delete(k);});
   if(!gTags.length&&!rTags.length){el.innerHTML='';el.style.display='none';return;}
@@ -146,5 +147,5 @@ export async function delTrade(id){
   const shots=await shotsByTrade(id);
   for(const s of shots)await idbDel('shots',s.id);
   state.trades=state.trades.filter(t=>t.id!==id);
-  renderAll();scheduleAutoSync();toast('Obchod vymazaný');
+  renderAfterTradeChange();scheduleAutoSync();toast('Obchod vymazaný');
 }

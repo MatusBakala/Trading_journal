@@ -56,3 +56,7 @@ export function sessionOf(t){
   if(h>=14&&h<22)return 'New York';
   return 'Mimo session';
 }
+export function debounce(fn,ms){
+  let h;
+  return function(...args){clearTimeout(h);h=setTimeout(()=>fn.apply(this,args),ms);};
+}

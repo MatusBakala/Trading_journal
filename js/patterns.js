@@ -8,6 +8,11 @@ import { $, computePnl, dayKey, esc } from './utils.js';
 
 /* ================= Trading patterns ================= */
 export const PATTERNS_MIN_TRADES=5;
+function lowerBoundByTime(bars,value){
+  let lo=0,hi=bars.length;
+  while(lo<hi){const mid=(lo+hi)>>1;if(bars[mid].t<value)lo=mid+1;else hi=mid;}
+  return lo;
+}
 export function barsForTrade(t){
   if(!t.symbol||!t.tEntry||!t.tExit)return null;
   const cands=datasetsForSymbol(t.symbol);
@@ -17,7 +22,14 @@ export function barsForTrade(t){
     // include any bar whose [t, t+tf) interval overlaps the trade's duration, not just
     // ones that start inside it - otherwise a trade shorter than one candle (common for
     // scalps) matches zero bars even though a covering candle exists.
-    const bars=d.bars.filter(b=>b.t<=t.tExit&&(b.t+tf)>=t.tEntry);
+    // bars are stored sorted by t - bound the scan instead of filtering the whole array.
+    const startIdx=lowerBoundByTime(d.bars,t.tEntry-tf);
+    const bars=[];
+    for(let i=startIdx;i<d.bars.length;i++){
+      const b=d.bars[i];
+      if(b.t>t.tExit)break;
+      if((b.t+tf)>=t.tEntry)bars.push(b);
+    }
     if(bars.length>bestCount){bestCount=bars.length;best=bars;}
   }
   return bestCount>=1?best:null;

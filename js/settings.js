@@ -1,10 +1,9 @@
-import { defaultStrategiesFingerprint } from './strategy-notes.js';
 import { esc } from './utils.js';
 import { addAccRow } from './accounts.js';
 import { idbAdd, idbAll, idbClear, idbDel, idbPut } from './db.js';
 import { renderGDriveStatus, scheduleAutoSync } from './gdrive.js';
 import { ask } from './i18n.js';
-import { renderAll, saveSettings } from './init.js';
+import { renderAfterTradeChange, renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
 import { seedDefaultStrategies } from './strategy-notes.js';
 import { $, num, toast } from './utils.js';
@@ -40,11 +39,18 @@ export async function saveMults(){
   });
   state.settings.mults=m;
   await saveSettings();
-  renderAll();
+  renderAfterTradeChange();
   scheduleAutoSync();
   toast('Multiplikátory uložené');
 }
 export function blobToB64(blob){return new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(blob);});}
+const _shotB64Cache=new Map();
+function cachedBlobToB64(cacheKey,blob){
+  if(_shotB64Cache.has(cacheKey))return _shotB64Cache.get(cacheKey);
+  const p=blobToB64(blob);
+  _shotB64Cache.set(cacheKey,p);
+  return p;
+}
 export function b64ToBlob(dataUrl){
   const [meta,data]=dataUrl.split(',');
   const mime=(meta.match(/data:(.*?);/)||[])[1]||'image/png';
@@ -55,10 +61,10 @@ export function b64ToBlob(dataUrl){
 export async function buildBackupPayload(){
   const shots=await idbAll('shots');
   const shotsOut=[];
-  for(const s of shots)shotsOut.push({tradeId:s.tradeId,data:await blobToB64(s.blob)});
+  for(const s of shots)shotsOut.push({tradeId:s.tradeId,data:await cachedBlobToB64(s.id,s.blob)});
   const stratShots=await idbAll('stratShots');
   const stratShotsOut=[];
-  for(const s of stratShots)stratShotsOut.push({strategyId:s.strategyId,data:await blobToB64(s.blob)});
+  for(const s of stratShots)stratShotsOut.push({strategyId:s.strategyId,data:await cachedBlobToB64('strat-'+s.id,s.blob)});
   const settingsOut=Object.assign({},state.settings);
   delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
   delete settingsOut.anthropicKey; // API kľúč sa nezálohuje (citlivý údaj, len pre toto zariadenie)
@@ -86,9 +92,9 @@ export async function applyBackupPayload(p){
     state.settings.anthropicKey=keepAnthropicKey;
     await saveSettings();
   }
-  state.trades=await idbAll('trades');
-  state.ohlcSets=await idbAll('ohlc');
-  state.strategies=await idbAll('strategies');
+  state.trades=p.trades||[];
+  state.ohlcSets=p.ohlc||[];
+  state.strategies=p.strategies||[];
 }
 export async function exportBackup(){
   const payload=await buildBackupPayload();

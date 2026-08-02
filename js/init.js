@@ -49,3 +49,5 @@ export async function init(){
 }
 export function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:state.settings.balance,mults:state.settings.mults,multsExact:true,accounts:state.settings.accounts,activeAccount:state.settings.activeAccount,lang:state.settings.lang,theme:state.settings.theme,gClientId:state.settings.gClientId,gConnected:state.settings.gConnected,gLastSync:state.settings.gLastSync,anthropicKey:state.settings.anthropicKey,aiChatModel:state.settings.aiChatModel,aiInsightModel:state.settings.aiInsightModel}});}
 export function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();}
+/* Užšia verzia renderAll() pre zmeny tradov/P&L - vynecháva účty/OHLC/nastavenia, ktoré nie sú dotknuté. */
+export function renderAfterTradeChange(){renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderStrategies();refreshSymbolFilter();}
