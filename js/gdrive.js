@@ -52,7 +52,7 @@ export async function gdriveFindFile(){
 }
 export async function gdriveForceDownload(){
   if(!state.settings.gConnected||!state.settings.gClientId){toast('Najprv sa pripoj ku Google Drive');return;}
-  if(!ask('Stiahnutie PREPÍŠE aktuálne lokálne dáta v tomto prehliadači dátami z Google Drive. Pokračovať?'))return;
+  if(!await ask('Stiahnutie PREPÍŠE aktuálne lokálne dáta v tomto prehliadači dátami z Google Drive. Pokračovať?'))return;
   if(gSyncing)return;
   gSyncing=true;
   renderGDriveStatus('syncing');
@@ -155,7 +155,7 @@ export async function gdriveShowSnapshots(){
   }
 }
 export async function gdriveRestoreSnapshot(fileId,dateLabel){
-  if(!ask(`Obnoviť zálohu z ${dateLabel}? PREPÍŠE to aktuálne dáta v tomto prehliadači.`))return;
+  if(!await ask(`Obnoviť zálohu z ${dateLabel}? PREPÍŠE to aktuálne dáta v tomto prehliadači.`))return;
   if(gSyncing)return;
   gSyncing=true;
   renderGDriveStatus('syncing');

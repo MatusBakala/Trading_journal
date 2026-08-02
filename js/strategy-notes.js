@@ -781,7 +781,7 @@ export async function saveStrategy(){
 }
 export async function deleteCurrentStrategy(){
   if(state.currentStrategyId==null)return;
-  if(!ask('Vymazať túto stratégiu? Obchody, ktoré ju používajú, ostanú zachované, len stratia priradenie.'))return;
+  if(!await ask('Vymazať túto stratégiu? Obchody, ktoré ju používajú, ostanú zachované, len stratia priradenie.'))return;
   await idbDel('strategies',state.currentStrategyId);
   state.strategies=state.strategies.filter(x=>x.id!==state.currentStrategyId);
   if(state.strategyDetailId===state.currentStrategyId)state.strategyDetailId=null;

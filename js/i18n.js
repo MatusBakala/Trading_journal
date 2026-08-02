@@ -273,5 +273,34 @@ export async function switchLang(l){
   if(l==='en'){renderAll();i18nBusy=true;translateDOM(document.body,'fwd');i18nBusy=false;}
   else{i18nBusy=true;translateDOM(document.body,'rev');i18nBusy=false;renderAll();}
 }
-export const _cfm=window.confirm.bind(window);
-export function ask(s){return _cfm(tr(s));}
+/* window.confirm() sa v niektorých prostrediach (embedded preview panely, headless
+   testy) ticho potláča a vždy vráti false, bez akejkoľvek chyby - mazanie potom
+   pôsobí "nefunkčne", hoci appka o potvrdenie požiadala správne. Vlastný dialóg
+   nad #confirmOverlay funguje všade rovnako. */
+export function ask(s){
+  return new Promise(res=>{
+    const overlay=document.getElementById('confirmOverlay');
+    const msg=document.getElementById('confirmMessage');
+    const okBtn=document.getElementById('confirmOkBtn');
+    const cancelBtn=document.getElementById('confirmCancelBtn');
+    msg.textContent=tr(s);
+    function cleanup(result){
+      overlay.classList.remove('open');
+      okBtn.removeEventListener('click',onOk);
+      cancelBtn.removeEventListener('click',onCancel);
+      overlay.removeEventListener('mousedown',onOverlayClick);
+      document.removeEventListener('keydown',onKey);
+      res(result);
+    }
+    function onOk(){cleanup(true);}
+    function onCancel(){cleanup(false);}
+    function onOverlayClick(e){if(e.target===overlay)cleanup(false);}
+    function onKey(e){if(e.key==='Escape')cleanup(false);else if(e.key==='Enter')cleanup(true);}
+    okBtn.addEventListener('click',onOk);
+    cancelBtn.addEventListener('click',onCancel);
+    overlay.addEventListener('mousedown',onOverlayClick);
+    document.addEventListener('keydown',onKey);
+    overlay.classList.add('open');
+    okBtn.focus();
+  });
+}

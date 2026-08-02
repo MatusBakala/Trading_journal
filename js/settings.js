@@ -107,7 +107,7 @@ export async function exportBackup(){
 }
 export async function restoreBackup(input){
   const file=input.files[0];if(!file)return;
-  if(!ask('Obnovenie PREPÍŠE všetky aktuálne dáta. Pokračovať?')){input.value='';return;}
+  if(!await ask('Obnovenie PREPÍŠE všetky aktuálne dáta. Pokračovať?')){input.value='';return;}
   const text=await file.text();
   let p;try{p=JSON.parse(text);}catch(e){toast('Neplatný JSON');return;}
   await applyBackupPayload(p);
@@ -117,8 +117,8 @@ export async function restoreBackup(input){
   toast('Záloha obnovená');
 }
 export async function wipeAll(){
-  if(!ask('Naozaj vymazať VŠETKY obchody, screenshoty a dáta?'))return;
-  if(!ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
+  if(!await ask('Naozaj vymazať VŠETKY obchody, screenshoty a dáta?'))return;
+  if(!await ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
   await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
   await idbClear('strategies');await idbClear('stratShots');
   await idbDel('kv','defaultStrategiesSeeded');

@@ -142,7 +142,7 @@ export function renderReports(){
   $('rCount').textContent=list.length+' obchodov';
 }
 export async function delTrade(id){
-  if(!ask('Vymazať tento obchod?'))return;
+  if(!await ask('Vymazať tento obchod?'))return;
   await idbDel('trades',id);
   const shots=await shotsByTrade(id);
   for(const s of shots)await idbDel('shots',s.id);
