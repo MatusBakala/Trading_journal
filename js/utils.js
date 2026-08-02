@@ -12,9 +12,18 @@ export function fmtDT(ts){if(!ts)return'–';const d=new Date(ts*1000);return d.
 export function fmtD(ts){return new Date(ts*1000).toLocaleDateString('sk-SK');}
 export function dayKey(ts){const d=new Date(ts*1000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 export function fmtDur(sec){if(sec==null||isNaN(sec)||sec<0)return'–';if(sec<60)return Math.round(sec)+'s';if(sec<3600)return Math.round(sec/60)+'m';if(sec<86400)return(sec/3600).toFixed(1)+'h';return(sec/86400).toFixed(1)+'d';}
-export function num(v){if(v==null)return NaN;let s=String(v).trim().replace(/[\s $]/g,'');if(!s)return NaN;
-  if(/,\d+$/.test(s)&&s.indexOf('.')===-1)s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'');
-  const n=parseFloat(s);return isNaN(n)?NaN:n;}
+/* Ktorý oddeľovač je desatinný, prezradí ten, čo je v čísle posledný:
+   "1,234.50" je americký zápis, "1.234,50" európsky. Ten druhý sa predtým
+   čítal ako 1.2345, lebo európska vetva sa púšťala len pri čísle bez bodky. */
+export function num(v){
+  if(v==null)return NaN;
+  let s=String(v).trim().replace(/[\s $]/g,'');
+  if(!s)return NaN;
+  if(s.lastIndexOf(',')>s.lastIndexOf('.'))s=s.replace(/\./g,'').replace(',','.');
+  else s=s.replace(/,/g,'');
+  const n=parseFloat(s);
+  return isNaN(n)?NaN:n;
+}
 export function parseDT(v){
   if(v==null)return null;const s=String(v).trim();if(!s)return null;
   if(/^\d+(\.\d+)?$/.test(s)){const n=parseFloat(s);if(n>1e12)return Math.floor(n/1000);if(n>1e9)return Math.floor(n);}

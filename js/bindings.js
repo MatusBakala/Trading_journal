@@ -11,7 +11,7 @@ import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
 import { calMove, showDay } from './calendar.js';
 import { renderDashboard } from './dashboard.js';
-import { gdriveConnect, gdriveDisconnect, gdriveForceDownload, gdriveSyncNow } from './gdrive.js';
+import { gdriveConnect, gdriveDisconnect, gdriveForceDownload, gdriveRestoreSnapshot, gdriveShowSnapshots, gdriveSyncNow } from './gdrive.js';
 import { switchLang } from './i18n.js';
 import { convertAndRebuild, doImport } from './import-csv.js';
 import { fetchOnline } from './ohlc-fetch.js';
@@ -69,6 +69,11 @@ document.getElementById('gdriveConnectBtn').addEventListener('click', function(e
 document.getElementById('gdriveDisconnectBtn').addEventListener('click', function(event){ gdriveDisconnect(); });
 document.getElementById('btnGdriveSyncNow').addEventListener('click', function(event){ gdriveSyncNow(false); });
 document.getElementById('btnGdriveForceDownload').addEventListener('click', function(event){ gdriveForceDownload(); });
+document.getElementById('btnGdriveSnapshots').addEventListener('click', function(event){ gdriveShowSnapshots(); });
+document.getElementById('gdriveSnapshotList').addEventListener('click', function(event){
+  const btn = event.target.closest('[data-action="restoreSnapshot"]');
+  if (btn) gdriveRestoreSnapshot(btn.dataset.id, btn.dataset.date);
+});
 document.getElementById('btnSaveAnthropicKey').addEventListener('click', function(event){ saveAnthropicKey(); });
 document.getElementById('btnExportBackup').addEventListener('click', function(event){ exportBackup(); });
 document.getElementById('restoreFile').addEventListener('change', function(event){ restoreBackup(this); });

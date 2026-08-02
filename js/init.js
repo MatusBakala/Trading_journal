@@ -2,7 +2,7 @@ import { renderAccSelects } from './accounts.js';
 import { renderCalendar } from './calendar.js';
 import { renderDashboard } from './dashboard.js';
 import { idbAll, idbGet, idbOpen, idbPut } from './db.js';
-import { gdriveLoadLastLocalChange, gdriveSyncNow } from './gdrive.js';
+import { gdriveLoadSyncState, gdriveSyncNow } from './gdrive.js';
 import { translateDOM, withI18nBusy } from './i18n.js';
 import { renderOhlcList } from './ohlc-import.js';
 import { renderSettings } from './settings.js';
@@ -37,7 +37,7 @@ export async function init(){
   state.ohlcSets=await idbAll('ohlc');
   state.strategies=await idbAll('strategies');
   // musí byť pred seedDefaultStrategies() - to samo značku prepisuje
-  await gdriveLoadLastLocalChange();
+  await gdriveLoadSyncState();
   await seedDefaultStrategies();
   renderAll();
   bindGlobal();

@@ -195,6 +195,12 @@ window.__TJ_BOOT__=(async function(){
     <div class="panel" id="statsLeft"></div>
     <div class="panel" id="statsRight"></div>
   </div>
+  <div class="panel" id="excursionPanel" style="margin-top:16px">
+    <h3>MAE / MFE – ako ďaleko šla cena proti tebe a v tvoj prospech</h3>
+    <p class="hint" id="excursionSub"></p>
+    <div style="position:relative;height:340px"><canvas id="excChart"></canvas></div>
+    <div id="excursionSummary" style="margin-top:12px"></div>
+  </div>
 </section>
 
 <!-- CALENDAR -->
@@ -315,6 +321,7 @@ window.__TJ_BOOT__=(async function(){
       </div>
     </div>
     <div id="mapRows"></div>
+    <div id="dateCheck" style="margin-top:10px"></div>
     <hr class="sep">
     <h3>Náhľad (prvých 5 riadkov)</h3>
     <div class="prevwrap" id="csvPreview"></div>
@@ -400,8 +407,11 @@ window.__TJ_BOOT__=(async function(){
     <button class="btn secondary" id="gdriveDisconnectBtn" style="display:none">Odpojiť</button>
     <button class="btn secondary small" id="btnGdriveSyncNow" style="margin-left:6px">⬆️ Nahrať na Drive</button>
     <button class="btn secondary small" id="btnGdriveForceDownload" style="margin-left:6px">⬇️ Stiahnuť z Drive</button>
+    <button class="btn secondary small" id="btnGdriveSnapshots" style="margin-left:6px">🕘 Staršie zálohy</button>
     <div id="gdriveStatus" class="hint" style="margin-top:8px">Nepripojené.</div>
+    <div id="gdriveSnapshotList" style="margin-top:8px"></div>
     <p class="hint" style="margin-top:6px">"Nahrať na Drive" pošle aktuálny lokálny stav do cloudu (prepíše to, čo tam je). "Stiahnuť z Drive" naopak prepíše dáta v tomto prehliadači tým, čo je uložené v cloude – použi to napr. keď appka na novom zariadení automaticky nestiahla dáta sama.</p>
+    <p class="hint" style="margin-top:6px">Okrem hlavnej zálohy (ktorá sa pri každej zmene prepisuje) sa raz denne odkladá datovaná kópia. Drží sa posledných 14 dní – cez "Staršie zálohy" sa dá vrátiť k ľubovoľnému dňu, napr. keď si omylom niečo vymazal.</p>
   </div>
   <div class="panel">
     <h3>🤖 AI zhodnotenie (Claude)</h3>
