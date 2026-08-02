@@ -1,3 +1,4 @@
+import { idbDel, idbGet, idbPut } from './db.js';
 import { ask } from './i18n.js';
 import { renderAll, saveSettings } from './init.js';
 import { applyBackupPayload, buildBackupPayload } from './settings.js';
@@ -57,7 +58,7 @@ export async function gdriveForceDownload(){
     const remote=await gdriveDownload(remoteMeta.id);
     await applyBackupPayload(remote);
     await seedDefaultStrategies(); // code defaults win over stale Drive strategy notes
-    try{localStorage.setItem('tj_lastLocalChange',String(remote.updatedAt||Date.now()));}catch(e){}
+    gdriveSetLastLocalChange(remote.updatedAt||Date.now());
     state.settings.gLastSync=Date.now();
     await saveSettings();
     renderAll();
@@ -89,8 +90,40 @@ export async function gdriveDownload(fileId){
   if(!res.ok)throw new Error('Sťahovanie zlyhalo ('+res.status+')');
   return res.json();
 }
-export function gdriveSetLastLocalChange(){try{localStorage.setItem('tj_lastLocalChange',String(Date.now()));}catch(e){}}
-export function gdriveLastLocalChange(){try{return parseInt(localStorage.getItem('tj_lastLocalChange')||'0',10);}catch(e){return 0;}}
+/* Značka poslednej lokálnej zmeny rozhoduje, či pri štarte vyhrajú lokálne dáta
+   alebo záloha z Drive. Musí žiť v tom istom úložisku ako samotné dáta (IndexedDB) -
+   keby bola v localStorage, jeho vyčistenie by ju zhodilo na 0 a staršia Drive
+   záloha by prepísala novšie lokálne dáta. V pamäti sa drží kópia, aby zápis
+   mohol zostať synchrónny pre volajúcich. */
+let gLastLocalChange=0;
+export async function gdriveLoadLastLocalChange(){
+  let v=0;
+  try{
+    const rec=await idbGet('kv','lastLocalChange');
+    if(rec&&rec.v!=null)v=parseInt(rec.v,10)||0;
+  }catch(e){}
+  if(!v){
+    // migrácia z pôvodného localStorage kľúča
+    let legacy=0;
+    try{legacy=parseInt(localStorage.getItem('tj_lastLocalChange')||'0',10)||0;}catch(e){}
+    if(legacy){
+      v=legacy;
+      idbPut('kv',{k:'lastLocalChange',v}).catch(()=>{});
+    }
+  }
+  gLastLocalChange=v;
+  return v;
+}
+export function gdriveSetLastLocalChange(ts){
+  gLastLocalChange=ts||Date.now();
+  idbPut('kv',{k:'lastLocalChange',v:gLastLocalChange}).catch(e=>console.error('lastLocalChange save failed',e));
+}
+export function gdriveLastLocalChange(){return gLastLocalChange;}
+export async function gdriveResetLastLocalChange(){
+  gLastLocalChange=0;
+  try{localStorage.removeItem('tj_lastLocalChange');}catch(e){}
+  try{await idbDel('kv','lastLocalChange');}catch(e){}
+}
 export function scheduleAutoSync(){
   gdriveSetLastLocalChange();
   if(!state.gBootDone||!state.settings.gConnected)return;

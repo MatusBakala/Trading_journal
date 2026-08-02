@@ -1,7 +1,7 @@
 import { accTrades } from './accounts.js';
 import { state } from './state.js';
 import { riskR, tTime } from './strategy-notes.js';
-import { $, computePnl, dayKey, fmtDur, fmtMoney, moneyCls } from './utils.js';
+import { $, computePnl, dayKey, fmtDur, fmtMoney, isClosed, moneyCls } from './utils.js';
 
 /* ================= Stats page ================= */
 export function periodFiltered(p){
@@ -17,14 +17,16 @@ export function maxStreak(arr,pred){let m=0,c=0;for(const x of arr){if(pred(x)){
 export function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;}
 export function srow(l,v,cls){return `<div class="srow"><span>${l}</span><b class="${cls||''}">${v}</b></div>`;}
 export function renderStats(){
-  const ts=periodFiltered($('statsPeriod').value);
+  const all=periodFiltered($('statsPeriod').value);
+  // len uzavreté obchody - otvorené pozície nemajú realizovaný P&L
+  const ts=all.filter(isClosed);
   const pnls=ts.map(computePnl);
   const net=pnls.reduce((a,b)=>a+b,0);
   const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0),be=pnls.filter(p=>p===0);
   const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
   const pf=gl>0?gw/gl:(gw>0?Infinity:0);
   const fees=ts.reduce((a,t)=>a+(t.fees||0),0);
-  const openTrades=ts.filter(t=>!isFinite(t.exit)&&t.pnlOverride==null).length;
+  const openTrades=all.length-ts.length;
   // hold times
   const durs=ts.map(t=>(t.tEntry&&t.tExit&&t.tExit>t.tEntry)?t.tExit-t.tEntry:null);
   const dAll=durs.filter(d=>d!=null);

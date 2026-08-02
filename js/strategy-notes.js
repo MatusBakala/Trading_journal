@@ -11,7 +11,7 @@ import { blobToB64 } from './settings.js';
 import { state } from './state.js';
 import { avg } from './stats.js';
 import { TF_SEC, datasetsForSymbol, openTrade } from './trade-modal.js';
-import { $, computePnl, esc, moneyCls, multFor } from './utils.js';
+import { $, computePnl, esc, isClosed, moneyCls, multFor } from './utils.js';
 
 /* ================= Strategy notes: formatting + inline images ================= */
 export function renderNotesHTML(text,imgMap){
@@ -101,7 +101,7 @@ export function refreshStrategySelects(){
   if(rSel){const cur=rSel.value;rSel.innerHTML='<option value="">Všetky stratégie</option>'+opts;rSel.value=cur;}
 }
 export function strategyStats(s){
-  const ts=state.trades.filter(t=>t.strategyId===s.id&&t.tExit&&isFinite(computePnl(t)));
+  const ts=state.trades.filter(t=>t.strategyId===s.id&&isClosed(t));
   const pnls=ts.map(computePnl);
   const net=pnls.reduce((a,b)=>a+b,0);
   const wins=pnls.filter(p=>p>0).length;

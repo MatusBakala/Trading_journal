@@ -46,6 +46,13 @@ export function computePnl(t){
   if(!isFinite(t.entry)||!isFinite(t.exit))return 0;
   return (t.exit-t.entry)*t.dir*(t.qty||1)*multFor(t.symbol)-(t.fees||0);
 }
+/* Obchod má realizovaný výsledok - buď výstupnú cenu, alebo ručne zadaný P&L.
+   Otvorené pozície nesmú vstupovať do štatistík: computePnl() im vráti 0, takže
+   by sa počítali ako breakeven obchody a skreslili win rate aj priemery. */
+export function isClosed(t){
+  if(t.pnlOverride!=null&&isFinite(t.pnlOverride))return true;
+  return isFinite(t.entry)&&isFinite(t.exit);
+}
 export const EMOTIONS={pokoj:'😌 Pokoj / disciplína',sebadovera:'💪 Sebadôvera',fomo:'😰 FOMO',strach:'😨 Strach',chamtivost:'🤑 Chamtivosť',netrpezlivost:'😤 Netrpezlivosť',frustracia:'😡 Frustrácia / revenge',nuda:'🥱 Nuda'};
 export function emotionLabel(k){return k?(EMOTIONS[k]||k):'– (nezadané)';}
 export function sessionOf(t){

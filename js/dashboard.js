@@ -3,7 +3,7 @@ import { renderBreakdown } from './ai.js';
 import { renderPatterns } from './patterns.js';
 import { cssVar, state } from './state.js';
 import { tTime } from './strategy-notes.js';
-import { $, computePnl, dayKey, emotionLabel, fmtMoney, moneyCls, sessionOf } from './utils.js';
+import { $, computePnl, dayKey, emotionLabel, fmtMoney, isClosed, moneyCls, sessionOf } from './utils.js';
 
 /* ================= Dashboard ================= */
 export const GAUGE_L=125.66; // dĺžka polkruhu r=40
@@ -37,7 +37,8 @@ export function filteredForDash(){
   return accTrades().filter(t=>tTime(t)>=from).sort((a,b)=>tTime(a)-tTime(b));
 }
 export function renderDashboard(){
-  const ts=filteredForDash();
+  // len uzavreté obchody - otvorené pozície nemajú realizovaný P&L
+  const ts=filteredForDash().filter(isClosed);
   const pnls=ts.map(computePnl);
   const net=pnls.reduce((a,b)=>a+b,0);
   const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0);

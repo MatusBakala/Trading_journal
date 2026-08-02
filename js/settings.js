@@ -1,7 +1,7 @@
 import { esc } from './utils.js';
 import { addAccRow } from './accounts.js';
 import { idbAdd, idbAll, idbClear, idbDel, idbPut } from './db.js';
-import { renderGDriveStatus, scheduleAutoSync } from './gdrive.js';
+import { gdriveResetLastLocalChange, renderGDriveStatus, scheduleAutoSync } from './gdrive.js';
 import { ask } from './i18n.js';
 import { renderAfterTradeChange, renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
@@ -125,7 +125,7 @@ export async function wipeAll(){
   await idbDel('kv','defaultStrategiesRevision');
   await idbDel('kv','defaultStrategiesFingerprint');
   state.trades=[];state.ohlcSets=[];state.strategies=[];
-  try{localStorage.removeItem('tj_lastLocalChange');}catch(e){}
+  await gdriveResetLastLocalChange();
   await seedDefaultStrategies();
   renderAll();
   scheduleAutoSync();

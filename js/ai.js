@@ -5,7 +5,7 @@ import { saveSettings } from './init.js';
 import { PATTERNS_MIN_TRADES, computePatternRows } from './patterns.js';
 import { state } from './state.js';
 import { tTime } from './strategy-notes.js';
-import { $, computePnl, toast } from './utils.js';
+import { $, computePnl, isClosed, toast } from './utils.js';
 
 /* ================= AI insight ================= */
 export function groupStats(closed,keyFn){
@@ -18,14 +18,16 @@ export function groupStats(closed,keyFn){
   }));
 }
 export function buildAiSummary(ts){
-  const closed=ts.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const closed=ts.filter(isClosed);
   const total=closed.length;
   const pnls=closed.map(computePnl);
   const net=pnls.reduce((a,b)=>a+b,0);
   const wins=pnls.filter(p=>p>0),losses=pnls.filter(p=>p<0);
   const gw=wins.reduce((a,b)=>a+b,0),gl=Math.abs(losses.reduce((a,b)=>a+b,0));
   const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
-  const patterns=total>=PATTERNS_MIN_TRADES?computePatternRows(closed).map(r=>({
+  // vzory navyše potrebujú tExit - počítajú trvanie obchodu a párujú sviečky
+  const forPatterns=closed.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
+  const patterns=forPatterns.length>=PATTERNS_MIN_TRADES?computePatternRows(forPatterns).map(r=>({
     name:r.name,pctOfEligible:+r.pct.toFixed(1),matched:r.count,eligible:r.eligible,
   })):[];
   return {
