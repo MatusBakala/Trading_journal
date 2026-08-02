@@ -26,6 +26,7 @@ export const state = {
   calDate: new Date(),
   eqChartObj: null,
   dailyChartObj: null,
+  excChartObj: null,
   currentTradeId: null,
   pendingShots: [],
   removedShotIds: [],

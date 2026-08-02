@@ -2,11 +2,11 @@ import { tr } from './i18n.js';
 import { esc } from './utils.js';
 import { defaultAccId } from './accounts.js';
 import { parseCSV } from './csv-parser.js';
-import { idbAdd, idbPut } from './db.js';
+import { idbAddMany, idbPut } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
-import { renderAll } from './init.js';
+import { renderAfterTradeChange } from './init.js';
 import { state } from './state.js';
-import { $, num, parseDT, toast, tsToLocalInput } from './utils.js';
+import { $, fmtDT, num, parseDT, toast, tsToLocalInput } from './utils.js';
 
 /* ================= CSV import (trades) ================= */
 let csvRows=null,csvHeaders=null;
@@ -168,8 +168,45 @@ export function buildImportMapUI(){
   }).join('');
   $('csvPreview').innerHTML='<table><thead><tr>'+csvHeaders.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
     csvRows.slice(0,5).map(r=>'<tr style="cursor:default">'+csvHeaders.map((_,i)=>`<td>${esc(r[i]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+  for(const id of ['map_tEntry','map_tExit']){
+    const sel=$(id);
+    if(sel)sel.addEventListener('change',renderDateCheck);
+  }
+  renderDateCheck();
   $('mapPanel').style.display='block';
   $('importResult').textContent=csvRows.length+' riadkov na import';
+}
+/* Dvojznačné dátumy sú tichý zabijak importu: "01/02/2026" appka číta ako
+   mesiac/deň/rok, ale európsky export myslí 1. február. Preto pri mapovaní
+   ukážeme, ako sa surová hodnota naozaj naparsovala, nech je omyl vidieť hneď. */
+export function isAmbiguousSlashDate(raw){
+  const m=String(raw||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/\d{4}/);
+  return !!m&&+m[1]<=12&&+m[2]<=12&&m[1]!==m[2];
+}
+export function renderDateCheck(){
+  const box=$('dateCheck');
+  if(!box||!csvRows)return;
+  const parts=[];
+  let ambiguous=false;
+  for(const [id,label] of [['map_tEntry','Čas vstupu'],['map_tExit','Čas výstupu']]){
+    const sel=$(id);
+    if(!sel)continue;
+    const idx=parseInt(sel.value,10);
+    if(!(idx>=0))continue;
+    const samples=csvRows.slice(0,3).map(r=>r[idx]).filter(v=>v!=null&&String(v).trim()!=='');
+    if(!samples.length)continue;
+    const lines=samples.map(raw=>{
+      const ts=parseDT(raw);
+      if(isAmbiguousSlashDate(raw))ambiguous=true;
+      return `<div style="margin-left:12px">${esc(String(raw))} <span class="hint">→</span> <b>${ts?esc(fmtDT(ts)):'<span style="color:var(--red)">nepodarilo sa naparsovať</span>'}</b></div>`;
+    }).join('');
+    parts.push(`<div style="margin-top:6px"><b>${esc(tr(label))}</b>${lines}</div>`);
+  }
+  if(!parts.length){box.innerHTML='';return;}
+  const warn=ambiguous
+    ? `<div class="hint" style="color:var(--red);margin-top:8px">⚠️ ${esc(tr('Dátum v tvare dd/mm/rrrr je dvojznačný – appka ho číta ako mesiac/deň/rok. Skontroluj, či deň a mesiac sedia; ak nie, prehoď ich v CSV alebo použi formát rrrr-mm-dd.'))}</div>`
+    : '';
+  box.innerHTML=`<div class="hint">${esc(tr('Kontrola dátumu – takto to appka prečítala:'))}</div>${parts.join('')}${warn}`;
 }
 export function convertAndRebuild(){
   const commissionMap=buildCommissionMap(rawCashHeaders,rawCashRows);
@@ -204,6 +241,33 @@ export function parseDir(v){
   if(s.startsWith('sell')||s.startsWith('short'))return -1;
   return 1;
 }
+/* Duplicity sa hľadajú cez index (účet|čas vstupu|symbol), nie lineárnym
+   prehľadávaním - inak by import n riadkov do žurnálu s m obchodmi bol O(n*m).
+   Cena vstupu sa porovnáva až v rámci malého zhodného vedra. */
+export function dupKeyFor(account,tEntry,symbol){
+  return account+'|'+tEntry+'|'+String(symbol||'').toUpperCase();
+}
+export function buildDupIndex(trades){
+  const index=new Map();
+  for(const t of trades||[]){
+    const k=dupKeyFor(t.account,t.tEntry,t.symbol);
+    if(!index.has(k))index.set(k,[]);
+    index.get(k).push(t);
+  }
+  return index;
+}
+export function findDuplicate(index,account,tEntry,symbol,entry){
+  const candidates=index.get(dupKeyFor(account,tEntry,symbol));
+  if(!candidates)return null;
+  return candidates.find(x=>
+    (!isFinite(entry)||!isFinite(x.entry)||Math.abs(x.entry-entry)<1e-9))||null;
+}
+export function addToDupIndex(index,trade){
+  const k=dupKeyFor(trade.account,trade.tEntry,trade.symbol);
+  if(!index.has(k))index.set(k,[]);
+  index.get(k).push(trade);
+  return index;
+}
 export async function doImport(){
   if(!csvRows){toast('Najprv nahraj CSV');return;}
   const map={};
@@ -212,6 +276,8 @@ export async function doImport(){
   const get=(r,k)=>map[k]>=0?r[map[k]]:null;
   const account=parseInt($('importAccount').value,10)||defaultAccId();
   let ok=0,skip=0,dup=0,backfilled=0;
+  const dupIndex=buildDupIndex(state.trades);
+  const newTrades=[];
   for(const r of csvRows){
     const symbol=String(get(r,'symbol')||'').trim();
     const tEntry=parseDT(get(r,'tEntry'));
@@ -220,9 +286,7 @@ export async function doImport(){
     const pnlRaw=get(r,'pnl');
     const pnlOverride=(pnlRaw!=null&&String(pnlRaw).trim()!=='')?num(pnlRaw):null;
     if(!isFinite(entry)&&(pnlOverride==null||!isFinite(pnlOverride))){skip++;continue;}
-    const existing=state.trades.find(x=>x.account===account&&x.tEntry===tEntry&&
-      String(x.symbol||'').toUpperCase()===symbol.toUpperCase()&&
-      (!isFinite(entry)||!isFinite(x.entry)||Math.abs(x.entry-entry)<1e-9));
+    const existing=findDuplicate(dupIndex,account,tEntry,symbol,entry);
     if(existing){
       dup++;
       const stopRaw=num(get(r,'stop'));
@@ -251,11 +315,16 @@ export async function doImport(){
       tagsNeg:String(get(r,'tagsNeg')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
       createdAt:Date.now(),
     };
-    const id=await idbAdd('trades',t);
-    t.id=id;state.trades.push(t);ok++;
+    newTrades.push(t);
+    addToDupIndex(dupIndex,t);
+    ok++;
+  }
+  if(newTrades.length){
+    const ids=await idbAddMany('trades',newTrades);
+    newTrades.forEach((t,i)=>{t.id=ids[i];state.trades.push(t);});
   }
   $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+(backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'');
-  renderAll();
+  renderAfterTradeChange();
   scheduleAutoSync();
   toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+(backfilled?`, doplnený stop pri ${backfilled}`:''));
 }

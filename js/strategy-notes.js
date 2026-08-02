@@ -4,7 +4,6 @@ import { ask } from './i18n.js';
 import { goToTab } from './tabs.js';
 import { renderTrades, tradeTableHTML } from './trades-list.js';
 import { fmtDT, fmtMoney, toast } from './utils.js';
-import { DEFAULT_STRATEGIES } from './data/default-strategies.js';
 import { idbAdd, idbAll, idbDel, idbGet, idbPut, stratShotsByStrategy } from './db.js';
 import { gdriveSetLastLocalChange } from './gdrive.js';
 import { tr } from './i18n.js';
@@ -12,7 +11,7 @@ import { blobToB64 } from './settings.js';
 import { state } from './state.js';
 import { avg } from './stats.js';
 import { TF_SEC, datasetsForSymbol, openTrade } from './trade-modal.js';
-import { $, computePnl, esc, moneyCls, multFor } from './utils.js';
+import { $, computePnl, esc, isClosed, moneyCls, multFor } from './utils.js';
 
 /* ================= Strategy notes: formatting + inline images ================= */
 export function renderNotesHTML(text,imgMap){
@@ -42,8 +41,8 @@ export function renderNotesHTML(text,imgMap){
   }
   return out;
 }
-export function defaultStrategiesFingerprint(){
-  return DEFAULT_STRATEGIES.map(s=>[
+export function defaultStrategiesFingerprint(defs){
+  return defs.map(s=>[
     s.name||'',
     s.description||'',
     (s.rules||[]).join('\n'),
@@ -51,9 +50,16 @@ export function defaultStrategiesFingerprint(){
   ].join('\x1e')).join('\x1f');
 }
 export async function seedDefaultStrategies(){
-  // Auto-update built-in strategies whenever DEFAULT_STRATEGIES in code changes.
-  // No manual cache wipe / IndexedDB reset required after deploy.
-  const fp=defaultStrategiesFingerprint();
+  // DEFAULT_STRATEGIES is a 2.7MB module (embedded base64 images) - skip importing it
+  // entirely once already seeded for the currently deployed app-version.json (bumped
+  // whenever DEFAULT_STRATEGIES changes, see CLAUDE.md).
+  const appVersion=String(window.__TJ_APP_VERSION__||'');
+  const storedVersion=await idbGet('kv','defaultStrategiesAppVersion');
+  const prevAppVersion=storedVersion&&storedVersion.v!=null?String(storedVersion.v):'';
+  const seededFlag=await idbGet('kv','defaultStrategiesSeeded');
+  if(seededFlag&&seededFlag.v&&appVersion&&appVersion===prevAppVersion)return;
+  const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
+  const fp=defaultStrategiesFingerprint(DEFAULT_STRATEGIES);
   const stored=await idbGet('kv','defaultStrategiesFingerprint');
   const prevFp=stored&&stored.v!=null?String(stored.v):'';
   const syncBuiltIns=prevFp!==fp;
@@ -81,6 +87,7 @@ export async function seedDefaultStrategies(){
     await idbDel('kv','defaultStrategiesRevision');
     if(typeof gdriveSetLastLocalChange==='function')gdriveSetLastLocalChange();
   }
+  await idbPut('kv',{k:'defaultStrategiesAppVersion',v:appVersion});
 }
 export function strategyById(id){return id==null?null:state.strategies.find(s=>s.id===id)||null;}
 export function strategyNameOf(t){const s=strategyById(t.strategyId);return s?s.name:'– (bez stratégie)';}
@@ -94,7 +101,7 @@ export function refreshStrategySelects(){
   if(rSel){const cur=rSel.value;rSel.innerHTML='<option value="">Všetky stratégie</option>'+opts;rSel.value=cur;}
 }
 export function strategyStats(s){
-  const ts=state.trades.filter(t=>t.strategyId===s.id&&t.tExit&&isFinite(computePnl(t)));
+  const ts=state.trades.filter(t=>t.strategyId===s.id&&isClosed(t));
   const pnls=ts.map(computePnl);
   const net=pnls.reduce((a,b)=>a+b,0);
   const wins=pnls.filter(p=>p>0).length;

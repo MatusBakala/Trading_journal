@@ -5,7 +5,7 @@ import { idbAdd, idbDel, idbPut, shotsByTrade } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
 import { tr } from './i18n.js';
 import { loadCsvForImport } from './import-csv.js';
-import { renderAll } from './init.js';
+import { renderAfterTradeChange } from './init.js';
 import { autoFetchForTrade, fetchTfForTrade } from './ohlc-fetch.js';
 import { cssVar, state } from './state.js';
 import { excursionFor, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
@@ -153,7 +153,7 @@ export async function saveTrade(){
     if(s.id==null){await idbAdd('shots',{tradeId:t.id,blob:s.blob,added:Date.now()});}
   }
   closeTrade();
-  renderAll();
+  renderAfterTradeChange();
   scheduleAutoSync();
   toast('Obchod uložený');
 }

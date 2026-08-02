@@ -31,6 +31,7 @@ window.__TJ_BOOT__=(async function(){
     return null;
   }
   if(v){try{localStorage.setItem(KEY,v);}catch(e){}}
+  window.__TJ_APP_VERSION__=v;
   function withV(url){return url+(url.indexOf('?')>=0?'&':'?')+'v='+encodeURIComponent(v);}
   function loadCss(href){
     return new Promise(function(res,rej){
@@ -40,6 +41,15 @@ window.__TJ_BOOT__=(async function(){
       el.onload=function(){res();};
       el.onerror=function(){rej(new Error('CSS '+href));};
       document.head.appendChild(el);
+    });
+  }
+  function loadScript(src){
+    return new Promise(function(res,rej){
+      var el=document.createElement('script');
+      el.src=src;
+      el.onload=function(){res();};
+      el.onerror=function(){rej(new Error('script '+src));};
+      document.body.appendChild(el);
     });
   }
   function loadModule(src){
@@ -53,13 +63,15 @@ window.__TJ_BOOT__=(async function(){
     });
   }
   return async function loadApp(){
-    await loadCss('css/styles.css');
+    await Promise.all([
+      loadCss('css/styles.css'),
+      loadScript('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'),
+      loadScript('https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js')
+    ]);
     await loadModule('js/app.js');
   };
 })();
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://unpkg.com/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -183,6 +195,12 @@ window.__TJ_BOOT__=(async function(){
     <div class="panel" id="statsLeft"></div>
     <div class="panel" id="statsRight"></div>
   </div>
+  <div class="panel" id="excursionPanel" style="margin-top:16px">
+    <h3>MAE / MFE – ako ďaleko šla cena proti tebe a v tvoj prospech</h3>
+    <p class="hint" id="excursionSub"></p>
+    <div style="position:relative;height:340px"><canvas id="excChart"></canvas></div>
+    <div id="excursionSummary" style="margin-top:12px"></div>
+  </div>
 </section>
 
 <!-- CALENDAR -->
@@ -303,6 +321,7 @@ window.__TJ_BOOT__=(async function(){
       </div>
     </div>
     <div id="mapRows"></div>
+    <div id="dateCheck" style="margin-top:10px"></div>
     <hr class="sep">
     <h3>Náhľad (prvých 5 riadkov)</h3>
     <div class="prevwrap" id="csvPreview"></div>
@@ -388,8 +407,11 @@ window.__TJ_BOOT__=(async function(){
     <button class="btn secondary" id="gdriveDisconnectBtn" style="display:none">Odpojiť</button>
     <button class="btn secondary small" id="btnGdriveSyncNow" style="margin-left:6px">⬆️ Nahrať na Drive</button>
     <button class="btn secondary small" id="btnGdriveForceDownload" style="margin-left:6px">⬇️ Stiahnuť z Drive</button>
+    <button class="btn secondary small" id="btnGdriveSnapshots" style="margin-left:6px">🕘 Staršie zálohy</button>
     <div id="gdriveStatus" class="hint" style="margin-top:8px">Nepripojené.</div>
+    <div id="gdriveSnapshotList" style="margin-top:8px"></div>
     <p class="hint" style="margin-top:6px">"Nahrať na Drive" pošle aktuálny lokálny stav do cloudu (prepíše to, čo tam je). "Stiahnuť z Drive" naopak prepíše dáta v tomto prehliadači tým, čo je uložené v cloude – použi to napr. keď appka na novom zariadení automaticky nestiahla dáta sama.</p>
+    <p class="hint" style="margin-top:6px">Okrem hlavnej zálohy (ktorá sa pri každej zmene prepisuje) sa raz denne odkladá datovaná kópia. Drží sa posledných 14 dní – cez "Staršie zálohy" sa dá vrátiť k ľubovoľnému dňu, napr. keď si omylom niečo vymazal.</p>
   </div>
   <div class="panel">
     <h3>🤖 AI zhodnotenie (Claude)</h3>

@@ -2,7 +2,7 @@ import { renderAccSelects } from './accounts.js';
 import { renderCalendar } from './calendar.js';
 import { renderDashboard } from './dashboard.js';
 import { idbAll, idbGet, idbOpen, idbPut } from './db.js';
-import { gdriveSyncNow } from './gdrive.js';
+import { gdriveLoadSyncState, gdriveSyncNow } from './gdrive.js';
 import { translateDOM, withI18nBusy } from './i18n.js';
 import { renderOhlcList } from './ohlc-import.js';
 import { renderSettings } from './settings.js';
@@ -36,6 +36,8 @@ export async function init(){
   state.trades=await idbAll('trades');
   state.ohlcSets=await idbAll('ohlc');
   state.strategies=await idbAll('strategies');
+  // musí byť pred seedDefaultStrategies() - to samo značku prepisuje
+  await gdriveLoadSyncState();
   await seedDefaultStrategies();
   renderAll();
   bindGlobal();
@@ -49,3 +51,5 @@ export async function init(){
 }
 export function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:state.settings.balance,mults:state.settings.mults,multsExact:true,accounts:state.settings.accounts,activeAccount:state.settings.activeAccount,lang:state.settings.lang,theme:state.settings.theme,gClientId:state.settings.gClientId,gConnected:state.settings.gConnected,gLastSync:state.settings.gLastSync,anthropicKey:state.settings.anthropicKey,aiChatModel:state.settings.aiChatModel,aiInsightModel:state.settings.aiInsightModel}});}
 export function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();}
+/* Užšia verzia renderAll() pre zmeny tradov/P&L - vynecháva účty/OHLC/nastavenia, ktoré nie sú dotknuté. */
+export function renderAfterTradeChange(){renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderStrategies();refreshSymbolFilter();}

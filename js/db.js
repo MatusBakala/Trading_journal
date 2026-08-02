@@ -18,6 +18,19 @@ export function pReq(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.res
 export const idbAll=n=>pReq(store(n).getAll());
 export const idbPut=(n,v)=>pReq(store(n,'readwrite').put(v));
 export const idbAdd=(n,v)=>pReq(store(n,'readwrite').add(v));
+export function idbAddMany(n,records){
+  return new Promise((res,rej)=>{
+    const tx=DB.db.transaction(n,'readwrite');
+    const os=tx.objectStore(n);
+    const ids=new Array(records.length);
+    records.forEach((v,i)=>{
+      const r=os.add(v);
+      r.onsuccess=()=>{ids[i]=r.result;};
+    });
+    tx.oncomplete=()=>res(ids);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
 export const idbDel=(n,k)=>pReq(store(n,'readwrite').delete(k));
 export const idbGet=(n,k)=>pReq(store(n).get(k));
 export const shotsByTrade=id=>pReq(store('shots').index('tradeId').getAll(id));
