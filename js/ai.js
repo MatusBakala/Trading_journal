@@ -1,11 +1,13 @@
 import { esc, fmtMoney, moneyCls } from './utils.js';
+import { accTrades, activeStartBalance } from './accounts.js';
 import { filteredForDash } from './dashboard.js';
 import { tr } from './i18n.js';
 import { saveSettings } from './init.js';
 import { PATTERNS_MIN_TRADES, computePatternRows } from './patterns.js';
 import { state } from './state.js';
-import { tTime } from './strategy-notes.js';
-import { $, computePnl, isClosed, toast } from './utils.js';
+import { avg, collectExcursions } from './stats.js';
+import { riskR, strategyRuleTable, tTime } from './strategy-notes.js';
+import { $, computePnl, emotionLabel, isClosed, sessionOf, toast } from './utils.js';
 
 /* ================= AI insight ================= */
 export function groupStats(closed,keyFn){
@@ -16,6 +18,59 @@ export function groupStats(closed,keyFn){
     winRatePct:+(arr.filter(p=>p>0).length/arr.length*100).toFixed(1),
     pnl:+arr.reduce((a,b)=>a+b,0).toFixed(2),
   }));
+}
+/* Zoznamy sa orezávajú podľa veľkosti dopadu na P&L, nie podľa abecedy - do promptu
+   patria položky, ktoré reálne hýbu výsledkom, nie kompletný výpis. */
+export function topByImpact(rows,n){
+  return [...rows].sort((a,b)=>Math.abs(b.pnl)-Math.abs(a.pnl)).slice(0,n);
+}
+export function tagStats(closed,field){
+  const g={};
+  for(const t of closed)for(const tag of (t[field]||[]))(g[tag]=g[tag]||[]).push(computePnl(t));
+  return Object.entries(g).map(([tag,arr])=>({
+    tag,trades:arr.length,
+    winRatePct:+(arr.filter(p=>p>0).length/arr.length*100).toFixed(1),
+    pnl:+arr.reduce((a,b)=>a+b,0).toFixed(2),
+  }));
+}
+/* Dodržiavanie vlastných pravidiel je najsilnejší signál, aký žurnál má:
+   ukáže rozdiel medzi "stratégia nefunguje" a "nerobím to, čo mám". */
+export function strategyBreakdown(closed){
+  const out=[];
+  for(const s of state.strategies){
+    const ts=closed.filter(t=>t.strategyId===s.id);
+    if(!ts.length)continue;
+    const pnls=ts.map(computePnl);
+    const rules=s.rules||[];
+    const withChecklist=ts.filter(t=>Array.isArray(t.checkedRules));
+    out.push({
+      strategy:s.name,
+      trades:ts.length,
+      pnl:+pnls.reduce((a,b)=>a+b,0).toFixed(2),
+      winRatePct:+(pnls.filter(p=>p>0).length/ts.length*100).toFixed(1),
+      ruleAdherencePct:(rules.length&&withChecklist.length)
+        ?+(avg(withChecklist.map(t=>t.checkedRules.length/rules.length))*100).toFixed(1):null,
+      rules:strategyRuleTable(s,ts).filter(r=>r.n>0).map(r=>({
+        rule:r.rule,
+        followedInPctOfTrades:+r.followRate.toFixed(1),
+        pnlWhenFollowed:+r.net.toFixed(2),
+        winRateWhenFollowedPct:r.wr==null?null:+r.wr.toFixed(1),
+      })).sort((a,b)=>Math.abs(b.pnlWhenFollowed)-Math.abs(a.pnlWhenFollowed)).slice(0,6),
+    });
+  }
+  return out.sort((a,b)=>b.trades-a.trades).slice(0,5);
+}
+export function excursionSummary(closed){
+  const rows=collectExcursions(closed);
+  if(!rows.length)return null;
+  const wins=rows.filter(r=>r.pnl>0),losses=rows.filter(r=>r.pnl<0);
+  return {
+    tradesWithCandleData:rows.length,
+    avgMaeOfWinners:+(-avg(wins.map(r=>r.mae))).toFixed(2),
+    worstMaeOfAWinner:+(-(wins.length?Math.max(...wins.map(r=>r.mae)):0)).toFixed(2),
+    avgMfeOfLosers:+avg(losses.map(r=>r.mfe)).toFixed(2),
+    profitLeftOnTable:+wins.reduce((a,r)=>a+r.leftOnTable,0).toFixed(2),
+  };
 }
 export function buildAiSummary(ts){
   const closed=ts.filter(isClosed);
@@ -30,14 +85,36 @@ export function buildAiSummary(ts){
   const patterns=forPatterns.length>=PATTERNS_MIN_TRADES?computePatternRows(forPatterns).map(r=>({
     name:r.name,pctOfEligible:+r.pct.toFixed(1),matched:r.count,eligible:r.eligible,
   })):[];
+  let peak=0,dd=0,cum=0;
+  for(const p of pnls){cum+=p;if(cum>peak)peak=cum;if(peak-cum>dd)dd=peak-cum;}
+  const rs=closed.map(riskR).filter(r=>r!=null);
+  const durOf=t=>(t.tEntry&&t.tExit&&t.tExit>t.tEntry)?t.tExit-t.tEntry:null;
+  const durWin=closed.filter((t,i)=>pnls[i]>0).map(durOf).filter(d=>d!=null);
+  const durLoss=closed.filter((t,i)=>pnls[i]<0).map(durOf).filter(d=>d!=null);
+  const periodLabel=($('dashPeriod')&&$('dashPeriod').selectedOptions[0])?$('dashPeriod').selectedOptions[0].textContent:'';
   return {
+    period:periodLabel,
+    accountStartBalance:+activeStartBalance().toFixed(2),
+    openPositionsNotCounted:accTrades().filter(t=>!isClosed(t)).length,
     totalClosedTrades:total,
     netPnl:+net.toFixed(2),
     winRatePct:total?+(wins.length/total*100).toFixed(1):0,
     profitFactor:gl>0?+(gw/gl).toFixed(2):null,
     avgWin:+(wins.length?gw/wins.length:0).toFixed(2),
     avgLoss:+(-(losses.length?gl/losses.length:0)).toFixed(2),
-    bySymbol:groupStats(closed,t=>String(t.symbol).toUpperCase()),
+    avgRMultiple:rs.length?+avg(rs).toFixed(2):null,
+    maxDrawdown:+(-dd).toFixed(2),
+    feesTotal:+closed.reduce((a,t)=>a+(t.fees||0),0).toFixed(2),
+    avgHoldSecondsWinners:durWin.length?Math.round(avg(durWin)):null,
+    avgHoldSecondsLosers:durLoss.length?Math.round(avg(durLoss)):null,
+    strategiesAndRuleAdherence:strategyBreakdown(closed),
+    mistakeTags:topByImpact(tagStats(closed,'tagsNeg'),8),
+    setupTags:topByImpact(tagStats(closed,'tags'),8),
+    byEntryEmotion:topByImpact(groupStats(closed,t=>emotionLabel(t.emotionIn)),8),
+    byExitEmotion:topByImpact(groupStats(closed,t=>emotionLabel(t.emotionOut)),8),
+    bySession:groupStats(closed,t=>sessionOf(t)),
+    excursion:excursionSummary(closed),
+    bySymbol:topByImpact(groupStats(closed,t=>String(t.symbol).toUpperCase()),10),
     byDayOfWeek:groupStats(closed,t=>dows[new Date(tTime(t)*1000).getDay()]),
     byEntryHour:groupStats(closed,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00'),
     detectedPatterns:patterns,
@@ -46,7 +123,17 @@ export function buildAiSummary(ts){
 export function saveAiInsightModel(){state.settings.aiInsightModel=$('aiInsightModel').value;saveSettings();}
 export function buildAiPromptText(inlineSummary){
   const langName=state.settings.lang==='en'?'English':'Slovak';
-  const base=`Toto je súhrn štatistík z trading journalu (počítané appkou, čísla sú presné). Napíš stručné, konkrétne zhodnotenie obchodovania: 2-3 silné stránky, 2-3 konkrétne oblasti na zlepšenie, a 1-2 praktické odporúčania na základe rozpoznaných vzorov a časových/symbolových štatistík. Buď priamy a vecný, žiadne všeobecné rady. Odpíš v jazyku: ${langName}.`;
+  const base=`Toto je súhrn štatistík z trading journalu (počítané appkou, čísla sú presné). Napíš stručné, konkrétne zhodnotenie obchodovania: 2-3 silné stránky, 2-3 konkrétne oblasti na zlepšenie, a 1-2 praktické odporúčania. Vždy sa opri o konkrétne čísla z dát.
+
+Kľúč k poliam:
+- strategiesAndRuleAdherence: ako často obchodník dodržal vlastné pravidlá a s akým výsledkom. Rozlíš, či stratégia nefunguje, alebo ju len nedodržiava (ruleAdherencePct, followedInPctOfTrades vs pnlWhenFollowed).
+- mistakeTags / setupTags: chyby a setupy, ktoré si sám otagoval, zoradené podľa dopadu na P&L.
+- byEntryEmotion / byExitEmotion: emócie a ich cena.
+- excursion: MAE = najhoršie proti nemu, MFE = najlepšie v jeho prospech. avgMaeOfWinners a worstMaeOfAWinner hovoria, či nemá stopy pritesné; profitLeftOnTable a avgMfeOfLosers, či nenechá zisky ujsť.
+- avgHoldSecondsWinners vs avgHoldSecondsLosers: kratšie držanie víťazov než porazených = zatvára zisky priskoro a sedí na stratách.
+- maxDrawdown, avgRMultiple, feesTotal: riziko a náklady.
+
+Buď priamy a vecný, žiadne všeobecné rady. Odpíš v jazyku: ${langName}.`;
   if(inlineSummary)return base+`\n\nDáta (JSON):\n${JSON.stringify(inlineSummary)}`;
   return base+`\n\nDáta sú v priloženom JSON súbore.`;
 }
