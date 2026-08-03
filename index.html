@@ -16,10 +16,12 @@
 window.__TJ_BOOT__=(async function(){
   var KEY='tj_code_v';
   var v='0';
+  var mods=[];
   try{
     var r=await fetch('app-version.json?_='+Date.now(),{cache:'no-store'});
     var d=await r.json();
     v=String(d&&d.v!=null?d.v:'0');
+    mods=(d&&d.modules)||[];
   }catch(e){}
   var cur=null;
   try{cur=localStorage.getItem(KEY);}catch(e){}
@@ -33,6 +35,25 @@ window.__TJ_BOOT__=(async function(){
   if(v){try{localStorage.setItem(KEY,v);}catch(e){}}
   window.__TJ_APP_VERSION__=v;
   function withV(url){return url+(url.indexOf('?')>=0?'&':'?')+'v='+encodeURIComponent(v);}
+  /* Relatívne importy vnútri modulov (import './init.js') sa rozvinú BEZ ?v=, takže
+     ich prehliadač po nasadení berie z cache - a appka beží ako mix nového app.js so
+     starým zvyškom. Import mapa premapuje každý modul na verzovanú URL, čím sa ?v=
+     dostane na všetky, nielen na vstupný app.js. Zoznam modulov drží v synchrone
+     `npm run manifest` + test module-manifest.test.mjs. */
+  function installImportMap(){
+    if(!mods.length)return;
+    if(!(window.HTMLScriptElement&&HTMLScriptElement.supports&&HTMLScriptElement.supports('importmap')))return;
+    var base=new URL('.',location.href).href;
+    var imports={};
+    for(var i=0;i<mods.length;i++){
+      var u=base+'js/'+mods[i];
+      imports[u]=withV(u);
+    }
+    var el=document.createElement('script');
+    el.type='importmap';
+    el.textContent=JSON.stringify({imports:imports});
+    document.head.appendChild(el);
+  }
   function loadCss(href){
     return new Promise(function(res,rej){
       var el=document.createElement('link');
@@ -63,6 +84,7 @@ window.__TJ_BOOT__=(async function(){
     });
   }
   return async function loadApp(){
+    installImportMap(); // musí byť v DOM skôr, než sa načíta prvý modul
     await Promise.all([
       loadCss('css/styles.css'),
       loadScript('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'),
