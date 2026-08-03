@@ -138,6 +138,7 @@ function handleTradeTableClick(event){
 }
 document.getElementById('tradesBody').addEventListener('click', handleTradeTableClick);
 document.getElementById('calDayPanel').addEventListener('click', handleTradeTableClick);
+document.getElementById('excOutliers').addEventListener('click', handleTradeTableClick);
 
 /* reports table rows (trades-list.js reportRowHTML) */
 document.getElementById('reportsBody').addEventListener('click', function(event){

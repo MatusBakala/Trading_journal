@@ -2,6 +2,7 @@ import { accTrades } from './accounts.js';
 import { tr } from './i18n.js';
 import { cssVar, state } from './state.js';
 import { excursionFor, riskR, tTime } from './strategy-notes.js';
+import { openTrade } from './trade-modal.js';
 import { $, computePnl, dayKey, esc, fmtD, fmtDur, fmtMoney, isClosed, moneyCls } from './utils.js';
 
 /* ================= Stats page ================= */
@@ -114,20 +115,21 @@ export function collectExcursions(ts){
   return rows;
 }
 export function renderExcursionChart(ts){
-  const canvas=$('excChart'),sub=$('excursionSub'),summary=$('excursionSummary');
+  const canvas=$('excChart'),sub=$('excursionSub'),summary=$('excursionSummary'),outliers=$('excOutliers');
   if(!canvas||!sub||!summary)return;
   const rows=collectExcursions(ts);
   if(state.excChartObj){state.excChartObj.destroy();state.excChartObj=null;}
   if(!rows.length){
     sub.textContent=tr('Potrebné sú sviečkové dáta – naimportuj ich v záložke „Dáta grafu“, potom sa tu MAE/MFE dopočíta.');
     summary.innerHTML='';
+    if(outliers)outliers.innerHTML='';
     canvas.style.display='none';
     return;
   }
   canvas.style.display='';
-  sub.textContent=`${rows.length} ${tr('z')} ${ts.length} ${tr('uzavretých obchodov má sviečkové dáta. Každý bod je jeden obchod.')}`;
+  sub.textContent=`${rows.length} ${tr('z')} ${ts.length} ${tr('uzavretých obchodov má sviečkové dáta. Klikni na bod alebo riadok nižšie pre detail obchodu.')}`;
   const wins=rows.filter(r=>r.pnl>0),losses=rows.filter(r=>r.pnl<0);
-  const pt=r=>({x:r.mae,y:r.mfe,sym:String(r.trade.symbol||'').toUpperCase(),day:fmtD(tTime(r.trade)),pnl:r.pnl});
+  const pt=r=>({x:r.mae,y:r.mfe,sym:String(r.trade.symbol||'').toUpperCase(),day:fmtD(tTime(r.trade)),pnl:r.pnl,id:r.trade.id});
   if(typeof Chart!=='undefined'){
     const gridColor=cssVar('--border'),tickColor=cssVar('--muted');
     state.excChartObj=new Chart(canvas,{
@@ -138,6 +140,15 @@ export function renderExcursionChart(ts){
       ]},
       options:{
         responsive:true,maintainAspectRatio:false,
+        onClick:(evt,elements,chart)=>{
+          if(!elements.length)return;
+          const {datasetIndex,index}=elements[0];
+          const point=chart.data.datasets[datasetIndex].data[index];
+          if(point&&point.id!=null)openTrade(point.id);
+        },
+        onHover:(evt,elements)=>{
+          if(evt.native&&evt.native.target)evt.native.target.style.cursor=elements.length?'pointer':'default';
+        },
         plugins:{
           legend:{labels:{color:tickColor}},
           tooltip:{callbacks:{label:c=>{
@@ -161,4 +172,28 @@ export function renderExcursionChart(ts){
     [tr('Priem. MFE stratových'),fmtMoney(avg(mfeLosses)),mfeLosses.length?'pos':'',tr('koľko zisku stratové obchody medzitým ukázali')],
     [tr('Nechané na stole'),fmtMoney(leftTotal),leftTotal?'pos':'',tr('rozdiel medzi MFE a reálnym ziskom víťazov')],
   ].map(k=>`<div class="card"><div class="lbl">${esc(k[0])}</div><div class="val ${k[2]}">${k[1]}</div><div class="lbl" style="margin-top:4px">${esc(k[3])}</div></div>`).join('')+'</div>';
+  if(outliers)renderExcursionOutliers(outliers,wins);
+}
+/* Presné klikanie na malý bod v scatter grafe je na dotyku aj pri prekrývajúcich sa
+   bodoch nespoľahlivé - preto popri klikaní na graf existuje aj tento zoznam
+   najvýraznejších prípadov (najviac nechaného na stole / najtesnejšie prežitý stop)
+   ako spoľahlivý, vždy klikateľný vstup do rovnakého detailu obchodu. */
+export function topExcursionOutliers(list,valueOf,n){
+  return [...list].filter(r=>valueOf(r)>0).sort((a,b)=>valueOf(b)-valueOf(a)).slice(0,n==null?5:n);
+}
+function excursionOutlierRowsHTML(list,valueOf,label){
+  const top=topExcursionOutliers(list,valueOf);
+  if(!top.length)return '';
+  return `<div style="margin-top:14px"><div class="lbl" style="margin-bottom:6px">${esc(label)}</div>`+
+    `<table><tbody>${top.map(r=>`<tr data-trade-id="${r.trade.id}">`+
+      `<td>${esc(fmtD(tTime(r.trade)))}</td>`+
+      `<td><b>${esc(String(r.trade.symbol||'').toUpperCase())}</b></td>`+
+      `<td class="${moneyCls(r.pnl)}">${esc(fmtMoney(r.pnl))}</td>`+
+      `<td class="hint">${esc(fmtMoney(valueOf(r)))}</td>`+
+      `</tr>`).join('')}</tbody></table></div>`;
+}
+export function renderExcursionOutliers(box,wins){
+  box.innerHTML=
+    excursionOutlierRowsHTML(wins,r=>r.leftOnTable,tr('Najviac nechané na stole'))+
+    excursionOutlierRowsHTML(wins,r=>r.mae,tr('Najtesnejšie prežitý stop (najhlbší MAE u víťazov)'));
 }
