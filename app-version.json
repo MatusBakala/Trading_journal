@@ -1,1 +1,29 @@
-{"v": 10}
+{
+  "v": 11,
+  "modules": [
+    "accounts.js",
+    "ai.js",
+    "app.js",
+    "bindings.js",
+    "calendar.js",
+    "csv-parser.js",
+    "dashboard.js",
+    "data/default-strategies.js",
+    "db.js",
+    "gdrive.js",
+    "i18n.js",
+    "import-csv.js",
+    "init.js",
+    "ohlc-fetch.js",
+    "ohlc-import.js",
+    "patterns.js",
+    "settings.js",
+    "state.js",
+    "stats.js",
+    "strategy-notes.js",
+    "tabs.js",
+    "trade-modal.js",
+    "trades-list.js",
+    "utils.js"
+  ]
+}

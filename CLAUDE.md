@@ -6,6 +6,12 @@ Odpovedaj stručne a vecne, vždy otestuj čo si vykonal či to funguje. Neponuk
 
 Treba mať aj nejaký back-up plan. Teda obsah sa musí uploadovať niekde cloudove úložisko každý deň.
 
+## Nasadzovanie a cache
+
+Pri každej zmene JS/CSS bumpni `v` v `app-version.json`. Boot skript v `index.html` z tohto súboru zároveň číta pole `modules` a postaví z neho import mapu, ktorá pridá `?v=` **všetkým** modulom – bez nej by sa relatívne importy (`import './init.js'`) ťahali z cache a po nasadení by bežal mix nového `app.js` so starým zvyškom appky.
+
+Keď pribudne alebo zmizne súbor v `js/`, spusti `npm run manifest`. Ak sa na to zabudne, `npm test` to zachytí a povie čo spustiť.
+
 ## Zabudovanie stratégie ako default
 
 Appka má v `js/data/default-strategies.js` konštantu `DEFAULT_STRATEGIES` – pole stratégií, ktoré sa automaticky vytvoria (cez `seedDefaultStrategies()` v `js/strategy-notes.js`) pri úplne prvom spustení appky na novom zariadení/prehliadači/nasadení. Slúži to ako predvolený "playbook" pre každého nového používateľa appky, bez potreby importu zálohy.
