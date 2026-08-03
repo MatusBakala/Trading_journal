@@ -124,13 +124,20 @@ document.getElementById('patternsSub').addEventListener('click', function(event)
   if (link) goToOhlcCoverage();
 });
 
-/* trades table rows + delete button (trades-list.js tradeRowHTML) */
-document.getElementById('tradesBody').addEventListener('click', function(event){
+/* trades table rows + delete button (trades-list.js tradeRowHTML).
+   tradeTableHTML() sa vykresľuje na viacerých miestach - v zozname obchodov, v paneli
+   dňa v kalendári a v detaile stratégie - a všade má platiť to isté: klik na riadok
+   otvorí obchod, klik na ✕ ho zmaže. CSS dáva riadkom cursor:pointer všade, takže bez
+   tohto handlera pôsobia klikateľne, ale nerobia nič. */
+function handleTradeTableClick(event){
   const delBtn = event.target.closest('[data-action="delTrade"]');
-  if (delBtn) { delTrade(parseInt(delBtn.dataset.id, 10)); return; }
+  if (delBtn) { delTrade(parseInt(delBtn.dataset.id, 10)); return true; }
   const row = event.target.closest('tr[data-trade-id]');
-  if (row) openTrade(parseInt(row.dataset.tradeId, 10));
-});
+  if (row) { openTrade(parseInt(row.dataset.tradeId, 10)); return true; }
+  return false;
+}
+document.getElementById('tradesBody').addEventListener('click', handleTradeTableClick);
+document.getElementById('calDayPanel').addEventListener('click', handleTradeTableClick);
 
 /* reports table rows (trades-list.js reportRowHTML) */
 document.getElementById('reportsBody').addEventListener('click', function(event){
@@ -151,6 +158,8 @@ document.getElementById('reportsBody').addEventListener('click', function(event)
   });
 
   box.addEventListener('click', function (event) {
+    /* záložka "Obchody" v detaile stratégie renderuje tradeTableHTML */
+    if (handleTradeTableClick(event)) return;
     const el = event.target.closest('[data-action]');
     if (!el) return;
     const action = el.dataset.action;

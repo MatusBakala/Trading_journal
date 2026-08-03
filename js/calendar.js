@@ -6,7 +6,7 @@ import { tradeTableHTML } from './trades-list.js';
 import { $, computePnl, dayKey } from './utils.js';
 
 /* ================= Calendar ================= */
-export function calMove(d){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()+d,1);renderCalendar();}
+export function calMove(d){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()+d,1);state.calSelectedDay=null;renderCalendar();}
 export function renderCalendar(){
   const y=state.calDate.getFullYear(),m=state.calDate.getMonth();
   const months=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
@@ -32,11 +32,16 @@ export function renderCalendar(){
   }
   $('calGrid').innerHTML=html;
   $('calTotal').innerHTML=`Mesiac: <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
-  $('calDayPanel').style.display='none';
+  // panel s obchodmi dňa musí prežiť prekreslenie kalendára - úprava aj zmazanie
+  // obchodu priamo z neho volá renderCalendar(), inak by zoznam zakaždým zmizol
+  if(state.calSelectedDay&&daily[state.calSelectedDay])showDay(state.calSelectedDay);
+  else{state.calSelectedDay=null;$('calDayPanel').style.display='none';}
 }
 export function showDay(k){
   const dayTrades=accTrades().filter(t=>dayKey(tTime(t))===k).sort((a,b)=>tTime(a)-tTime(b));
   const p=$('calDayPanel');
+  if(!dayTrades.length){state.calSelectedDay=null;p.style.display='none';return;}
+  state.calSelectedDay=k;
   p.style.display='block';
   p.innerHTML=`<h3>Obchody ${k.split('-').reverse().join('.')}</h3>`+tradeTableHTML(dayTrades);
 }

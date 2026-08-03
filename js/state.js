@@ -24,6 +24,7 @@ export const state = {
   strategyDetailTab: 'rules',
   ohlcSets: [],
   calDate: new Date(),
+  calSelectedDay: null,
   eqChartObj: null,
   dailyChartObj: null,
   excChartObj: null,
