@@ -1,9 +1,9 @@
-import { accTrades } from './accounts.js';
+import { accTrades, activeStartBalance } from './accounts.js';
 import { tr } from './i18n.js';
 import { cssVar, state } from './state.js';
 import { excursionFor, riskR, tTime } from './strategy-notes.js';
 import { openTrade } from './trade-modal.js';
-import { $, computePnl, dayKey, esc, fmtD, fmtDur, fmtMoney, isClosed, moneyCls } from './utils.js';
+import { $, computeDrawdown, computePnl, dayKey, esc, fmtD, fmtDur, fmtMoney, fmtPct, isClosed, moneyCls, returnPct } from './utils.js';
 
 /* ================= Stats page ================= */
 export function periodFiltered(p){
@@ -40,9 +40,10 @@ export function renderStats(){
   const dkeys=Object.keys(daily).sort();
   const dVals=dkeys.map(k=>daily[k]);
   const dW=dVals.filter(v=>v>0),dL=dVals.filter(v=>v<0),dB=dVals.filter(v=>v===0);
-  // drawdown
-  let peak=0,dd=0,cum=0;
-  for(const p of pnls){cum+=p;if(cum>peak)peak=cum;const d=peak-cum;if(d>dd)dd=d;}
+  // drawdown + % return
+  const startBalance=activeStartBalance();
+  const {ddAbs:dd,ddPct}=computeDrawdown(pnls,startBalance);
+  const netPct=returnPct(net,startBalance);
   // R multiples
   const rs=ts.map(riskR).filter(r=>r!=null);
   // months
@@ -63,7 +64,7 @@ export function renderStats(){
   ].map(k=>`<div class="card"><div class="lbl">${k[0]}</div><div class="val ${k[2]}">${k[1]}</div><div class="lbl" style="margin-top:4px">${k[3]}</div></div>`).join('');
 
   $('statsLeft').innerHTML='<h3>Obchody</h3>'+
-    srow('Celkový P&L',fmtMoney(net),moneyCls(net))+
+    srow('Celkový P&L',fmtMoney(net)+(netPct!=null?` (${fmtPct(netPct)})`:''),moneyCls(net))+
     srow('Priemerný P&L / obchod',fmtMoney(avg(pnls)),moneyCls(avg(pnls)))+
     srow('Priemerný ziskový obchod',fmtMoney(avg(wins)),'pos')+
     srow('Priemerný stratový obchod',fmtMoney(-Math.abs(avg(losses))),losses.length?'neg':'')+
@@ -97,7 +98,7 @@ export function renderStats(){
     srow('Priem. denný objem (kontrakty)',dkeys.length?avg(Object.values(dailyVol)).toFixed(1):'–')+
     srow('Očakávaná hodnota / obchod',fmtMoney(avg(pnls)),moneyCls(avg(pnls)))+
     srow('Priemerný realizovaný R-multiple',rs.length?avg(rs).toFixed(2)+'R':'–',rs.length?(avg(rs)>=0?'pos':'neg'):'')+
-    srow('Max drawdown',fmtMoney(-dd),dd?'neg':'');
+    srow('Max drawdown',fmtMoney(-dd)+(dd&&startBalance>0?` (-${ddPct.toFixed(1)}%)`:''),dd?'neg':'');
 
   renderExcursionChart(ts);
 }
@@ -164,9 +165,12 @@ export function renderExcursionChart(ts){
     });
   }
   const maeWins=wins.map(r=>r.mae),mfeLosses=losses.map(r=>r.mfe);
+  const allMae=rows.map(r=>r.mae),allMfe=rows.map(r=>r.mfe);
   const worstWinMae=maeWins.length?Math.max(...maeWins):0;
   const leftTotal=wins.reduce((a,r)=>a+r.leftOnTable,0);
   summary.innerHTML='<div class="cards">'+[
+    [tr('Priemerné MAE'),fmtMoney(-avg(allMae)),allMae.length?'neg':'',tr('priemerný najhorší bod proti tebe, naprieč všetkými obchodmi')],
+    [tr('Priemerné MFE'),fmtMoney(avg(allMfe)),allMfe.length?'pos':'',tr('priemerný najlepší bod v tvoj prospech, naprieč všetkými obchodmi')],
     [tr('Priem. MAE ziskových'),fmtMoney(-avg(maeWins)),maeWins.length?'neg':'',tr('koľko museli víťazi vydržať proti sebe')],
     [tr('Najhorší MAE víťaza'),fmtMoney(-worstWinMae),worstWinMae?'neg':'',tr('pod týmto by ťa stop vyhodil zo ziskového obchodu')],
     [tr('Priem. MFE stratových'),fmtMoney(avg(mfeLosses)),mfeLosses.length?'pos':'',tr('koľko zisku stratové obchody medzitým ukázali')],

@@ -8,7 +8,7 @@ import { loadCsvForImport } from './import-csv.js';
 import { renderAfterTradeChange } from './init.js';
 import { autoFetchForTrade, fetchTfForTrade } from './ohlc-fetch.js';
 import { cssVar, state } from './state.js';
-import { excursionFor, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
+import { excursionFor, plannedRiskPct, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
 import { allTagsOf, delTrade } from './trades-list.js';
 import { $, computePnl, dayKey, emotionLabel, localInputToTs, num, sessionOf, toast, tsToLocalInput } from './utils.js';
 
@@ -80,6 +80,14 @@ export function formTrade(){
     checkedRules:$('tStrategy').value?[...document.querySelectorAll('#tRuleChecklist .tRuleCheck:checked')].map(i=>i.value):null,
     notes:$('tNotes').value,
   };
+  // entryLegs/exitLegs (z broker CSV importu, pozri import-csv.js) nemajú formulárové
+  // políčka - bez tohto by ich formTrade() vždy vynulovalo (aj len pri prekreslení P&L
+  // náhľadu, aj pri uložení), a MAE/MFE by tichmo spadlo naspäť na približný výpočet.
+  if(state.currentTradeId!=null){
+    const old=state.trades.find(x=>x.id===state.currentTradeId);
+    if(old&&old.entryLegs)t.entryLegs=old.entryLegs;
+    if(old&&old.exitLegs)t.exitLegs=old.exitLegs;
+  }
   return t;
 }
 export function updatePnlPreview(){
@@ -87,10 +95,21 @@ export function updatePnlPreview(){
   if(!t.symbol){$('tPnlPreview').textContent='';return;}
   const pnl=computePnl(t);
   const r=riskR(t);
+  const riskPct=plannedRiskPct(t);
+  const limit=state.settings.maxRiskPerTradePct;
+  const overLimit=limit>0&&riskPct!=null&&riskPct>limit;
   $('tPnlPreview').innerHTML=`P&L: <span class="${moneyCls(pnl)}">${fmtMoney(pnl)}</span>`+
     (r!=null?` &nbsp; <span class="hint">(${r.toFixed(2)}R)</span>`:'')+
-    ` &nbsp; <span class="hint">multiplikátor ${multFor(t.symbol)}</span>`;
+    ` &nbsp; <span class="hint">multiplikátor ${multFor(t.symbol)}</span>`+
+    (riskPct!=null?` &nbsp; <span class="${overLimit?'neg':'hint'}" title="${esc(tr('Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu'))}">${overLimit?'⚠️ ':''}riziko ${riskPct.toFixed(2)}%${limit>0?' / '+limit+'%':''}</span>`:'');
   renderExcursion(t);
+}
+/* Jeden riadok "2@3985.0 → 1@3986.2" per leg-skupina, aby bolo pri škálovanom
+   obchode vidno, že sa nešlo dnu/von jedným fillom - presne to, čo v tabuľke
+   obchodov ukazuje odznak ⇄ scaled (pozri trades-list.js). */
+function legsSummary(legs){
+  if(!legs||!legs.length)return '';
+  return legs.map(l=>`${l.qty}@${l.price}`).join(' → ');
 }
 export function renderExcursion(t){
   const el=$('tExcursion');
@@ -98,12 +117,17 @@ export function renderExcursion(t){
   const x=excursionFor(t);
   if(!x){el.innerHTML='';return;}
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
+  const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
+  const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
   el.innerHTML=
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
     `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
     ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
-    ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`;
+    ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
+    (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
+      (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }
 ['tSymbol','tDir','tQty','tFees','tEntry','tExit','tStop','tTarget','tPnl'].forEach(id=>{
   document.addEventListener('input',e=>{if(e.target.id===id)updatePnlPreview();});

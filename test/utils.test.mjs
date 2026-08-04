@@ -2,7 +2,7 @@ import './dom-stub.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const { computePnl, isClosed, multFor, num, parseDT, fmtDur } = await import('../js/utils.js');
+const { computeDrawdown, computePnl, isClosed, multFor, num, parseDT, fmtDur, fmtPct, returnPct } = await import('../js/utils.js');
 const { state } = await import('../js/state.js');
 
 test('computePnl: long a short s multiplikátorom', () => {
@@ -107,4 +107,38 @@ test('fmtDur: rozsahy jednotiek', () => {
 test('state má očakávané predvolené multiplikátory', () => {
   assert.equal(state.settings.mults.MGC, 10);
   assert.equal(state.settings.mults.GC, 100);
+});
+
+test('computeDrawdown: $ pokles je rovnaký ako pri starom výpočte len z kumulatívneho P&L (posun o konštantu nemení rozdiely)', () => {
+  const pnls = [100, -50, 200, -300, 150];
+  const { ddAbs } = computeDrawdown(pnls, 1000);
+  // stará logika: peak/pokles len z kumulatívneho súčtu P&L, bez počiat. kapitálu
+  let peak = 0, dd = 0, cum = 0;
+  for (const p of pnls) { cum += p; if (cum > peak) peak = cum; const d = peak - cum; if (d > dd) dd = d; }
+  assert.equal(ddAbs, dd);
+});
+
+test('computeDrawdown: % pokles je voči vrcholu equity, nie voči nule', () => {
+  // vrchol equity 1000+100=1100, potom pokles o 300 na 800 → -300/1100
+  const { ddAbs, ddPct } = computeDrawdown([100, -300], 1000);
+  assert.equal(ddAbs, 300);
+  assert.ok(Math.abs(ddPct - 300 / 1100 * 100) < 1e-9);
+});
+
+test('computeDrawdown: kým equity nikdy neprejde nad nulu, % pokles nedelí nulou', () => {
+  const { ddAbs, ddPct } = computeDrawdown([-300], 0);
+  assert.equal(ddAbs, 300);
+  assert.equal(ddPct, 0);
+});
+
+test('returnPct: null bez kladného počiat. kapitálu, inak percento voči nemu', () => {
+  assert.equal(returnPct(150, 0), null);
+  assert.equal(returnPct(150, 1000), 15);
+  assert.equal(returnPct(-50, 1000), -5);
+});
+
+test('fmtPct: kladné hodnoty majú +, záporné -, null je pomlčka', () => {
+  assert.equal(fmtPct(5), '+5.00%');
+  assert.equal(fmtPct(-5), '-5.00%');
+  assert.equal(fmtPct(null), '–');
 });
