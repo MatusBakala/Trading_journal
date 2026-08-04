@@ -116,6 +116,10 @@ export function renderExcursion(t){
   if(!el)return;
   const x=excursionFor(t);
   if(!x){el.innerHTML='';return;}
+  if(x.mismatch){
+    el.innerHTML=`<span class="hint" style="color:var(--red)" title="${esc(tr('Cena v priradených sviečkach sa výrazne líši od ceny obchodu - pravdepodobne iný kontrakt/mesiac než bol stiahnutý.'))}">⚠️ ${esc(tr('Sviečky nesedia s cenou obchodu'))} (${esc(x.tf)})</span>`;
+    return;
+  }
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
   const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
   const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
@@ -198,7 +202,8 @@ export function shrinkImageBlob(blob,maxDim){
   });
 }
 export function buildTradeReviewData(t){
-  const pnl=computePnl(t),r=riskR(t),x=excursionFor(t);
+  const pnl=computePnl(t),r=riskR(t),xRaw=excursionFor(t);
+  const x=xRaw&&!xRaw.mismatch?xRaw:null;
   const strat=t.strategyId!=null?strategyById(t.strategyId):null;
   const barsPayload=(()=>{
     const cands=datasetsForSymbol(t.symbol);

@@ -861,6 +861,12 @@ export function excursionFor(t){
   let hi=-Infinity,lo=Infinity;
   for(const b of best.bars){if(b.h>hi)hi=b.h;if(b.l<lo)lo=b.l;}
   if(!isFinite(hi)||!isFinite(lo))return null;
+  // Sviečky priradené cez koreňový symbol (napr. "MGC" pre MGCQ6 aj MGCZ6, viď
+  // datasetsForSymbol) môžu patriť inému kontraktu-mesiacu na inej cenovej hladine
+  // (kontango) - vtedy by MAE/MFE vyšlo z nesúvisiacich čísel. Namiesto tichého
+  // zavádzajúceho výsledku to označíme ako mismatch.
+  const range=hi-lo,tol=Math.max(range*0.5,hi*0.01);
+  if(t.entry<lo-tol||t.entry>hi+tol)return{mismatch:true,tf:best.tf};
   const dir=t.dir,mult=multFor(t.symbol);
   const hasLegs=(t.entryLegs&&t.entryLegs.length)||(t.exitLegs&&t.exitLegs.length);
   let maeMoney,mfeMoney;
@@ -868,7 +874,11 @@ export function excursionFor(t){
     const segments=buildPositionSegments(t.entryLegs,t.exitLegs,t1,t2);
     maeMoney=0;mfeMoney=0;
     for(const b of best.bars){
-      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)||segments[segments.length-1];
+      // Sviečka tesne pred tEntry (bežné pri 5m+ timeframe, viď filter vyššie) nespadá
+      // do žiadneho segmentu - patrí prvému (pozícia sa ešte len otvárala), nie
+      // poslednému, inak by sa jej rozsah nesprávne váhoval finálnym (často väčším) qty.
+      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)
+        ||(b.t<segments[0].tStart?segments[0]:segments[segments.length-1]);
       if(!seg)continue;
       const fav=(dir===1?b.h:b.l)-seg.avgPrice,adv=(dir===1?b.l:b.h)-seg.avgPrice;
       const favMoney=fav*dir*seg.qty*mult,advMoney=adv*dir*seg.qty*mult;

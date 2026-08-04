@@ -48,3 +48,16 @@ test('collectExcursions: vynechá obchody bez sviečkových dát, zvyšné majú
   assert.equal(rows.length, 1);
   assert.equal(rows[0].trade.id, 1, 'referencia na trade musí prežiť do bodu grafu kvôli klik-na-detail');
 });
+
+test('collectExcursions: vynechá aj obchody s excursionFor mismatch (iný kontrakt-mesiac) - nesmie spadnúť do $NaN priemerov', () => {
+  // Sviečky ďaleko od entry (rovnaký tvar ako reálny Q6/Z6 kontangový mismatch) -
+  // excursionFor vráti {mismatch:true} bez maeMoney/mfeMoney; ak by ho collectExcursions
+  // nevynechalo, Math.abs(undefined) by sa dostalo do priemerov ako NaN.
+  state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [bar(T0, 4077, 4080, 4074, 4078)] }];
+  const mismatched = trade({ id: 1, entry: 4017.6 });
+  const ok = trade({ id: 2, entry: 4076 });
+  const rows = collectExcursions([mismatched, ok]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].trade.id, 2);
+  assert.ok(rows.every(r => Number.isFinite(r.mae) && Number.isFinite(r.mfe)));
+});

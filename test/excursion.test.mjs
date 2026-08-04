@@ -56,6 +56,33 @@ test('excursionFor: leg-aware MAE váži cenovú špičku iba skutočne držaný
   close(x.mfeMoney, 160);
 });
 
+test('excursionFor: hraničná sviečka tesne pred tEntry patrí prvému segmentu, nie poslednému', () => {
+  // 1m sviečka, ktorá začína 30s pred tEntry, ale vonkajší filter (b.t+tf>t1) ju stále
+  // zarátava - bežné, keď sviečka "obsahujúca" moment vstupu logicky začína o kúsok skôr.
+  // Extrémny range (50-200) nech je omyl vidieť na prvý pohľad: keby sa nesprávne
+  // priradila poslednému segmentu (qty=5, priemer 101.2), MAE by vyšlo -4940; správne
+  // (prvý segment - pozícia sa tam ešte len otvárala - qty=2, priemer 100) je -2000.
+  state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
+    bar(970, 200, 50),
+  ] }];
+  const x = excursionFor(scaledShortTrade(true));
+  close(x.maeMoney, -2000);
+});
+
+test('excursionFor: cena obchodu ďaleko mimo rozsahu sviečok (iný kontrakt-mesiac) sa označí ako mismatch', () => {
+  // Rovnaký tvar ako reálny prípad: obchod na MGCQ6 (august) omylom priradený k
+  // sviečkam z MGCZ6 (december) datasetu cez spoločný koreň "MGC" - kontangová
+  // medzera medzi mesiacmi je desiatky bodov, oveľa viac než bežná volatilita.
+  state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
+    bar(1005, 4080, 4074),
+    bar(1050, 4082, 4078),
+  ] }];
+  const t = scaledShortTrade(false);
+  t.entry = 4017.6;
+  const x = excursionFor(t);
+  assert.deepEqual(x, { mismatch: true, tf: '1m' });
+});
+
 test('excursionFor: bez legov (manuálny/starý obchod) ostáva plošný výpočet cez celé qty - žiadna regresia', () => {
   state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
     bar(1005, 110, 99),
