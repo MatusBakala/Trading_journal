@@ -122,15 +122,18 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
       const feePerUnit=f.fee/f.qty;
       while(remaining>0){
         if(position===0){
-          cur={dir:f.side,symbol:f.symbol,account,entryQty:0,entryNotional:0,exitQty:0,exitNotional:0,fees:0,tEntry:f.t,tExit:null};
+          cur={dir:f.side,symbol:f.symbol,account,entryQty:0,entryNotional:0,exitQty:0,exitNotional:0,fees:0,tEntry:f.t,tExit:null,entryLegs:[],exitLegs:[]};
           cur.entryQty+=remaining;cur.entryNotional+=remaining*f.price;cur.fees+=feePerUnit*remaining;
+          cur.entryLegs.push({qty:remaining,price:f.price,t:f.t});
           position=f.side*remaining;remaining=0;
         }else if(Math.sign(position)===f.side){
           cur.entryQty+=remaining;cur.entryNotional+=remaining*f.price;cur.fees+=feePerUnit*remaining;
+          cur.entryLegs.push({qty:remaining,price:f.price,t:f.t});
           position+=f.side*remaining;remaining=0;
         }else{
           const closeQty=Math.min(remaining,Math.abs(position));
           cur.exitQty+=closeQty;cur.exitNotional+=closeQty*f.price;cur.fees+=feePerUnit*closeQty;
+          cur.exitLegs.push({qty:closeQty,price:f.price,t:f.t});
           position-=Math.sign(position)*closeQty;
           remaining-=closeQty;
           if(position===0){cur.tExit=f.t;convertedTrades.push(cur);cur=null;}
@@ -146,7 +149,11 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     if(cands.length)t.stopPrice=cands[0].stopPrice;
   }
   const rnd=x=>Math.round(x*1e6)/1e6;
-  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees','Stop loss'];
+  // EntryLegs/ExitLegs sú interné, generované stĺpce (JSON pole {qty,price,t} na fill) -
+  // nemapujú sa v UI (nie sú v IMPORT_FIELDS), doImport() ich vyzdvihne podľa presného
+  // názvu hlavičky a napojí na obchod, aby excursionFor mohol počítať MAE/MFE podľa
+  // reálne držanej veľkosti pozície namiesto plošného konečného množstva.
+  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees','Stop loss','EntryLegs','ExitLegs'];
   const outRows=convertedTrades.map(t=>[
     t.symbol,
     t.dir===1?'Buy':'Sell',
@@ -157,6 +164,8 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     t.tExit?tsToLocalInput(t.tExit):'',
     String(rnd(t.fees||0)),
     t.stopPrice!=null?String(rnd(t.stopPrice)):'',
+    JSON.stringify(t.entryLegs||[]),
+    JSON.stringify(t.exitLegs||[]),
   ]);
   return {headers:outHeaders,rows:outRows,openCount:convertedTrades.filter(t=>!t.tExit).length};
 }
@@ -166,8 +175,10 @@ export function buildImportMapUI(){
     const auto=csvHeaders.findIndex(h=>f[2].includes(normH(h)));
     return `<div class="maprow"><div>${f[1]}</div><select id="map_${f[0]}">${opts(auto)}</select></div>`;
   }).join('');
-  $('csvPreview').innerHTML='<table><thead><tr>'+csvHeaders.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
-    csvRows.slice(0,5).map(r=>'<tr style="cursor:default">'+csvHeaders.map((_,i)=>`<td>${esc(r[i]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+  // EntryLegs/ExitLegs sú interné JSON stĺpce - v náhľade by len zapratali tabuľku surovým JSON-om
+  const previewCols=csvHeaders.map((_,i)=>i).filter(i=>csvHeaders[i]!=='EntryLegs'&&csvHeaders[i]!=='ExitLegs');
+  $('csvPreview').innerHTML='<table><thead><tr>'+previewCols.map(i=>`<th>${esc(csvHeaders[i])}</th>`).join('')+'</tr></thead><tbody>'+
+    csvRows.slice(0,5).map(r=>'<tr style="cursor:default">'+previewCols.map(i=>`<td>${esc(r[i]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
   for(const id of ['map_tEntry','map_tExit']){
     const sel=$(id);
     if(sel)sel.addEventListener('change',renderDateCheck);
@@ -274,6 +285,10 @@ export async function doImport(){
   IMPORT_FIELDS.forEach(f=>{map[f[0]]=parseInt($('map_'+f[0]).value,10);});
   if(map.symbol<0||map.tEntry<0){toast('Namapuj minimálne Symbol a Čas vstupu');return;}
   const get=(r,k)=>map[k]>=0?r[map[k]]:null;
+  // EntryLegs/ExitLegs (ak sú prítomné - len z broker-converter, pozri convertBrokerOrdersToTrades)
+  // sa nemapujú cez IMPORT_FIELDS UI, nájdu sa priamo podľa presného názvu stĺpca.
+  const iEntryLegs=csvHeaders.indexOf('EntryLegs'),iExitLegs=csvHeaders.indexOf('ExitLegs');
+  const parseLegs=(r,idx)=>{if(idx<0)return null;try{const v=JSON.parse(r[idx]||'[]');return Array.isArray(v)&&v.length?v:null;}catch{return null;}};
   const account=parseInt($('importAccount').value,10)||defaultAccId();
   let ok=0,skip=0,dup=0,backfilled=0;
   const dupIndex=buildDupIndex(state.trades);
@@ -315,6 +330,9 @@ export async function doImport(){
       tagsNeg:String(get(r,'tagsNeg')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean),
       createdAt:Date.now(),
     };
+    const entryLegs=parseLegs(r,iEntryLegs),exitLegs=parseLegs(r,iExitLegs);
+    if(entryLegs)t.entryLegs=entryLegs;
+    if(exitLegs)t.exitLegs=exitLegs;
     newTrades.push(t);
     addToDupIndex(dupIndex,t);
     ok++;

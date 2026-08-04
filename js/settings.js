@@ -16,11 +16,20 @@ export function renderSettings(){
   Object.entries(state.settings.mults).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>addMultRow(k,v));
   renderGDriveStatus();
   if($('anthropicKey')&&document.activeElement!==$('anthropicKey'))$('anthropicKey').value=state.settings.anthropicKey||'';
+  if($('maxRiskPerTradePct')&&document.activeElement!==$('maxRiskPerTradePct'))$('maxRiskPerTradePct').value=state.settings.maxRiskPerTradePct||'';
+  if($('maxDailyLossPct')&&document.activeElement!==$('maxDailyLossPct'))$('maxDailyLossPct').value=state.settings.maxDailyLossPct||'';
 }
 export function saveAnthropicKey(){
   state.settings.anthropicKey=$('anthropicKey').value.trim();
   saveSettings();
   toast('Kľúč uložený');
+}
+export function saveRiskLimits(){
+  state.settings.maxRiskPerTradePct=num($('maxRiskPerTradePct').value)||0;
+  state.settings.maxDailyLossPct=num($('maxDailyLossPct').value)||0;
+  saveSettings();
+  renderAfterTradeChange(); // banner na dashboarde a upozornenie v modáli reagujú na nové limity hneď
+  toast('Limity uložené');
 }
 export function addMultRow(k,v){
   const div=document.createElement('div');

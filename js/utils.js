@@ -76,3 +76,22 @@ export function debounce(fn,ms){
   let h;
   return function(...args){clearTimeout(h);h=setTimeout(()=>fn.apply(this,args),ms);};
 }
+/* Zdieľaný max drawdown pre dashboard aj štatistiky (predtým každý počítal ten istý
+   cyklus zvlášť). Sleduje sa rovno equity (počiat. kapitál + kumulatívne P&L), nie len
+   holé súčty P&L - vrchol a pokles v dolároch vyjde identicky ako predtým (posun o
+   konštantu nemení rozdiely), ale navyše to umožní aj % pokles voči vrcholu equity. */
+export function computeDrawdown(pnls,startBalance){
+  let peakEq=startBalance||0,eq=startBalance||0,ddAbs=0,ddPct=0;
+  for(const p of pnls){
+    eq+=p;
+    if(eq>peakEq)peakEq=eq;
+    const d=peakEq-eq;
+    if(d>ddAbs){ddAbs=d;ddPct=peakEq>0?d/peakEq*100:0;}
+  }
+  return {ddAbs,ddPct};
+}
+/* % return voči počiatočnému kapitálu - bez kladného počiat. kapitálu nemá zmysel. */
+export function returnPct(net,startBalance){
+  return startBalance>0?net/startBalance*100:null;
+}
+export function fmtPct(v){return v==null?'–':(v>=0?'+':'')+v.toFixed(2)+'%';}

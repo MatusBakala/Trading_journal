@@ -148,10 +148,11 @@ window.__TJ_BOOT__=(async function(){
       <option value="year">Tento rok</option>
     </select>
   </div>
+  <div id="riskBanner"></div>
   <div class="kpirow" id="kpiCards"></div>
   <div class="cards" id="kpiCards2"></div>
   <div class="grid2">
-    <div class="panel"><h3>Equity krivka</h3><div class="chartbox"><canvas id="eqChart"></canvas></div></div>
+    <div class="panel"><h3>Equity krivka <span id="eqModeBar" style="display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle"></span></h3><div class="chartbox"><canvas id="eqChart"></canvas></div></div>
     <div class="panel"><h3>Denný P&L</h3><div class="chartbox"><canvas id="dailyChart"></canvas></div></div>
   </div>
   <div class="grid3">
@@ -222,6 +223,7 @@ window.__TJ_BOOT__=(async function(){
     <p class="hint" id="excursionSub"></p>
     <div style="position:relative;height:340px"><canvas id="excChart"></canvas></div>
     <div id="excursionSummary" style="margin-top:12px"></div>
+    <div id="excOutliers"></div>
   </div>
 </section>
 
@@ -416,6 +418,17 @@ window.__TJ_BOOT__=(async function(){
     <div id="multList"></div>
     <button class="btn secondary small" id="btnAddMultRow">+ Pridať symbol</button>
     <button class="btn small" id="btnSaveMults">Uložiť multiplikátory</button>
+  </div>
+  <div class="panel">
+    <h3>⚠️ Rizikový manažment</h3>
+    <p class="hint">Limity počítané voči počiat. kapitálu aktívneho účtu. Nastav 0, ak limit nechceš sledovať. Appka nič neblokuje – len upozorní, keď obchod alebo deň limit prekročí.</p>
+    <br>
+    <div class="filters">
+      <label class="f">Max. riziko na obchod (%)<input id="maxRiskPerTradePct" type="number" step="any" min="0" placeholder="napr. 1"></label>
+      <label class="f">Max. denná strata (%)<input id="maxDailyLossPct" type="number" step="any" min="0" placeholder="napr. 3"></label>
+    </div>
+    <br>
+    <button class="btn small" id="btnSaveRiskLimits">Uložiť limity</button>
   </div>
   <div class="panel">
     <h3>☁️ Cloud sync (Google Drive)</h3>

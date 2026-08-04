@@ -12,6 +12,8 @@ export const state = {
       GC: 100, MGC: 10, SI: 5000, SIL: 1000, CL: 1000, MCL: 100, NG: 10000,
       XAUUSD: 100, XAGUSD: 5000,
     },
+    maxRiskPerTradePct: 0, // 0 = limit nesledovaný
+    maxDailyLossPct: 0,
     gClientId: '',
     gConnected: false,
     gLastSync: null,
@@ -26,6 +28,7 @@ export const state = {
   calDate: new Date(),
   calSelectedDay: null,
   eqChartObj: null,
+  eqChartMode: 'usd', // 'usd' | 'pct' - equity krivka v dolároch alebo % voči počiat. kapitálu
   dailyChartObj: null,
   excChartObj: null,
   currentTradeId: null,

@@ -3,7 +3,7 @@ import { renderBreakdown } from './ai.js';
 import { renderPatterns } from './patterns.js';
 import { cssVar, state } from './state.js';
 import { tTime } from './strategy-notes.js';
-import { $, computePnl, dayKey, emotionLabel, fmtMoney, isClosed, moneyCls, sessionOf } from './utils.js';
+import { $, computeDrawdown, computePnl, dayKey, emotionLabel, fmtMoney, fmtPct, isClosed, moneyCls, returnPct, sessionOf } from './utils.js';
 
 /* ================= Dashboard ================= */
 export const GAUGE_L=125.66; // dĺžka polkruhu r=40
@@ -36,6 +36,32 @@ export function filteredForDash(){
   else if(p==='90')from=now.getTime()/1000-90*86400;
   return accTrades().filter(t=>tTime(t)>=from).sort((a,b)=>tTime(a)-tTime(b));
 }
+export function toggleEqMode(mode){state.eqChartMode=mode;renderDashboard();}
+/* Banner "dnešné využité riziko" - na rozdiel od plannedRiskPct() v trade-modal.js
+   (riziko JEDNÉHO rozostavaného obchodu, vstup→stop) toto sčíta realizované straty
+   VŠETKÝCH dnešných uzavretých obchodov, aby bolo vidno priebežné čerpanie denného
+   limitu, nielen limit na jeden obchod. */
+function renderRiskBanner(startBalance){
+  const el=$('riskBanner');
+  if(!el)return;
+  const limit=state.settings.maxDailyLossPct;
+  if(!(limit>0)||!(startBalance>0)){el.innerHTML='';return;}
+  const todayKey=dayKey(Math.floor(Date.now()/1000));
+  const todayNet=accTrades().filter(t=>isClosed(t)&&dayKey(tTime(t))===todayKey).reduce((a,t)=>a+computePnl(t),0);
+  const lossPct=todayNet<0?Math.abs(todayNet)/startBalance*100:0;
+  const overLimit=lossPct>limit;
+  el.innerHTML=`<div class="card" style="border:1px solid ${overLimit?'var(--red)':'var(--border)'};margin-bottom:14px">
+    <div class="lbl">${overLimit?'⚠️ ':''}Dnešné využité riziko <span class="hint">(denný limit ${limit}%)</span></div>
+    <div class="val ${overLimit?'neg':''}" style="font-size:20px;font-weight:700">${lossPct.toFixed(2)}%</div>
+  </div>`;
+}
+function renderEqModeBar(startBalance){
+  const bar=$('eqModeBar');
+  if(!bar)return;
+  if(!(startBalance>0)){bar.innerHTML='';return;} // % nedáva zmysel bez počiat. kapitálu
+  bar.innerHTML=['usd','pct'].map(m=>
+    `<button type="button" class="tfBtn${state.eqChartMode===m?' on':''}" data-eqmode="${m}">${m==='usd'?'$':'%'}</button>`).join('');
+}
 export function renderDashboard(){
   // len uzavreté obchody - otvorené pozície nemajú realizovaný P&L
   const ts=filteredForDash().filter(isClosed);
@@ -47,9 +73,10 @@ export function renderDashboard(){
   const pf=gl>0?gw/gl:(gw>0?Infinity:0);
   const avgW=wins.length?gw/wins.length:0,avgL=losses.length?gl/losses.length:0;
   const expct=pnls.length?net/pnls.length:0;
-  // max drawdown
-  let peak=0,dd=0,cum=0;
-  for(const p of pnls){cum+=p;if(cum>peak)peak=cum;const d=peak-cum;if(d>dd)dd=d;}
+  const startBalance=activeStartBalance();
+  const {ddAbs:dd,ddPct}=computeDrawdown(pnls,startBalance);
+  const netPct=returnPct(net,startBalance);
+  renderRiskBanner(startBalance);
   const be=pnls.filter(p=>p===0).length;
   // daily sums
   const daily={};
@@ -67,6 +94,7 @@ export function renderDashboard(){
       <div>
         <div class="lbl">Net P&L <span class="badge">${pnls.length}</span></div>
         <div class="big ${moneyCls(net)}">${fmtMoney(net)}</div>
+        ${netPct!=null?`<div class="hint ${moneyCls(net)}">${fmtPct(netPct)}</div>`:''}
       </div>
     </div>
     <div class="card kpi">
@@ -104,19 +132,22 @@ export function renderDashboard(){
     </div>`;
   $('kpiCards2').innerHTML=[
     ['Očak. hodnota / trade',fmtMoney(expct),moneyCls(expct)],
-    ['Max drawdown',fmtMoney(-dd),dd?'neg':''],
+    ['Max drawdown',fmtMoney(-dd)+(dd&&startBalance>0?` (-${ddPct.toFixed(1)}%)`:''),dd?'neg':''],
     ['Najlepší deň',fmtMoney(bestDay),moneyCls(bestDay)],
     ['Najhorší deň',fmtMoney(worstDay),moneyCls(worstDay)],
   ].map(k=>`<div class="card"><div class="lbl">${k[0]}</div><div class="val ${k[2]}">${k[1]}</div></div>`).join('');
 
+  renderEqModeBar(startBalance);
   // equity
   if(typeof Chart!=='undefined'){
     const labels=ts.map((t,i)=>i+1);
-    let c=activeStartBalance(),eq=ts.map((t,i)=>{c+=pnls[i];return c;});
+    let c=startBalance,eqUsd=ts.map((t,i)=>{c+=pnls[i];return c;});
+    const pctMode=state.eqChartMode==='pct'&&startBalance>0;
+    const eq=pctMode?eqUsd.map(v=>(v/startBalance-1)*100):eqUsd;
     if(state.eqChartObj)state.eqChartObj.destroy();
     const gridColor=cssVar('--border'),tickColor=cssVar('--muted'),accentColor=cssVar('--accent'),greenColor=cssVar('--green'),redColor=cssVar('--red');
     state.eqChartObj=new Chart($('eqChart'),{type:'line',data:{labels,datasets:[{data:eq,borderColor:accentColor,backgroundColor:accentColor+'1f',fill:true,pointRadius:0,tension:.2,borderWidth:2}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{grid:{color:gridColor},ticks:{color:tickColor}}}}});
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>pctMode?fmtPct(c.parsed.y):fmtMoney(c.parsed.y)}}},scales:{x:{display:false},y:{grid:{color:gridColor},ticks:{color:tickColor,callback:v=>pctMode?v.toFixed(1)+'%':v}}}}});
     // daily
     const dkeys=Object.keys(daily).sort();
     if(state.dailyChartObj)state.dailyChartObj.destroy();

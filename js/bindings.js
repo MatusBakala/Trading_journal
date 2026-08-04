@@ -9,14 +9,14 @@ import { reportRowHTML, tradeRowHTML } from './trades-list.js';
 import { $, debounce } from './utils.js';
 import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
-import { calMove, showDay } from './calendar.js';
-import { renderDashboard } from './dashboard.js';
+import { calMove, exportDayJson, showDay } from './calendar.js';
+import { renderDashboard, toggleEqMode } from './dashboard.js';
 import { gdriveConnect, gdriveDisconnect, gdriveForceDownload, gdriveRestoreSnapshot, gdriveShowSnapshots, gdriveSyncNow } from './gdrive.js';
 import { switchLang } from './i18n.js';
 import { convertAndRebuild, doImport } from './import-csv.js';
 import { fetchOnline } from './ohlc-fetch.js';
 import { delOhlc, goToOhlcCoverage, importOHLC, runOhlcCoverageCheck } from './ohlc-import.js';
-import { addMultRow, exportBackup, restoreBackup, saveAnthropicKey, saveMults, wipeAll } from './settings.js';
+import { addMultRow, exportBackup, restoreBackup, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
 import { toggleTheme } from './state.js';
 import { renderStats } from './stats.js';
 import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
@@ -65,6 +65,7 @@ document.getElementById('btnAddAccRow').addEventListener('click', function(event
 document.getElementById('btnSaveAccounts').addEventListener('click', function(event){ saveAccounts(); });
 document.getElementById('btnAddMultRow').addEventListener('click', function(event){ addMultRow('',1); });
 document.getElementById('btnSaveMults').addEventListener('click', function(event){ saveMults(); });
+document.getElementById('btnSaveRiskLimits').addEventListener('click', function(event){ saveRiskLimits(); });
 document.getElementById('gdriveConnectBtn').addEventListener('click', function(event){ gdriveConnect(); });
 document.getElementById('gdriveDisconnectBtn').addEventListener('click', function(event){ gdriveDisconnect(); });
 document.getElementById('btnGdriveSyncNow').addEventListener('click', function(event){ gdriveSyncNow(false); });
@@ -106,6 +107,12 @@ document.getElementById('byHour').addEventListener('click', function(event){
   if (row) goToTradesForHour(row.dataset.hour);
 });
 
+/* equity krivka $ / % toggle (dashboard.js renderEqModeBar) */
+document.getElementById('eqModeBar').addEventListener('click', function(event){
+  const btn = event.target.closest('[data-eqmode]');
+  if (btn) toggleEqMode(btn.dataset.eqmode);
+});
+
 /* calendar day cells (calendar.js renderCalendar) */
 document.getElementById('calGrid').addEventListener('click', function(event){
   const cell = event.target.closest('[data-day]');
@@ -138,6 +145,13 @@ function handleTradeTableClick(event){
 }
 document.getElementById('tradesBody').addEventListener('click', handleTradeTableClick);
 document.getElementById('calDayPanel').addEventListener('click', handleTradeTableClick);
+document.getElementById('excOutliers').addEventListener('click', handleTradeTableClick);
+
+/* "📥 Export JSON pre AI" tlačidlo v paneli dňa (calendar.js showDay) */
+document.getElementById('calDayPanel').addEventListener('click', function(event){
+  const btn = event.target.closest('[data-action="exportDay"]');
+  if (btn) exportDayJson(btn.dataset.day);
+});
 
 /* reports table rows (trades-list.js reportRowHTML) */
 document.getElementById('reportsBody').addEventListener('click', function(event){

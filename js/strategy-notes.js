@@ -1,3 +1,4 @@
+import { activeStartBalance } from './accounts.js';
 import { shotsByTrade } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
 import { ask } from './i18n.js';
@@ -808,7 +809,40 @@ export function riskR(t){
   if(risk<=0)return null;
   return pnl/risk;
 }
+/* Plánované riziko obchodu (vstup→stop) ako % počiat. kapitálu aktívneho účtu -
+   na rozdiel od riskR() (spätný R-multiple realizovaného výsledku) toto je preventívne:
+   vidno to hneď pri vypĺňaní obchodu, ešte pred uložením. */
+export function plannedRiskPct(t){
+  if(t.stop==null||!isFinite(t.stop)||!isFinite(t.entry))return null;
+  const balance=activeStartBalance();
+  if(!(balance>0))return null;
+  const risk=Math.abs(t.entry-t.stop)*(t.qty||1)*multFor(t.symbol);
+  return risk/balance*100;
+}
 export function tTime(t){return t.tExit||t.tEntry||0;}
+/* Pri obchode postavenom z viacerých fillov (scale-in/scale-out z broker CSV importu,
+   pozri convertBrokerOrdersToTrades) sa počas života pozície menila reálne držaná
+   veľkosť - t.qty je len súčet/maximum, nie veľkosť v každom okamihu. Táto funkcia
+   z entryLegs/exitLegs (chronologicky zoradené {qty,price,t}) zrekonštruuje časovú os
+   veľkosti pozície metódou priemerných nákladov (exit neholieb cenu zvyšku, len zníži
+   qty), aby excursionFor mohol každý úsek váhovať skutočne držaným množstvom namiesto
+   plošného konečného qty cez celé okno.  */
+export function buildPositionSegments(entryLegs,exitLegs,tEntry,tExit){
+  const events=[
+    ...(entryLegs||[]).map(l=>({t:l.t,type:'in',qty:l.qty,price:l.price})),
+    ...(exitLegs||[]).map(l=>({t:l.t,type:'out',qty:l.qty})),
+  ].sort((a,b)=>a.t-b.t);
+  const segments=[];
+  let openQty=0,openNotional=0,segStart=tEntry;
+  for(const e of events){
+    if(openQty>0&&e.t>segStart)segments.push({tStart:segStart,tEnd:e.t,qty:openQty,avgPrice:openNotional/openQty});
+    if(e.type==='in'){openQty+=e.qty;openNotional+=e.qty*e.price;}
+    else{const rm=Math.min(e.qty,openQty);if(openQty>0)openNotional-=rm*(openNotional/openQty);openQty-=rm;}
+    segStart=e.t;
+  }
+  if(openQty>0&&tExit>segStart)segments.push({tStart:segStart,tEnd:tExit,qty:openQty,avgPrice:openNotional/openQty});
+  return segments;
+}
 /* MAE/MFE – ako hlboko šla pozícia proti tebe (Maximum Adverse Excursion) a ako
    ďaleko v tvoj prospech (Maximum Favourable Excursion), kým si ju zavrel.
    Počíta sa z uložených sviečok; bez OHLC dát vráti null. */
@@ -827,13 +861,32 @@ export function excursionFor(t){
   let hi=-Infinity,lo=Infinity;
   for(const b of best.bars){if(b.h>hi)hi=b.h;if(b.l<lo)lo=b.l;}
   if(!isFinite(hi)||!isFinite(lo))return null;
-  const dir=t.dir,qty=t.qty||1,mult=multFor(t.symbol);
+  const dir=t.dir,mult=multFor(t.symbol);
+  const hasLegs=(t.entryLegs&&t.entryLegs.length)||(t.exitLegs&&t.exitLegs.length);
+  let maeMoney,mfeMoney;
+  if(hasLegs){
+    const segments=buildPositionSegments(t.entryLegs,t.exitLegs,t1,t2);
+    maeMoney=0;mfeMoney=0;
+    for(const b of best.bars){
+      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)||segments[segments.length-1];
+      if(!seg)continue;
+      const fav=(dir===1?b.h:b.l)-seg.avgPrice,adv=(dir===1?b.l:b.h)-seg.avgPrice;
+      const favMoney=fav*dir*seg.qty*mult,advMoney=adv*dir*seg.qty*mult;
+      if(favMoney>mfeMoney)mfeMoney=favMoney;
+      if(advMoney<maeMoney)maeMoney=advMoney;
+    }
+  }else{
+    const qty=t.qty||1;
+    const maePrice=dir===1?lo:hi,mfePrice=dir===1?hi:lo;
+    maeMoney=Math.min(0,(maePrice-t.entry)*dir*qty*mult);
+    mfeMoney=Math.max(0,(mfePrice-t.entry)*dir*qty*mult);
+  }
   const maePrice=dir===1?lo:hi,mfePrice=dir===1?hi:lo;
-  const maeMoney=Math.min(0,(maePrice-t.entry)*dir*qty*mult);
-  const mfeMoney=Math.max(0,(mfePrice-t.entry)*dir*qty*mult);
+  const qty=t.qty||1;
   const risk=(t.stop!=null&&isFinite(t.stop))?Math.abs(t.entry-t.stop)*qty*mult:0;
   return {
     tf:best.tf,barCount:best.bars.length,maePrice,mfePrice,maeMoney,mfeMoney,
+    approx:!hasLegs,
     maeR:risk>0?maeMoney/risk:null,
     mfeR:risk>0?mfeMoney/risk:null,
     leftOnTable:Math.max(0,mfeMoney-computePnl(t)),
