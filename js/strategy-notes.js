@@ -868,7 +868,11 @@ export function excursionFor(t){
     const segments=buildPositionSegments(t.entryLegs,t.exitLegs,t1,t2);
     maeMoney=0;mfeMoney=0;
     for(const b of best.bars){
-      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)||segments[segments.length-1];
+      // Sviečka tesne pred tEntry (bežné pri 5m+ timeframe, viď filter vyššie) nespadá
+      // do žiadneho segmentu - patrí prvému (pozícia sa ešte len otvárala), nie
+      // poslednému, inak by sa jej rozsah nesprávne váhoval finálnym (často väčším) qty.
+      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)
+        ||(b.t<segments[0].tStart?segments[0]:segments[segments.length-1]);
       if(!seg)continue;
       const fav=(dir===1?b.h:b.l)-seg.avgPrice,adv=(dir===1?b.l:b.h)-seg.avgPrice;
       const favMoney=fav*dir*seg.qty*mult,advMoney=adv*dir*seg.qty*mult;
