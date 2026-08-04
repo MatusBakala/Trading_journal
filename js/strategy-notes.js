@@ -861,6 +861,12 @@ export function excursionFor(t){
   let hi=-Infinity,lo=Infinity;
   for(const b of best.bars){if(b.h>hi)hi=b.h;if(b.l<lo)lo=b.l;}
   if(!isFinite(hi)||!isFinite(lo))return null;
+  // Sviečky priradené cez koreňový symbol (napr. "MGC" pre MGCQ6 aj MGCZ6, viď
+  // datasetsForSymbol) môžu patriť inému kontraktu-mesiacu na inej cenovej hladine
+  // (kontango) - vtedy by MAE/MFE vyšlo z nesúvisiacich čísel. Namiesto tichého
+  // zavádzajúceho výsledku to označíme ako mismatch.
+  const range=hi-lo,tol=Math.max(range*0.5,hi*0.01);
+  if(t.entry<lo-tol||t.entry>hi+tol)return{mismatch:true,tf:best.tf};
   const dir=t.dir,mult=multFor(t.symbol);
   const hasLegs=(t.entryLegs&&t.entryLegs.length)||(t.exitLegs&&t.exitLegs.length);
   let maeMoney,mfeMoney;
