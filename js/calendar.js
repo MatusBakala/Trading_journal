@@ -53,7 +53,8 @@ export function showDay(k){
    agregovaný súhrn za celé filtrované obdobie cez API. Tu ide o surové obchody len za
    jeden konkrétny deň. */
 export function dayTradeToJson(t){
-  const x=excursionFor(t);
+  const xRaw=excursionFor(t);
+  const x=xRaw&&!xRaw.mismatch?xRaw:null;
   return {
     id:t.id,symbol:String(t.symbol||'').toUpperCase(),
     dir:t.dir===1?'long':'short',

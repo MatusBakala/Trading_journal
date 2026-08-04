@@ -110,7 +110,7 @@ export function collectExcursions(ts){
   const rows=[];
   for(const t of ts){
     const x=excursionFor(t);
-    if(!x)continue;
+    if(!x||x.mismatch)continue;
     rows.push({trade:t,pnl:computePnl(t),mae:Math.abs(x.maeMoney),mfe:x.mfeMoney,leftOnTable:x.leftOnTable});
   }
   return rows;

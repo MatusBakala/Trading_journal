@@ -202,7 +202,8 @@ export function shrinkImageBlob(blob,maxDim){
   });
 }
 export function buildTradeReviewData(t){
-  const pnl=computePnl(t),r=riskR(t),x=excursionFor(t);
+  const pnl=computePnl(t),r=riskR(t),xRaw=excursionFor(t);
+  const x=xRaw&&!xRaw.mismatch?xRaw:null;
   const strat=t.strategyId!=null?strategyById(t.strategyId):null;
   const barsPayload=(()=>{
     const cands=datasetsForSymbol(t.symbol);
