@@ -458,6 +458,12 @@ window.__TJ_BOOT__=(async function(){
     <br>
     <button class="btn small" id="btnSaveAnthropicKey">Uložiť kľúč</button>
     <p class="hint" style="margin-top:6px">Kľúč získaš na <code>console.anthropic.com</code> → API Keys.</p>
+    <hr class="sep">
+    <h3 style="font-size:15px">Prompt pre "AI rozbor obchodu"</h3>
+    <p class="hint">Text inštrukcií, ktoré appka pošle Claude pri kliknutí na "🤖 Rozobrať tento obchod" v detaile obchodu. Dáta obchodu (JSON) a sviečky sa vždy pripoja automaticky za tento text – nie sú jeho súčasťou. Použi <code>{{JAZYK}}</code> tam, kde má appka doplniť aktuálny jazyk appky (SK/EN).</p>
+    <label class="f" style="margin-top:8px"><textarea id="aiReviewPromptTemplate" rows="8"></textarea></label>
+    <button class="btn small" id="btnSaveAiReviewPrompt">Uložiť prompt</button>
+    <button class="btn secondary small" id="btnResetAiReviewPrompt">Obnoviť predvolený</button>
   </div>
   <div class="panel">
     <h3>Manuálna záloha</h3>
@@ -546,6 +552,11 @@ window.__TJ_BOOT__=(async function(){
     <h3 style="color:var(--muted);font-size:13px">AI rozbor obchodu</h3>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn secondary small" id="tAiReviewBtn">🤖 Rozobrať tento obchod</button>
+      <select id="tAiReviewModel" style="font-size:12px">
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5 (rýchly, lacný)</option>
+        <option value="claude-sonnet-5">Sonnet 5 (vyvážený)</option>
+        <option value="claude-opus-5">Opus 5 (najhlbší, drahší)</option>
+      </select>
       <span class="hint">Pošle Claude parametre obchodu, sviečky, MAE/MFE, pravidlá a tvoje screenshoty.</span>
     </div>
     <div id="tAiReviewBody" style="margin-top:10px"></div>

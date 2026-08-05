@@ -20,6 +20,8 @@ export const state = {
     anthropicKey: '',
     aiChatModel: 'claude-sonnet-5',
     aiInsightModel: 'claude-haiku-4-5-20251001',
+    aiReviewModel: 'claude-sonnet-5',
+    aiReviewPromptTemplate: '', // prázdne = použiť DEFAULT_TRADE_REVIEW_PROMPT z trade-modal.js
   },
   currentStrategyId: null,
   strategyDetailId: null,

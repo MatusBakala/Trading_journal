@@ -16,12 +16,12 @@ import { switchLang } from './i18n.js';
 import { convertAndRebuild, doImport } from './import-csv.js';
 import { fetchOnline } from './ohlc-fetch.js';
 import { delOhlc, goToOhlcCoverage, importOHLC, runOhlcCoverageCheck } from './ohlc-import.js';
-import { addMultRow, exportBackup, restoreBackup, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
+import { addMultRow, exportBackup, resetAiReviewPrompt, restoreBackup, saveAiReviewPrompt, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
 import { toggleTheme } from './state.js';
 import { renderStats } from './stats.js';
 import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
 import { toggleMobileNav } from './tabs.js';
-import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveTrade } from './trade-modal.js';
+import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveAiReviewModel, saveTrade } from './trade-modal.js';
 import { delTrade, renderReports, renderTrades } from './trades-list.js';
 
 export function bindStaticHandlers(){
@@ -76,11 +76,14 @@ document.getElementById('gdriveSnapshotList').addEventListener('click', function
   if (btn) gdriveRestoreSnapshot(btn.dataset.id, btn.dataset.date);
 });
 document.getElementById('btnSaveAnthropicKey').addEventListener('click', function(event){ saveAnthropicKey(); });
+document.getElementById('btnSaveAiReviewPrompt').addEventListener('click', function(event){ saveAiReviewPrompt(); });
+document.getElementById('btnResetAiReviewPrompt').addEventListener('click', function(event){ resetAiReviewPrompt(); });
 document.getElementById('btnExportBackup').addEventListener('click', function(event){ exportBackup(); });
 document.getElementById('restoreFile').addEventListener('change', function(event){ restoreBackup(this); });
 document.getElementById('btnWipeAll').addEventListener('click', function(event){ wipeAll(); });
 document.getElementById('tStrategy').addEventListener('change', function(event){ renderTradeRuleChecklist(); });
 document.getElementById('tAiReviewBtn').addEventListener('click', function(event){ aiReviewTrade(); });
+document.getElementById('tAiReviewModel').addEventListener('change', function(event){ saveAiReviewModel(); });
 document.getElementById('tDelete').addEventListener('click', function(event){ deleteCurrentTrade(); });
 document.getElementById('btnCloseTrade').addEventListener('click', function(event){ closeTrade(); });
 document.getElementById('btnSaveTrade').addEventListener('click', function(event){ saveTrade(); });
