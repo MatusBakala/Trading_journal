@@ -1,10 +1,7 @@
-Vytvorenie podobnej aplikácie ako je Tradezella.
-Je to web/app štatistika mojich tradov a setup-ov/ stratégií. Pokiaľ nájdeš niečo čo by si zlepšil, pridal tak to navrhni.
+Vytvorenie dvojjazyčnej web app/ dashboard na denné analyzovanie tradov.
+Tento nástroj bude v dvoch jazykoch- Slovensky, Anglicky.
+Záloha- iCloud sync pre zatiaľ a export JSON. Neskôr možno nejaka databáza.
 
-Odpovedaj stručne a vecne, vždy otestuj čo si vykonal či to funguje. Neponukaj upload na github, urobim si to sám.
-
-
-Treba mať aj nejaký back-up plan. Teda obsah sa musí uploadovať niekde cloudove úložisko každý deň.
 
 ## Nasadzovanie a cache
 
