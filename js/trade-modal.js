@@ -5,7 +5,7 @@ import { idbAdd, idbDel, idbPut, shotsByTrade } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
 import { tr } from './i18n.js';
 import { loadCsvForImport } from './import-csv.js';
-import { renderAfterTradeChange } from './init.js';
+import { renderAfterTradeChange, saveSettings } from './init.js';
 import { autoFetchForTrade, fetchTfForTrade } from './ohlc-fetch.js';
 import { cssVar, state } from './state.js';
 import { excursionFor, plannedRiskPct, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
@@ -47,6 +47,7 @@ export async function openTrade(id){
   renderTagSuggest();
   renderTradeRuleChecklist();
   renderAiReview(t?t.aiReview:null);
+  if($('tAiReviewModel'))$('tAiReviewModel').value=state.settings.aiReviewModel||'claude-sonnet-5';
   updatePnlPreview();
   $('tradeOverlay').classList.add('open');
   renderModalChart();
@@ -244,6 +245,25 @@ export function buildTradeReviewData(t){
     svieckyOkoloObchodu:barsPayload,
   };
 }
+/* Predvolený inštrukčný text pre "AI rozbor obchodu" - editovateľný v Nastaveniach
+   (state.settings.aiReviewPromptTemplate, prázdne = použiť tento default).
+   {{JAZYK}} appka nahradí aktuálnym jazykom appky (SK/EN); dáta obchodu (JSON) a
+   veta o sviečkach sa vždy pripájajú automaticky za tento text, nie sú jeho súčasťou. */
+export const DEFAULT_TRADE_REVIEW_PROMPT=
+  `Si skúsený trading kouč. Nižšie sú presné dáta jedného obchodu z trading journalu `+
+  `(čísla počítala appka, sú spoľahlivé). Ak sú priložené obrázky, sú to screenshoty grafu k tomuto obchodu.\n\n`+
+  `Napíš rozbor v tejto štruktúre:\n`+
+  `1. ČO SI SPRAVIL DOBRE – 1-3 konkrétne body\n`+
+  `2. ČO SI SPRAVIL ZLE – 1-3 konkrétne body\n`+
+  `3. ODPORÚČANIE NABUDÚCE – 1-2 vety, konkrétne a vykonateľné\n\n`+
+  `Opieraj sa o čísla (MAE/MFE, R-multiple, dodržanie pravidiel, načasovanie). Žiadne všeobecné frázy typu "riaď si riziko". `+
+  `Ak dáta na nejaký záver nestačia, radšej to povedz, než by si si vymýšľal. Odpíš v jazyku: {{JAZYK}}.`;
+export function buildTradeReviewPrompt(template,langName,hasCandles,data){
+  const base=(template||DEFAULT_TRADE_REVIEW_PROMPT).replace('{{JAZYK}}',langName);
+  return base+(hasCandles?` Nižšie sú aj sviečky pred vstupom a počas obchodu.`:``)+
+    `\n\nDáta (JSON):\n${JSON.stringify(data)}`;
+}
+export function saveAiReviewModel(){state.settings.aiReviewModel=$('tAiReviewModel').value;saveSettings();}
 export async function aiReviewTrade(){
   if(!state.settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
   const btn=$('tAiReviewBtn'),body=$('tAiReviewBody');
@@ -253,16 +273,7 @@ export async function aiReviewTrade(){
   btn.disabled=true;btn.textContent=tr('Analyzujem…');
   body.innerHTML=`<div class="hint">${esc(tr('Čakám na odpoveď od Claude…'))}</div>`;
   const langName=state.settings.lang==='en'?'English':'Slovak';
-  const promptText=`Si skúsený trading kouč. Nižšie sú presné dáta jedného obchodu z trading journalu (čísla počítala appka, sú spoľahlivé)`+
-    (data.svieckyOkoloObchodu?`, vrátane sviečok pred vstupom a počas obchodu`:``)+
-    `. Ak sú priložené obrázky, sú to screenshoty grafu k tomuto obchodu.\n\n`+
-    `Napíš rozbor v tejto štruktúre:\n`+
-    `1. ČO SI SPRAVIL DOBRE – 1-3 konkrétne body\n`+
-    `2. ČO SI SPRAVIL ZLE – 1-3 konkrétne body\n`+
-    `3. ODPORÚČANIE NABUDÚCE – 1-2 vety, konkrétne a vykonateľné\n\n`+
-    `Opieraj sa o čísla (MAE/MFE, R-multiple, dodržanie pravidiel, načasovanie). Žiadne všeobecné frázy typu "riaď si riziko". `+
-    `Ak dáta na nejaký záver nestačia, radšej to povedz, než by si si vymýšľal. Odpíš v jazyku: ${langName}.\n\n`+
-    `Dáta (JSON):\n${JSON.stringify(data)}`;
+  const promptText=buildTradeReviewPrompt(state.settings.aiReviewPromptTemplate,langName,!!data.svieckyOkoloObchodu,data);
   const content=[];
   try{
     const shots=state.currentTradeId!=null?await shotsByTrade(state.currentTradeId):[];
@@ -279,8 +290,9 @@ export async function aiReviewTrade(){
       headers:{'content-type':'application/json','x-api-key':state.settings.anthropicKey,
         'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:state.settings.aiChatModel||'claude-sonnet-5',
-        max_tokens:1600,
+        model:state.settings.aiReviewModel||'claude-sonnet-5',
+        max_tokens:3200,
+        thinking:{type:'disabled'},
         messages:[{role:'user',content}],
       }),
     });
@@ -288,7 +300,7 @@ export async function aiReviewTrade(){
     if(!res.ok)throw new Error((d&&d.error&&d.error.message)||('HTTP '+res.status));
     const text=(d.content||[]).map(c=>c.text||'').join('').trim();
     if(!text){body.innerHTML=`<div class="hint" style="color:var(--red)">${esc(tr('Prázdna odpoveď.'))}</div>`;return;}
-    const review={text,at:Date.now(),model:state.settings.aiChatModel||'claude-sonnet-5',images:content.length-1};
+    const review={text,at:Date.now(),model:state.settings.aiReviewModel||'claude-sonnet-5',images:content.length-1};
     renderAiReview(review);
     if(state.currentTradeId!=null){ // ulož, nech sa nemusí (a neplatí) generovať znova
       const stored=state.trades.find(x=>x.id===state.currentTradeId);

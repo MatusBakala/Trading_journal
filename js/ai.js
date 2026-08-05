@@ -249,7 +249,7 @@ export async function sendAiChatMessage(){
         'anthropic-version':'2023-06-01',
         'anthropic-dangerous-direct-browser-access':'true',
       },
-      body:JSON.stringify({model,max_tokens:1024,system:systemPrompt,messages:aiChatHistory}),
+      body:JSON.stringify({model,max_tokens:2048,thinking:{type:'disabled'},system:systemPrompt,messages:aiChatHistory}),
     });
     const data=await res.json();
     if(!res.ok)throw new Error((data&&data.error&&data.error.message)||('HTTP '+res.status));
