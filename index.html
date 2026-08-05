@@ -16,10 +16,12 @@
 window.__TJ_BOOT__=(async function(){
   var KEY='tj_code_v';
   var v='0';
+  var mods=[];
   try{
     var r=await fetch('app-version.json?_='+Date.now(),{cache:'no-store'});
     var d=await r.json();
     v=String(d&&d.v!=null?d.v:'0');
+    mods=(d&&d.modules)||[];
   }catch(e){}
   var cur=null;
   try{cur=localStorage.getItem(KEY);}catch(e){}
@@ -33,6 +35,25 @@ window.__TJ_BOOT__=(async function(){
   if(v){try{localStorage.setItem(KEY,v);}catch(e){}}
   window.__TJ_APP_VERSION__=v;
   function withV(url){return url+(url.indexOf('?')>=0?'&':'?')+'v='+encodeURIComponent(v);}
+  /* Relatívne importy vnútri modulov (import './init.js') sa rozvinú BEZ ?v=, takže
+     ich prehliadač po nasadení berie z cache - a appka beží ako mix nového app.js so
+     starým zvyškom. Import mapa premapuje každý modul na verzovanú URL, čím sa ?v=
+     dostane na všetky, nielen na vstupný app.js. Zoznam modulov drží v synchrone
+     `npm run manifest` + test module-manifest.test.mjs. */
+  function installImportMap(){
+    if(!mods.length)return;
+    if(!(window.HTMLScriptElement&&HTMLScriptElement.supports&&HTMLScriptElement.supports('importmap')))return;
+    var base=new URL('.',location.href).href;
+    var imports={};
+    for(var i=0;i<mods.length;i++){
+      var u=base+'js/'+mods[i];
+      imports[u]=withV(u);
+    }
+    var el=document.createElement('script');
+    el.type='importmap';
+    el.textContent=JSON.stringify({imports:imports});
+    document.head.appendChild(el);
+  }
   function loadCss(href){
     return new Promise(function(res,rej){
       var el=document.createElement('link');
@@ -63,6 +84,7 @@ window.__TJ_BOOT__=(async function(){
     });
   }
   return async function loadApp(){
+    installImportMap(); // musí byť v DOM skôr, než sa načíta prvý modul
     await Promise.all([
       loadCss('css/styles.css'),
       loadScript('https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'),
@@ -126,10 +148,11 @@ window.__TJ_BOOT__=(async function(){
       <option value="year">Tento rok</option>
     </select>
   </div>
+  <div id="riskBanner"></div>
   <div class="kpirow" id="kpiCards"></div>
   <div class="cards" id="kpiCards2"></div>
   <div class="grid2">
-    <div class="panel"><h3>Equity krivka</h3><div class="chartbox"><canvas id="eqChart"></canvas></div></div>
+    <div class="panel"><h3>Equity krivka <span id="eqModeBar" style="display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle"></span></h3><div class="chartbox"><canvas id="eqChart"></canvas></div></div>
     <div class="panel"><h3>Denný P&L</h3><div class="chartbox"><canvas id="dailyChart"></canvas></div></div>
   </div>
   <div class="grid3">
@@ -200,6 +223,7 @@ window.__TJ_BOOT__=(async function(){
     <p class="hint" id="excursionSub"></p>
     <div style="position:relative;height:340px"><canvas id="excChart"></canvas></div>
     <div id="excursionSummary" style="margin-top:12px"></div>
+    <div id="excOutliers"></div>
   </div>
 </section>
 
@@ -396,6 +420,17 @@ window.__TJ_BOOT__=(async function(){
     <button class="btn small" id="btnSaveMults">Uložiť multiplikátory</button>
   </div>
   <div class="panel">
+    <h3>⚠️ Rizikový manažment</h3>
+    <p class="hint">Limity počítané voči počiat. kapitálu aktívneho účtu. Nastav 0, ak limit nechceš sledovať. Appka nič neblokuje – len upozorní, keď obchod alebo deň limit prekročí.</p>
+    <br>
+    <div class="filters">
+      <label class="f">Max. riziko na obchod (%)<input id="maxRiskPerTradePct" type="number" step="any" min="0" placeholder="napr. 1"></label>
+      <label class="f">Max. denná strata (%)<input id="maxDailyLossPct" type="number" step="any" min="0" placeholder="napr. 3"></label>
+    </div>
+    <br>
+    <button class="btn small" id="btnSaveRiskLimits">Uložiť limity</button>
+  </div>
+  <div class="panel">
     <h3>☁️ Cloud sync (Google Drive)</h3>
     <p class="hint">Appka si vie sama ukladať a načítavať zálohu z tvojho Google Drive (do skrytého priečinka appky, nevidno ho v bežnom Drive). Vďaka tomu sa dáta objavia aj v inom prehliadači či na mobile, bez ručného exportu/importu. Návod na získanie Client ID nájdeš v README/pokynoch od Claude.</p>
     <br>
@@ -423,6 +458,12 @@ window.__TJ_BOOT__=(async function(){
     <br>
     <button class="btn small" id="btnSaveAnthropicKey">Uložiť kľúč</button>
     <p class="hint" style="margin-top:6px">Kľúč získaš na <code>console.anthropic.com</code> → API Keys.</p>
+    <hr class="sep">
+    <h3 style="font-size:15px">Prompt pre "AI rozbor obchodu"</h3>
+    <p class="hint">Text inštrukcií, ktoré appka pošle Claude pri kliknutí na "🤖 Rozobrať tento obchod" v detaile obchodu. Dáta obchodu (JSON) a sviečky sa vždy pripoja automaticky za tento text – nie sú jeho súčasťou. Použi <code>{{JAZYK}}</code> tam, kde má appka doplniť aktuálny jazyk appky (SK/EN).</p>
+    <label class="f" style="margin-top:8px"><textarea id="aiReviewPromptTemplate" rows="8"></textarea></label>
+    <button class="btn small" id="btnSaveAiReviewPrompt">Uložiť prompt</button>
+    <button class="btn secondary small" id="btnResetAiReviewPrompt">Obnoviť predvolený</button>
   </div>
   <div class="panel">
     <h3>Manuálna záloha</h3>
@@ -511,6 +552,11 @@ window.__TJ_BOOT__=(async function(){
     <h3 style="color:var(--muted);font-size:13px">AI rozbor obchodu</h3>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn secondary small" id="tAiReviewBtn">🤖 Rozobrať tento obchod</button>
+      <select id="tAiReviewModel" style="font-size:12px">
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5 (rýchly, lacný)</option>
+        <option value="claude-sonnet-5">Sonnet 5 (vyvážený)</option>
+        <option value="claude-opus-5">Opus 5 (najhlbší, drahší)</option>
+      </select>
       <span class="hint">Pošle Claude parametre obchodu, sviečky, MAE/MFE, pravidlá a tvoje screenshoty.</span>
     </div>
     <div id="tAiReviewBody" style="margin-top:10px"></div>

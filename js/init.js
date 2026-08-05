@@ -23,12 +23,16 @@ export async function init(){
     if(s.v.activeAccount!=null)state.settings.activeAccount=s.v.activeAccount;
     if(s.v.lang)state.settings.lang=s.v.lang;
     if(s.v.theme)state.settings.theme=s.v.theme;
+    if(s.v.maxRiskPerTradePct!=null)state.settings.maxRiskPerTradePct=s.v.maxRiskPerTradePct;
+    if(s.v.maxDailyLossPct!=null)state.settings.maxDailyLossPct=s.v.maxDailyLossPct;
     if(s.v.gClientId)state.settings.gClientId=s.v.gClientId;
     state.settings.gConnected=!!s.v.gConnected;
     state.settings.gLastSync=s.v.gLastSync||null;
     if(s.v.anthropicKey)state.settings.anthropicKey=s.v.anthropicKey;
     if(s.v.aiChatModel)state.settings.aiChatModel=s.v.aiChatModel;
-    if(s.v.aiInsightModel)state.settings.aiInsightModel=s.v.aiInsightModel;}
+    if(s.v.aiInsightModel)state.settings.aiInsightModel=s.v.aiInsightModel;
+    if(s.v.aiReviewModel)state.settings.aiReviewModel=s.v.aiReviewModel;
+    if(s.v.aiReviewPromptTemplate!=null)state.settings.aiReviewPromptTemplate=s.v.aiReviewPromptTemplate;}
   applyTheme();
   // migrácia: starý settings.balance -> prvý účet
   if(state.settings.accounts.length===1&&!state.settings.accounts[0].balance&&state.settings.balance)state.settings.accounts[0].balance=state.settings.balance;
@@ -49,7 +53,7 @@ export async function init(){
     setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
   }
 }
-export function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:state.settings.balance,mults:state.settings.mults,multsExact:true,accounts:state.settings.accounts,activeAccount:state.settings.activeAccount,lang:state.settings.lang,theme:state.settings.theme,gClientId:state.settings.gClientId,gConnected:state.settings.gConnected,gLastSync:state.settings.gLastSync,anthropicKey:state.settings.anthropicKey,aiChatModel:state.settings.aiChatModel,aiInsightModel:state.settings.aiInsightModel}});}
+export function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:state.settings.balance,mults:state.settings.mults,multsExact:true,accounts:state.settings.accounts,activeAccount:state.settings.activeAccount,lang:state.settings.lang,theme:state.settings.theme,maxRiskPerTradePct:state.settings.maxRiskPerTradePct,maxDailyLossPct:state.settings.maxDailyLossPct,gClientId:state.settings.gClientId,gConnected:state.settings.gConnected,gLastSync:state.settings.gLastSync,anthropicKey:state.settings.anthropicKey,aiChatModel:state.settings.aiChatModel,aiInsightModel:state.settings.aiInsightModel,aiReviewModel:state.settings.aiReviewModel,aiReviewPromptTemplate:state.settings.aiReviewPromptTemplate}});}
 export function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();}
 /* Užšia verzia renderAll() pre zmeny tradov/P&L - vynecháva účty/OHLC/nastavenia, ktoré nie sú dotknuté. */
 export function renderAfterTradeChange(){renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderStrategies();refreshSymbolFilter();}

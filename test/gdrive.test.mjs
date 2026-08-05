@@ -2,8 +2,27 @@ import './dom-stub.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-const { GDRIVE_SNAPSHOT_KEEP, GDRIVE_SNAPSHOT_PREFIX, snapshotDateKey } =
+const { GDRIVE_SNAPSHOT_KEEP, GDRIVE_SNAPSHOT_PREFIX, snapshotDateKey, shouldUploadOnConnect } =
   await import('../js/gdrive.js');
+
+test('shouldUploadOnConnect: prázdny lokálny stav sa nikdy nenahráva, aj keď je "novší"', () => {
+  // Toto je presne scenár, ktorý reálne zmazal produkčnú zálohu: nový/vyčistený
+  // prehliadač s hasUserData=false a localChanged=0 sa pripojí k Drive, kde je
+  // staršia záloha (remoteUpdated < localChanged ako čísla, lebo obe sú malé/0).
+  assert.equal(shouldUploadOnConnect(false, 0, 0), false);
+  assert.equal(shouldUploadOnConnect(false, Date.now(), 0), false);
+});
+
+test('shouldUploadOnConnect: lokálne dáta sa nahrajú, len keď existujú A sú aspoň také nové', () => {
+  const now = Date.now();
+  assert.equal(shouldUploadOnConnect(true, now, now - 1000), true);
+  assert.equal(shouldUploadOnConnect(true, now, now), true);
+});
+
+test('shouldUploadOnConnect: lokálne dáta existujú, ale vzdialená záloha je novšia -> stiahnuť', () => {
+  const now = Date.now();
+  assert.equal(shouldUploadOnConnect(true, now - 1000, now), false);
+});
 
 test('snapshotDateKey: lokálny dátum vo formáte YYYY-MM-DD s nulami', () => {
   assert.equal(snapshotDateKey(new Date(2026, 0, 5)), '2026-01-05');

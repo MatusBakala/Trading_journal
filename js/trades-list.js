@@ -86,11 +86,15 @@ export function tradeRowHTML(t){
   const pnl=computePnl(t);
   const r=riskR(t);
   const dur=(t.tEntry&&t.tExit)?t.tExit-t.tEntry:null;
+  const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
+  const scaledTitle=scaled?esc(tr('Postupný vstup/výstup')+': '+
+    (t.entryLegs||[]).map(l=>`${l.qty}@${l.price}`).join('→')+
+    (t.exitLegs&&t.exitLegs.length?' / '+t.exitLegs.map(l=>`${l.qty}@${l.price}`).join('→'):'')):'';
   return `<tr data-trade-id="${t.id}">
     <td>${fmtDT(t.tEntry)}</td>
     <td><b>${esc(String(t.symbol).toUpperCase())}</b></td>
     <td><span class="pill ${t.dir===1?'long':'short'}">${t.dir===1?'LONG':'SHORT'}</span></td>
-    <td>${t.qty??''}</td>
+    <td>${t.qty??''}${scaled?` <span class="hint" title="${scaledTitle}">⇄</span>`:''}</td>
     <td>${isFinite(t.entry)?t.entry:''}</td>
     <td>${isFinite(t.exit)?t.exit:'–'}</td>
     <td>${fmtDur(dur)}</td>

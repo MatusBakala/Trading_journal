@@ -221,6 +221,16 @@ export async function gdriveResetLastLocalChange(){
   try{localStorage.removeItem('tj_lastLocalChange');}catch(e){}
   try{await idbDel('kv','lastLocalChange');}catch(e){}
 }
+/* Rozhoduje, či pri PRVOM pripojení/synchronizácii v tejto session nahrať
+   lokálne dáta na Drive, alebo radšej stiahnuť to, čo je tam už uložené.
+   Zámerne asymetrické: nahrať smie len vtedy, keď lokálne dáta reálne niečo
+   obsahujú A sú aspoň také nové ako vzdialená záloha. Vo všetkých ostatných
+   prípadoch (vrátane úplne prázdneho lokálneho stavu na novom/vyčistenom
+   prehliadači) sa musí stiahnuť vzdialená záloha - inak by čerstvý/prázdny
+   prehliadač ticho prepísal existujúcu zálohu na Drive niečím prázdnym. */
+export function shouldUploadOnConnect(hasUserData,localChanged,remoteUpdated){
+  return !!hasUserData&&localChanged>=remoteUpdated;
+}
 export function scheduleAutoSync(){
   gdriveSetLastLocalChange();
   if(!state.gBootDone||!state.settings.gConnected)return;
@@ -245,16 +255,16 @@ export async function gdriveSyncNow(isInitial){
         const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
         const builtInNames=new Set(DEFAULT_STRATEGIES.map(s=>s.name));
         const hasUserData=state.trades.length>0||state.strategies.some(s=>!builtInNames.has(s.name));
-        // Fresh install / reset often has only built-in strategies and localChanged=0.
-        // Don't let an older Drive backup overwrite newly seeded defaults from code.
-        if(remoteUpdated>localChanged&&hasUserData){
+        if(shouldUploadOnConnect(hasUserData,localChanged,remoteUpdated)){
+          uploaded=await buildBackupPayload();
+          await gdriveUpload(uploaded);
+        }else{
+          // Bezpečná predvoľba: prázdny/starší lokálny stav nikdy neprepíše
+          // existujúcu zálohu na Drive - radšej sa stiahne to, čo tam je.
           await applyBackupPayload(remote);
           await seedDefaultStrategies(); // keep built-in strategies current from deployed code
           renderAll();
           toast('Dáta stiahnuté z Google Drive');
-        }else{
-          uploaded=await buildBackupPayload();
-          await gdriveUpload(uploaded);
         }
       }else{
         uploaded=await buildBackupPayload();
@@ -307,14 +317,17 @@ export function gdriveDisconnect(){
 export function renderGDriveStatus(status){
   const el=$('gdriveStatus');if(!el)return;
   const connectBtn=$('gdriveConnectBtn'),disconnectBtn=$('gdriveDisconnectBtn');
-  if(status instanceof Error){el.textContent='⚠️ Chyba synchronizácie: '+status.message;el.style.color='var(--red)';}
-  else if(status==='syncing'){el.textContent='⏳ Synchronizujem…';el.style.color='';}
+  if(status instanceof Error){el.textContent=tr('⚠️ Chyba synchronizácie: ')+status.message;el.style.color='var(--red)';}
+  else if(status==='syncing'){el.textContent=tr('⏳ Synchronizujem…');el.style.color='';}
   else{
     el.style.color='';
-    if(!state.settings.gConnected)el.textContent='Nepripojené.';
-    else el.textContent='✅ Pripojené'
-      +(state.settings.gLastSync?(' · posledná synchronizácia '+new Date(state.settings.gLastSync).toLocaleTimeString('sk-SK')):'')
-      +(gLastSnapshotDate?(' · denná záloha '+gLastSnapshotDate):'');
+    if(!state.settings.gConnected)el.textContent=tr('Nepripojené.');
+    else{
+      const loc=state.settings.lang==='en'?'en-GB':'sk-SK';
+      el.textContent=tr('✅ Pripojené')
+        +(state.settings.gLastSync?(tr(' · posledná synchronizácia ')+new Date(state.settings.gLastSync).toLocaleTimeString(loc)):'')
+        +(gLastSnapshotDate?(tr(' · denná záloha ')+gLastSnapshotDate):'');
+    }
   }
   if($('gClientId')&&document.activeElement!==$('gClientId'))$('gClientId').value=state.settings.gClientId||'';
   if(connectBtn)connectBtn.style.display=state.settings.gConnected?'none':'';

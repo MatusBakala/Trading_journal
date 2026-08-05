@@ -6,6 +6,7 @@ import { ask } from './i18n.js';
 import { renderAfterTradeChange, renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
 import { seedDefaultStrategies } from './strategy-notes.js';
+import { DEFAULT_TRADE_REVIEW_PROMPT } from './trade-modal.js';
 import { $, num, toast } from './utils.js';
 
 /* ================= Settings ================= */
@@ -16,11 +17,32 @@ export function renderSettings(){
   Object.entries(state.settings.mults).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>addMultRow(k,v));
   renderGDriveStatus();
   if($('anthropicKey')&&document.activeElement!==$('anthropicKey'))$('anthropicKey').value=state.settings.anthropicKey||'';
+  if($('maxRiskPerTradePct')&&document.activeElement!==$('maxRiskPerTradePct'))$('maxRiskPerTradePct').value=state.settings.maxRiskPerTradePct||'';
+  if($('maxDailyLossPct')&&document.activeElement!==$('maxDailyLossPct'))$('maxDailyLossPct').value=state.settings.maxDailyLossPct||'';
+  if($('aiReviewPromptTemplate')&&document.activeElement!==$('aiReviewPromptTemplate'))$('aiReviewPromptTemplate').value=state.settings.aiReviewPromptTemplate||DEFAULT_TRADE_REVIEW_PROMPT;
 }
 export function saveAnthropicKey(){
   state.settings.anthropicKey=$('anthropicKey').value.trim();
   saveSettings();
   toast('Kľúč uložený');
+}
+export function saveAiReviewPrompt(){
+  state.settings.aiReviewPromptTemplate=$('aiReviewPromptTemplate').value.trim();
+  saveSettings();
+  toast('Prompt uložený');
+}
+export function resetAiReviewPrompt(){
+  state.settings.aiReviewPromptTemplate='';
+  $('aiReviewPromptTemplate').value=DEFAULT_TRADE_REVIEW_PROMPT;
+  saveSettings();
+  toast('Prompt obnovený na predvolený');
+}
+export function saveRiskLimits(){
+  state.settings.maxRiskPerTradePct=num($('maxRiskPerTradePct').value)||0;
+  state.settings.maxDailyLossPct=num($('maxDailyLossPct').value)||0;
+  saveSettings();
+  renderAfterTradeChange(); // banner na dashboarde a upozornenie v modáli reagujú na nové limity hneď
+  toast('Limity uložené');
 }
 export function addMultRow(k,v){
   const div=document.createElement('div');

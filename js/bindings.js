@@ -9,19 +9,19 @@ import { reportRowHTML, tradeRowHTML } from './trades-list.js';
 import { $, debounce } from './utils.js';
 import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
-import { calMove, showDay } from './calendar.js';
-import { renderDashboard } from './dashboard.js';
+import { calMove, exportDayJson, showDay } from './calendar.js';
+import { renderDashboard, toggleEqMode } from './dashboard.js';
 import { gdriveConnect, gdriveDisconnect, gdriveForceDownload, gdriveRestoreSnapshot, gdriveShowSnapshots, gdriveSyncNow } from './gdrive.js';
 import { switchLang } from './i18n.js';
 import { convertAndRebuild, doImport } from './import-csv.js';
 import { fetchOnline } from './ohlc-fetch.js';
 import { delOhlc, goToOhlcCoverage, importOHLC, runOhlcCoverageCheck } from './ohlc-import.js';
-import { addMultRow, exportBackup, restoreBackup, saveAnthropicKey, saveMults, wipeAll } from './settings.js';
+import { addMultRow, exportBackup, resetAiReviewPrompt, restoreBackup, saveAiReviewPrompt, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
 import { toggleTheme } from './state.js';
 import { renderStats } from './stats.js';
 import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
 import { toggleMobileNav } from './tabs.js';
-import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveTrade } from './trade-modal.js';
+import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveAiReviewModel, saveTrade } from './trade-modal.js';
 import { delTrade, renderReports, renderTrades } from './trades-list.js';
 
 export function bindStaticHandlers(){
@@ -65,6 +65,7 @@ document.getElementById('btnAddAccRow').addEventListener('click', function(event
 document.getElementById('btnSaveAccounts').addEventListener('click', function(event){ saveAccounts(); });
 document.getElementById('btnAddMultRow').addEventListener('click', function(event){ addMultRow('',1); });
 document.getElementById('btnSaveMults').addEventListener('click', function(event){ saveMults(); });
+document.getElementById('btnSaveRiskLimits').addEventListener('click', function(event){ saveRiskLimits(); });
 document.getElementById('gdriveConnectBtn').addEventListener('click', function(event){ gdriveConnect(); });
 document.getElementById('gdriveDisconnectBtn').addEventListener('click', function(event){ gdriveDisconnect(); });
 document.getElementById('btnGdriveSyncNow').addEventListener('click', function(event){ gdriveSyncNow(false); });
@@ -75,11 +76,14 @@ document.getElementById('gdriveSnapshotList').addEventListener('click', function
   if (btn) gdriveRestoreSnapshot(btn.dataset.id, btn.dataset.date);
 });
 document.getElementById('btnSaveAnthropicKey').addEventListener('click', function(event){ saveAnthropicKey(); });
+document.getElementById('btnSaveAiReviewPrompt').addEventListener('click', function(event){ saveAiReviewPrompt(); });
+document.getElementById('btnResetAiReviewPrompt').addEventListener('click', function(event){ resetAiReviewPrompt(); });
 document.getElementById('btnExportBackup').addEventListener('click', function(event){ exportBackup(); });
 document.getElementById('restoreFile').addEventListener('change', function(event){ restoreBackup(this); });
 document.getElementById('btnWipeAll').addEventListener('click', function(event){ wipeAll(); });
 document.getElementById('tStrategy').addEventListener('change', function(event){ renderTradeRuleChecklist(); });
 document.getElementById('tAiReviewBtn').addEventListener('click', function(event){ aiReviewTrade(); });
+document.getElementById('tAiReviewModel').addEventListener('change', function(event){ saveAiReviewModel(); });
 document.getElementById('tDelete').addEventListener('click', function(event){ deleteCurrentTrade(); });
 document.getElementById('btnCloseTrade').addEventListener('click', function(event){ closeTrade(); });
 document.getElementById('btnSaveTrade').addEventListener('click', function(event){ saveTrade(); });
@@ -106,6 +110,12 @@ document.getElementById('byHour').addEventListener('click', function(event){
   if (row) goToTradesForHour(row.dataset.hour);
 });
 
+/* equity krivka $ / % toggle (dashboard.js renderEqModeBar) */
+document.getElementById('eqModeBar').addEventListener('click', function(event){
+  const btn = event.target.closest('[data-eqmode]');
+  if (btn) toggleEqMode(btn.dataset.eqmode);
+});
+
 /* calendar day cells (calendar.js renderCalendar) */
 document.getElementById('calGrid').addEventListener('click', function(event){
   const cell = event.target.closest('[data-day]');
@@ -124,12 +134,26 @@ document.getElementById('patternsSub').addEventListener('click', function(event)
   if (link) goToOhlcCoverage();
 });
 
-/* trades table rows + delete button (trades-list.js tradeRowHTML) */
-document.getElementById('tradesBody').addEventListener('click', function(event){
+/* trades table rows + delete button (trades-list.js tradeRowHTML).
+   tradeTableHTML() sa vykresľuje na viacerých miestach - v zozname obchodov, v paneli
+   dňa v kalendári a v detaile stratégie - a všade má platiť to isté: klik na riadok
+   otvorí obchod, klik na ✕ ho zmaže. CSS dáva riadkom cursor:pointer všade, takže bez
+   tohto handlera pôsobia klikateľne, ale nerobia nič. */
+function handleTradeTableClick(event){
   const delBtn = event.target.closest('[data-action="delTrade"]');
-  if (delBtn) { delTrade(parseInt(delBtn.dataset.id, 10)); return; }
+  if (delBtn) { delTrade(parseInt(delBtn.dataset.id, 10)); return true; }
   const row = event.target.closest('tr[data-trade-id]');
-  if (row) openTrade(parseInt(row.dataset.tradeId, 10));
+  if (row) { openTrade(parseInt(row.dataset.tradeId, 10)); return true; }
+  return false;
+}
+document.getElementById('tradesBody').addEventListener('click', handleTradeTableClick);
+document.getElementById('calDayPanel').addEventListener('click', handleTradeTableClick);
+document.getElementById('excOutliers').addEventListener('click', handleTradeTableClick);
+
+/* "📥 Export JSON pre AI" tlačidlo v paneli dňa (calendar.js showDay) */
+document.getElementById('calDayPanel').addEventListener('click', function(event){
+  const btn = event.target.closest('[data-action="exportDay"]');
+  if (btn) exportDayJson(btn.dataset.day);
 });
 
 /* reports table rows (trades-list.js reportRowHTML) */
@@ -151,6 +175,8 @@ document.getElementById('reportsBody').addEventListener('click', function(event)
   });
 
   box.addEventListener('click', function (event) {
+    /* záložka "Obchody" v detaile stratégie renderuje tradeTableHTML */
+    if (handleTradeTableClick(event)) return;
     const el = event.target.closest('[data-action]');
     if (!el) return;
     const action = el.dataset.action;

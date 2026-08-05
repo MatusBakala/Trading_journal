@@ -5,10 +5,10 @@ import { idbAdd, idbDel, idbPut, shotsByTrade } from './db.js';
 import { scheduleAutoSync } from './gdrive.js';
 import { tr } from './i18n.js';
 import { loadCsvForImport } from './import-csv.js';
-import { renderAfterTradeChange } from './init.js';
+import { renderAfterTradeChange, saveSettings } from './init.js';
 import { autoFetchForTrade, fetchTfForTrade } from './ohlc-fetch.js';
 import { cssVar, state } from './state.js';
-import { excursionFor, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
+import { excursionFor, plannedRiskPct, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
 import { allTagsOf, delTrade } from './trades-list.js';
 import { $, computePnl, dayKey, emotionLabel, localInputToTs, num, sessionOf, toast, tsToLocalInput } from './utils.js';
 
@@ -17,7 +17,7 @@ export async function openTrade(id){
   state.currentTradeId=id;state.pendingShots=[];state.removedShotIds=[];state.modalChartTf=null;
   $('tChartDsWrap').dataset.chosen='';
   const t=id!=null?state.trades.find(x=>x.id===id):null;
-  $('tmTitle').textContent=t?`Obchod #${t.id} – ${String(t.symbol).toUpperCase()}`:'Nový obchod';
+  $('tmTitle').textContent=t?tr(`Obchod #${t.id} – ${String(t.symbol).toUpperCase()}`):tr('Nový obchod');
   $('tDelete').style.display=t?'':'none';
   $('tAccount').innerHTML=state.settings.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
   $('tAccount').value=String(t?(t.account??defaultAccId()):(state.settings.activeAccount==='all'?defaultAccId():state.settings.activeAccount));
@@ -47,6 +47,7 @@ export async function openTrade(id){
   renderTagSuggest();
   renderTradeRuleChecklist();
   renderAiReview(t?t.aiReview:null);
+  if($('tAiReviewModel'))$('tAiReviewModel').value=state.settings.aiReviewModel||'claude-sonnet-5';
   updatePnlPreview();
   $('tradeOverlay').classList.add('open');
   renderModalChart();
@@ -80,6 +81,14 @@ export function formTrade(){
     checkedRules:$('tStrategy').value?[...document.querySelectorAll('#tRuleChecklist .tRuleCheck:checked')].map(i=>i.value):null,
     notes:$('tNotes').value,
   };
+  // entryLegs/exitLegs (z broker CSV importu, pozri import-csv.js) nemajú formulárové
+  // políčka - bez tohto by ich formTrade() vždy vynulovalo (aj len pri prekreslení P&L
+  // náhľadu, aj pri uložení), a MAE/MFE by tichmo spadlo naspäť na približný výpočet.
+  if(state.currentTradeId!=null){
+    const old=state.trades.find(x=>x.id===state.currentTradeId);
+    if(old&&old.entryLegs)t.entryLegs=old.entryLegs;
+    if(old&&old.exitLegs)t.exitLegs=old.exitLegs;
+  }
   return t;
 }
 export function updatePnlPreview(){
@@ -87,23 +96,43 @@ export function updatePnlPreview(){
   if(!t.symbol){$('tPnlPreview').textContent='';return;}
   const pnl=computePnl(t);
   const r=riskR(t);
+  const riskPct=plannedRiskPct(t);
+  const limit=state.settings.maxRiskPerTradePct;
+  const overLimit=limit>0&&riskPct!=null&&riskPct>limit;
   $('tPnlPreview').innerHTML=`P&L: <span class="${moneyCls(pnl)}">${fmtMoney(pnl)}</span>`+
     (r!=null?` &nbsp; <span class="hint">(${r.toFixed(2)}R)</span>`:'')+
-    ` &nbsp; <span class="hint">multiplikátor ${multFor(t.symbol)}</span>`;
+    ` &nbsp; <span class="hint">${tr('multiplikátor')} ${multFor(t.symbol)}</span>`+
+    (riskPct!=null?` &nbsp; <span class="${overLimit?'neg':'hint'}" title="${esc(tr('Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu'))}">${overLimit?'⚠️ ':''}${tr(`riziko ${riskPct.toFixed(2)}%${limit>0?' / '+limit+'%':''}`)}</span>`:'');
   renderExcursion(t);
+}
+/* Jeden riadok "2@3985.0 → 1@3986.2" per leg-skupina, aby bolo pri škálovanom
+   obchode vidno, že sa nešlo dnu/von jedným fillom - presne to, čo v tabuľke
+   obchodov ukazuje odznak ⇄ scaled (pozri trades-list.js). */
+function legsSummary(legs){
+  if(!legs||!legs.length)return '';
+  return legs.map(l=>`${l.qty}@${l.price}`).join(' → ');
 }
 export function renderExcursion(t){
   const el=$('tExcursion');
   if(!el)return;
   const x=excursionFor(t);
   if(!x){el.innerHTML='';return;}
+  if(x.mismatch){
+    el.innerHTML=`<span class="hint" style="color:var(--red)" title="${esc(tr('Cena v priradených sviečkach sa výrazne líši od ceny obchodu - pravdepodobne iný kontrakt/mesiac než bol stiahnutý.'))}">⚠️ ${esc(tr('Sviečky nesedia s cenou obchodu'))} (${esc(x.tf)})</span>`;
+    return;
+  }
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
+  const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
+  const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
   el.innerHTML=
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
     `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
     ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
-    ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`;
+    ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
+    (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
+      (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }
 ['tSymbol','tDir','tQty','tFees','tEntry','tExit','tStop','tTarget','tPnl'].forEach(id=>{
   document.addEventListener('input',e=>{if(e.target.id===id)updatePnlPreview();});
@@ -174,7 +203,8 @@ export function shrinkImageBlob(blob,maxDim){
   });
 }
 export function buildTradeReviewData(t){
-  const pnl=computePnl(t),r=riskR(t),x=excursionFor(t);
+  const pnl=computePnl(t),r=riskR(t),xRaw=excursionFor(t);
+  const x=xRaw&&!xRaw.mismatch?xRaw:null;
   const strat=t.strategyId!=null?strategyById(t.strategyId):null;
   const barsPayload=(()=>{
     const cands=datasetsForSymbol(t.symbol);
@@ -215,6 +245,25 @@ export function buildTradeReviewData(t){
     svieckyOkoloObchodu:barsPayload,
   };
 }
+/* Predvolený inštrukčný text pre "AI rozbor obchodu" - editovateľný v Nastaveniach
+   (state.settings.aiReviewPromptTemplate, prázdne = použiť tento default).
+   {{JAZYK}} appka nahradí aktuálnym jazykom appky (SK/EN); dáta obchodu (JSON) a
+   veta o sviečkach sa vždy pripájajú automaticky za tento text, nie sú jeho súčasťou. */
+export const DEFAULT_TRADE_REVIEW_PROMPT=
+  `Si skúsený trading kouč. Nižšie sú presné dáta jedného obchodu z trading journalu `+
+  `(čísla počítala appka, sú spoľahlivé). Ak sú priložené obrázky, sú to screenshoty grafu k tomuto obchodu.\n\n`+
+  `Napíš rozbor v tejto štruktúre:\n`+
+  `1. ČO SI SPRAVIL DOBRE – 1-3 konkrétne body\n`+
+  `2. ČO SI SPRAVIL ZLE – 1-3 konkrétne body\n`+
+  `3. ODPORÚČANIE NABUDÚCE – 1-2 vety, konkrétne a vykonateľné\n\n`+
+  `Opieraj sa o čísla (MAE/MFE, R-multiple, dodržanie pravidiel, načasovanie). Žiadne všeobecné frázy typu "riaď si riziko". `+
+  `Ak dáta na nejaký záver nestačia, radšej to povedz, než by si si vymýšľal. Odpíš v jazyku: {{JAZYK}}.`;
+export function buildTradeReviewPrompt(template,langName,hasCandles,data){
+  const base=(template||DEFAULT_TRADE_REVIEW_PROMPT).replace('{{JAZYK}}',langName);
+  return base+(hasCandles?` Nižšie sú aj sviečky pred vstupom a počas obchodu.`:``)+
+    `\n\nDáta (JSON):\n${JSON.stringify(data)}`;
+}
+export function saveAiReviewModel(){state.settings.aiReviewModel=$('tAiReviewModel').value;saveSettings();}
 export async function aiReviewTrade(){
   if(!state.settings.anthropicKey){toast(tr('Najprv si v Nastaveniach ulož svoj Anthropic API kľúč'));return;}
   const btn=$('tAiReviewBtn'),body=$('tAiReviewBody');
@@ -224,16 +273,7 @@ export async function aiReviewTrade(){
   btn.disabled=true;btn.textContent=tr('Analyzujem…');
   body.innerHTML=`<div class="hint">${esc(tr('Čakám na odpoveď od Claude…'))}</div>`;
   const langName=state.settings.lang==='en'?'English':'Slovak';
-  const promptText=`Si skúsený trading kouč. Nižšie sú presné dáta jedného obchodu z trading journalu (čísla počítala appka, sú spoľahlivé)`+
-    (data.svieckyOkoloObchodu?`, vrátane sviečok pred vstupom a počas obchodu`:``)+
-    `. Ak sú priložené obrázky, sú to screenshoty grafu k tomuto obchodu.\n\n`+
-    `Napíš rozbor v tejto štruktúre:\n`+
-    `1. ČO SI SPRAVIL DOBRE – 1-3 konkrétne body\n`+
-    `2. ČO SI SPRAVIL ZLE – 1-3 konkrétne body\n`+
-    `3. ODPORÚČANIE NABUDÚCE – 1-2 vety, konkrétne a vykonateľné\n\n`+
-    `Opieraj sa o čísla (MAE/MFE, R-multiple, dodržanie pravidiel, načasovanie). Žiadne všeobecné frázy typu "riaď si riziko". `+
-    `Ak dáta na nejaký záver nestačia, radšej to povedz, než by si si vymýšľal. Odpíš v jazyku: ${langName}.\n\n`+
-    `Dáta (JSON):\n${JSON.stringify(data)}`;
+  const promptText=buildTradeReviewPrompt(state.settings.aiReviewPromptTemplate,langName,!!data.svieckyOkoloObchodu,data);
   const content=[];
   try{
     const shots=state.currentTradeId!=null?await shotsByTrade(state.currentTradeId):[];
@@ -250,8 +290,9 @@ export async function aiReviewTrade(){
       headers:{'content-type':'application/json','x-api-key':state.settings.anthropicKey,
         'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:state.settings.aiChatModel||'claude-sonnet-5',
-        max_tokens:1600,
+        model:state.settings.aiReviewModel||'claude-sonnet-5',
+        max_tokens:3200,
+        thinking:{type:'disabled'},
         messages:[{role:'user',content}],
       }),
     });
@@ -259,7 +300,7 @@ export async function aiReviewTrade(){
     if(!res.ok)throw new Error((d&&d.error&&d.error.message)||('HTTP '+res.status));
     const text=(d.content||[]).map(c=>c.text||'').join('').trim();
     if(!text){body.innerHTML=`<div class="hint" style="color:var(--red)">${esc(tr('Prázdna odpoveď.'))}</div>`;return;}
-    const review={text,at:Date.now(),model:state.settings.aiChatModel||'claude-sonnet-5',images:content.length-1};
+    const review={text,at:Date.now(),model:state.settings.aiReviewModel||'claude-sonnet-5',images:content.length-1};
     renderAiReview(review);
     if(state.currentTradeId!=null){ // ulož, nech sa nemusí (a neplatí) generovať znova
       const stored=state.trades.find(x=>x.id===state.currentTradeId);
