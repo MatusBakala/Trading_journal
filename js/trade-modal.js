@@ -17,7 +17,7 @@ export async function openTrade(id){
   state.currentTradeId=id;state.pendingShots=[];state.removedShotIds=[];state.modalChartTf=null;
   $('tChartDsWrap').dataset.chosen='';
   const t=id!=null?state.trades.find(x=>x.id===id):null;
-  $('tmTitle').textContent=t?`Obchod #${t.id} – ${String(t.symbol).toUpperCase()}`:'Nový obchod';
+  $('tmTitle').textContent=t?tr(`Obchod #${t.id} – ${String(t.symbol).toUpperCase()}`):tr('Nový obchod');
   $('tDelete').style.display=t?'':'none';
   $('tAccount').innerHTML=state.settings.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join('');
   $('tAccount').value=String(t?(t.account??defaultAccId()):(state.settings.activeAccount==='all'?defaultAccId():state.settings.activeAccount));
@@ -101,8 +101,8 @@ export function updatePnlPreview(){
   const overLimit=limit>0&&riskPct!=null&&riskPct>limit;
   $('tPnlPreview').innerHTML=`P&L: <span class="${moneyCls(pnl)}">${fmtMoney(pnl)}</span>`+
     (r!=null?` &nbsp; <span class="hint">(${r.toFixed(2)}R)</span>`:'')+
-    ` &nbsp; <span class="hint">multiplikátor ${multFor(t.symbol)}</span>`+
-    (riskPct!=null?` &nbsp; <span class="${overLimit?'neg':'hint'}" title="${esc(tr('Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu'))}">${overLimit?'⚠️ ':''}riziko ${riskPct.toFixed(2)}%${limit>0?' / '+limit+'%':''}</span>`:'');
+    ` &nbsp; <span class="hint">${tr('multiplikátor')} ${multFor(t.symbol)}</span>`+
+    (riskPct!=null?` &nbsp; <span class="${overLimit?'neg':'hint'}" title="${esc(tr('Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu'))}">${overLimit?'⚠️ ':''}${tr(`riziko ${riskPct.toFixed(2)}%${limit>0?' / '+limit+'%':''}`)}</span>`:'');
   renderExcursion(t);
 }
 /* Jeden riadok "2@3985.0 → 1@3986.2" per leg-skupina, aby bolo pri škálovanom

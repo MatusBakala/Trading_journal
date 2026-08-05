@@ -45,7 +45,7 @@ export const I18N_EN={
 'Uložiť stratégiu':'Save strategy','Zadaj názov stratégie':'Enter a strategy name','Stratégia uložená':'Strategy saved',
 'Vymazať túto stratégiu? Obchody, ktoré ju používajú, ostanú zachované, len stratia priradenie.':'Delete this strategy? Trades using it will be kept, they will just lose the assignment.','Stratégia vymazaná':'Strategy deleted',
 'Zatiaľ žiadne stratégie. Klikni na "+ Pridať stratégiu" a definuj si prvý playbook – pravidlá vstupu, ktoré chceš dodržiavať.':'No strategies yet. Click "+ Add strategy" to define your first playbook – entry rules you want to follow.',
-'Upraviť':'Edit','Obchody →':'Trades →','Obchodov':'Trades','Priem. R':'Avg R','Dodrž. pravidiel':'Rule adherence','Dodržiavanosť jednotlivých pravidiel:':'Adherence per rule:','Dodržal(a) si pravidlá tejto stratégie?':'Did you follow this strategy\'s rules?',
+'Upraviť':'Edit','Obchody →':'Trades →','Obchodov':'# trades','Priem. R':'Avg R','Dodrž. pravidiel':'Rule adherence','Dodržiavanosť jednotlivých pravidiel:':'Adherence per rule:','Dodržal(a) si pravidlá tejto stratégie?':'Did you follow this strategy\'s rules?',
 'Pravidlá':'Rules','Pravidlo':'Rule','← Späť na zoznam':'← Back to list',
 'Follow rate = ako často toto pravidlo dodržíš. Ostatné stĺpce = výkonnosť obchodov, kde bolo toto pravidlo dodržané.':'Follow rate = how often you follow this rule. The other columns = performance of trades where this rule was followed.',
 'Táto stratégia nemá zadané žiadne pravidlá. Klikni na "Upraviť" a pridaj checklist vstupu.':'This strategy has no rules yet. Click "Edit" to add an entry checklist.',
@@ -165,6 +165,62 @@ export const I18N_EN={
 'Väčšinu trvania obchodu bola cena proti tebe':'Price was against you for most of the trade\'s duration',
 'Obchod držaný dlhšie než je tvoj priemer':'Trade held longer than your average',
 'Obchodoval si s výrazne vyšším objemom než zvyčajne':'You traded with significantly higher volume than usual',
+'Zrušiť':'Cancel','Odpojiť':'Disconnect','Odstrániť':'Remove',
+'Nepripojené.':'Not connected.','✅ Pripojené':'✅ Connected','⏳ Synchronizujem…':'⏳ Syncing…',
+'⚠️ Chyba synchronizácie: ':'⚠️ Sync error: ',' · posledná synchronizácia ':' · last sync ',' · denná záloha ':' · daily backup ',
+'🔗 Pripojiť Google Drive':'🔗 Connect Google Drive','⬆️ Nahrať na Drive':'⬆️ Upload to Drive','⬇️ Stiahnuť z Drive':'⬇️ Download from Drive',
+'🕘 Staršie zálohy':'🕘 Older backups','Nahrať na Drive':'Upload to Drive','Stiahnuť z Drive':'Download from Drive','Manuálna záloha':'Manual backup',
+'Najprv sa pripoj ku Google Drive':'Connect to Google Drive first','Najprv zadaj Google Client ID':'Enter a Google Client ID first',
+'Na Google Drive zatiaľ nie je žiadna záloha':'There is no backup on Google Drive yet','Dáta stiahnuté z Google Drive':'Data downloaded from Google Drive',
+'Pripojené ku Google Drive':'Connected to Google Drive','Google Drive odpojený':'Google Drive disconnected',
+'Google Identity Services sa nenačítalo':'Google Identity Services failed to load','Prihlásenie zamietnuté':'Sign-in denied',
+'Stiahnutie PREPÍŠE aktuálne lokálne dáta v tomto prehliadači dátami z Google Drive. Pokračovať?':'Download will OVERWRITE the current local data in this browser with data from Google Drive. Continue?',
+'Záloha obsahuje obchody, nastavenia a screenshoty. Bez pripojeného Google Drive sú dáta uložené len v tomto prehliadači.':'The backup contains trades, settings and screenshots. Without Google Drive connected, data is stored only in this browser.',
+'Appka si vie sama ukladať a načítavať zálohu z tvojho Google Drive (do skrytého priečinka appky, nevidno ho v bežnom Drive). Vďaka tomu sa dáta objavia aj v inom prehliadači či na mobile, bez ručného exportu/importu. Návod na získanie Client ID nájdeš v README/pokynoch od Claude.':'The app can automatically save and load a backup from your Google Drive (into a hidden app folder, not visible in regular Drive). That way data shows up in another browser or on mobile without manual export/import. See the README for how to get a Client ID.',
+'"Nahrať na Drive" pošle aktuálny lokálny stav do cloudu (prepíše to, čo tam je). "Stiahnuť z Drive" naopak prepíše dáta v tomto prehliadači tým, čo je uložené v cloude – použi to napr. keď appka na novom zariadení automaticky nestiahla dáta sama.':'"Upload to Drive" sends the current local state to the cloud (overwriting what is there). "Download from Drive" overwrites the data in this browser with what is stored in the cloud – use it e.g. when the app on a new device did not download data automatically.',
+'Okrem hlavnej zálohy (ktorá sa pri každej zmene prepisuje) sa raz denne odkladá datovaná kópia. Drží sa posledných 14 dní – cez "Staršie zálohy" sa dá vrátiť k ľubovoľnému dňu, napr. keď si omylom niečo vymazal.':'Besides the main backup (rewritten on every change), a dated copy is stored once a day. The last 14 days are kept – via "Older backups" you can restore any day, e.g. if you deleted something by mistake.',
+'Kľúč uložený':'Key saved','Pravidlá uložené':'Rules saved','Limity uložené':'Limits saved',
+'Prompt uložený':'Prompt saved','Prompt obnovený na predvolený':'Prompt reset to default',
+'URL odkazu:':'Link URL:','Nadpis':'Heading','Farba textu':'Text color','Farba zvýraznenia':'Highlight color','Zarovnanie':'Alignment',
+'Vložiť odkaz':'Insert link','Vymazať formátovanie':'Clear formatting','Vložiť obrázok':'Insert image',
+'Najviac nechané na stole':'Most left on the table','Najtesnejšie prežitý stop (najhlbší MAE u víťazov)':'Tightest survived stop (deepest MAE among winners)',
+'uzavretých obchodov má sviečkové dáta. Klikni na bod alebo riadok nižšie pre detail obchodu.':'closed trades have candle data. Click a dot or a row below for trade detail.',
+'Zadaj symbol a čas vstupu':'Enter a symbol and entry time','Zobraziť detaily chýbajúcich dát':'View missing data details','🤖 Rozobrať tento obchod':'🤖 Review this trade',
+'Perióda':'Period','Dataset nemá dáta o objeme (volume)':'Dataset has no volume data','nepodarilo sa naparsovať':'could not parse',
+'Nepodarilo sa načítať appku. Skús obnoviť stránku.':'Failed to load the app. Try refreshing the page.',
+'Haiku 4.5 (rýchly, lacný)':'Haiku 4.5 (fast, cheap)','Claude Haiku 4.5 (rýchly, lacný)':'Claude Haiku 4.5 (fast, cheap)',
+'Sonnet 5 (vyvážený)':'Sonnet 5 (balanced)','Opus 5 (najhlbší, drahší)':'Opus 5 (deepest, more expensive)',
+'Spárovať do obchodov':'Pair into trades','Mapovať ručne':'Map manually',
+'⚡ Toto vyzerá ako export objednávok (Tradovate a pod.) – jeden riadok = jedna objednávka/fill, nie hotový obchod. Vstupy a výstupy treba spárovať.':'⚡ This looks like an orders export (Tradovate etc.) – one row = one order/fill, not a finished trade. Entries and exits need to be paired.',
+'📎 Priložiť Cash History.csv (voliteľné, doplní poplatky)':'📎 Attach Cash History.csv (optional, fills in fees)',
+'Cash History CSV je prázdne alebo má len hlavičku':'Cash History CSV is empty or has only a header',
+'Nenašli sa žiadne vyplnené (Filled) objednávky na spárovanie':'No filled orders found to pair',
+'1m dáta u Yahoo siahajú len ~7 dní dozadu – tento obchod je starší, skús 5m/15m alebo nahraj CSV.':'1m Yahoo data only goes ~7 days back – this trade is older, try 5m/15m or upload a CSV.',
+'Čas vstupu':'Entry time','Export JSON pre AI':'Export JSON for AI',
+'JSON pre deň':'JSON for day','stiahnutý – vlož ho do claude.ai alebo iného AI chatu':'downloaded – paste it into claude.ai or another AI chat',
+'⚠️ Rizikový manažment':'⚠️ Risk management',
+'Limity počítané voči počiat. kapitálu aktívneho účtu. Nastav 0, ak limit nechceš sledovať. Appka nič neblokuje – len upozorní, keď obchod alebo deň limit prekročí.':'Limits are calculated against the active account starting capital. Set 0 if you do not want to track a limit. The app does not block anything – it only warns when a trade or day exceeds the limit.',
+'Max. riziko na obchod (%)':'Max. risk per trade (%)','Max. denná strata (%)':'Max. daily loss (%)','Uložiť limity':'Save limits',
+'Sviečky nesedia s cenou obchodu':'Candles do not match trade price',
+'Cena v priradených sviečkach sa výrazne líši od ceny obchodu - pravdepodobne iný kontrakt/mesiac než bol stiahnutý.':'The price in the assigned candles differs significantly from the trade price – likely a different contract/month than was downloaded.',
+'Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu':'Risk entry→stop as % of active account starting capital',
+'Dnešné využité riziko':'Today\'s used risk','(denný limit':'(daily limit',
+'Prompt pre "AI rozbor obchodu"':'Prompt for "AI trade review"',
+'Text inštrukcií, ktoré appka pošle Claude pri kliknutí na "🤖 Rozobrať tento obchod" v detaile obchodu. Dáta obchodu (JSON) a sviečky sa vždy pripoja automaticky za tento text – nie sú jeho súčasťou. Použi <code>{{JAZYK}}</code> tam, kde má appka doplniť aktuálny jazyk appky (SK/EN).':'Instruction text the app sends to Claude when you click "🤖 Review this trade" in trade detail. Trade data (JSON) and candles are always appended after this text – they are not part of it. Use <code>{{JAZYK}}</code> where the app should insert the current app language (SK/EN).',
+'Uložiť prompt':'Save prompt','Obnoviť predvolený':'Reset to default','riziko':'risk',
+'Priemerné MAE':'Average MAE','Priemerné MFE':'Average MFE',
+'priemerný najhorší bod proti tebe, naprieč všetkými obchodmi':'average worst point against you, across all trades',
+'priemerný najlepší bod v tvoj prospech, naprieč všetkými obchodmi':'average best point in your favour, across all trades',
+'Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.':'Approximate – without fill breakdown, the final quantity is used across the whole trade window; more accurate only for broker CSV imports.',
+'Postupný vstup/výstup':'Scaled entry/exit',
+'Import CSV':'Import CSV','Long + Short':'Long + Short','Long':'Long','Short':'Short',
+'Timeframe':'Timeframe','Symbol':'Symbol','Symbol *':'Symbol *','Obchod':'Trade',
+'Stop loss':'Stop loss','Take profit':'Take profit','napr. 1':'e.g. 1','napr. 3':'e.g. 3',
+'Uložiť pravidlá':'Save rules','Táto stratégia nemá zadané žiadne pravidlá.':'This strategy has no rules yet.',
+'„Export chart data…"':'"Export chart data…"',
+'Alternatíva s presnými dátami tvojho kontraktu: v TradingView otvor graf → menu grafu → „Export chart data…" → stiahnutý CSV nahraj sem. CSV musí obsahovať stĺpce: čas, open, high, low, close (voliteľne volume).':'Alternative with exact data for your contract: in TradingView open the chart → chart menu → "Export chart data…" → upload the downloaded CSV here. The CSV must contain columns: time, open, high, low, close (volume optional).',
+'Win rate':'Win rate','Profit factor':'Profit factor','Net P&L':'Net P&L',
+'obchod':'trade','obchody':'trades','obchodov':'trades','multiplikátor':'multiplier',
 };
 Object.assign(I18N_EN,{
 'Stratégia iFVG (Inverse Fair Value Gap) stojí na jednej jednoduchej myšlienke: ak bola vyčistená likvidita a fair value gap je následne prerazený opačným smerom, cena bude pravdepodobne pokračovať v pohybe týmto smerom.':'The IFVG (Inverse Fair Value Gap) strategy is built around one simple idea: If liquidity has been swept and a fair value gap is broken in the opposite direction, price is likely to continue to rally.',
@@ -191,6 +247,28 @@ Object.assign(I18N_EN,{
 "VYTVORENÉ PRE\n\nNástroje: Akcie, futures, forex\nŠtýl obchodovania: Intradenný aj swingový\n\nPREHĽAD STRATÉGIE\n\nBreak & Retest je jedna z najstarších a najspoľahlivejších technických stratégií, založená na čítaní price action a kľúčových úrovní. Namiesto naháňania ceny hneď po breakoute čakáme na jej návrat k prelomenej úrovni – tam, kde je pomer risk/reward najvýhodnejší a signál najčistejší.\n\nZÁKLADNÝ KONCEPT: Zlomenie štruktúry\n\nKaždá kľúčová úroveň (predchádzajúci high/low dňa, výrazný swing bod, alebo psychologická cena) funguje ako bariéra, kde sa história obchodovania hromadí – objednávky, stopy, limitné príkazy. Keď cena túto úroveň presvedčivo prelomí (silná sviečka, jasné zatvorenie za úrovňou, nie len tieň knôtu), znamená to posun v rovnováhe medzi kupujúcimi a predávajúcimi.\n\nDôležité je rozlíšiť skutočný breakout od falošného. Slabý breakout (dlhý knôt, uzavretie späť pod úrovňou) často signalizuje pascu na retailových obchodníkov – radšej počkaj na presvedčivé zatvorenie.\n\nZÁKLADNÝ KONCEPT: Retest a vstup\n\nPo breakoute sa cena veľmi často vráti späť k prelomenej úrovni – nie preto, že sa \"mýlila\", ale pretože táto úroveň sa teraz stáva novou podporou (pri breakoute nahor) alebo odporom (pri breakoute nadol). Toto je presne ten moment, na ktorý Break & Retest trader čaká.\n\nVstup nastáva až vtedy, keď cena úroveň pri retest zreteľne rešpektuje – napríklad malou sviečkou s dlhým knôtom smerom k úrovni a zatvorením naspäť v smere pôvodného breakoutu. Ak cena namiesto toho prerazí späť cez úroveň, setup je neplatný a treba ho vynechať.\n\nRIADENIE RIZIKA: Stop a ciele\n\nStop loss patrí tesne za retest zónu (za low retest sviečky pri long vstupe, za high pri short vstupe) – dostatočne blízko, aby bol pomer risk/reward priaznivý, ale dostatočne ďaleko, aby ho nevyradil bežný trhový šum.\n\nPrvý cieľ je najbližší výrazný swing high/low – tu je vhodné časť pozície uzavrieť (trim) a zvyšok nechať bežať s presunutým stopom na breakeven. Druhý, rozšírený cieľ sa hľadá pri ďalšej významnej štruktúrnej úrovni, ak trend pokračuje.\n\nKEDY SETUP VYNECHAŤ\n\n- Breakout bez objemu alebo s dlhými knôtmi namiesto pevného zatvorenia.\n- Retest, ktorý preráža späť cez úroveň namiesto toho, aby sa od nej odrazil.\n- Príliš veľa predchádzajúcich testov tej istej úrovne – čím viackrát je úroveň testovaná, tým je slabšia.":
 "BUILT FOR\n\nInstruments: Stocks, futures, forex\nTrading Style: Intraday and swing\n\nPLAYBOOK OVERVIEW\n\nBreak & Retest is one of the oldest and most reliable technical strategies, grounded in reading price action and key levels. Instead of chasing price right after the breakout, we wait for it to return to the broken level – where the risk/reward is most favorable and the signal is cleanest.\n\nCORE CONCEPT: Break of Structure\n\nEvery key level (previous day's high/low, a significant swing point, or a psychological price) acts as a barrier where trading history accumulates – orders, stops, limit orders. When price convincingly breaks through it (a strong candle, a clear close beyond the level, not just a wick), it signals a shift in the balance between buyers and sellers.\n\nIt's important to distinguish a real breakout from a fake one. A weak breakout (long wick, closing back below the level) often signals a trap for retail traders – better to wait for a convincing close.\n\nCORE CONCEPT: Retest and Entry\n\nAfter the breakout, price very often returns to the broken level – not because it was \"wrong,\" but because this level now becomes new support (on a breakout up) or resistance (on a breakout down). This is exactly the moment a Break & Retest trader waits for.\n\nEntry only comes once price clearly respects the level on the retest – for example, a small candle with a long wick toward the level, closing back in the direction of the original breakout. If price instead breaks back through the level, the setup is invalid and should be skipped.\n\nRISK MANAGEMENT: Stop and Targets\n\nThe stop loss belongs just beyond the retest zone (below the retest candle's low on a long entry, above its high on a short entry) – close enough to keep risk/reward favorable, but far enough not to get taken out by normal market noise.\n\nThe first target is the nearest significant swing high/low – a good spot to trim part of the position and let the rest run with the stop moved to breakeven. A second, extended target is sought at the next major structural level if the trend continues.\n\nWHEN TO SKIP THE SETUP\n\n- A breakout without volume or with long wicks instead of a solid close.\n- A retest that breaks back through the level instead of bouncing off it.\n- Too many previous tests of the same level – the more a level gets tested, the weaker it becomes.",
 });
+Object.assign(I18N_EN,{
+'AMD (Akumulácia – Manipulácia – Distribúcia) je model založený na sledovaní trhových fáz: cena najprv buduje likviditu v Akumulácii, potom ju vyčistí a nalapí obchodníkov v Manipulácii, a až vo fáze Distribúcie sa objaví skutočný, obchodovateľný pohyb. Vstupuje sa až po potvrdení displacementu vo fáze Distribúcie, nikdy počas samotného manipulačného sweepu.':'AMD (Accumulation – Manipulation – Distribution) is a model based on tracking market phases: price first builds liquidity in Accumulation, then sweeps it and traps traders in Manipulation, and only in the Distribution phase does the real, tradeable move appear. Enter only after displacement is confirmed in Distribution – never during the manipulation sweep itself.',
+'Správa: dôležitá udalosť (CPI, FOMC, NFP, GDP atď.)':'News: important event (CPI, FOMC, NFP, GDP, etc.)',
+'Štruktúra (identifikovaná fáza Akumulácie a Manipulácie)':'Structure (identified Accumulation and Manipulation phase)',
+'Korelácia trhov':'Market correlation','Identifikovaný draw on liquidity':'Identified draw on liquidity',
+'Sledovaný displacement':'Displacement observed','Vstup na retracemente do fair value gapu':'Entry on retracement into a fair value gap',
+'Stop za high/low manipulácie':'Stop beyond the manipulation high/low','Trailing stop':'Trailing stop',
+'Čiastočný zisk na najbližšom čistom swing high/low':'Partial profit at the nearest clean swing high/low',
+'Max. dva obchody za session – po dvoch stratách koniec':'Max. two trades per session – after two losses, stop',
+'Low Volume Node stratégia hľadá miesta na volume-by-price profile, kadiaľ cena prešla rýchlo s minimálnym objemom (LVN). Keď sa cena neskôr vráti do tejto zóny, sleduje sa cez heatmapu/order flow, či tam veľkí hráči bránia svoju pozíciu – to je signál na vstup s tesným stopom tesne za LVN.':'The Low Volume Node strategy looks for areas on the volume-by-price profile where price moved quickly with minimal volume (LVN). When price later returns to that zone, watch the heatmap/order flow for big players defending their position – that is the entry signal with a tight stop just beyond the LVN.',
+'Identifikovateľná kľúčová úroveň (predchádzajúca konsolidácia, po ktorej nasleduje impulzívny pohyb preč od tejto oblasti)':'Identifiable key level (prior consolidation followed by an impulsive move away from the area)',
+'Vytvorenie Low Volume Node (LVN)':'Formation of a Low Volume Node (LVN)','Pullback ceny späť do LVN':'Price pullback back into the LVN',
+'Potvrdenie cez orderflow (absorpcia, chytení účastníci, delta divergencia)':'Confirmation via order flow (absorption, trapped participants, delta divergence)',
+'VYTVORENÉ PRE':'BUILT FOR','PREHĽAD STRATÉGIE':'PLAYBOOK OVERVIEW','KĽÚČOVÉ KONCEPTY':'CORE CONCEPTS',
+'PREHĽAD SETUPU':'SETUP OVERVIEW','PRAVIDLÁ STRATÉGIE':'PLAYBOOK RULES','PRAVIDLÁ PLAYBOOKU':'PLAYBOOK RULES',
+'ROZBOR OBCHODOV':'TRADE BREAKDOWN','ROZBOR OBCHODU':'TRADE BREAKDOWN','VÝHODY A NEVÝHODY STRATÉGIE':'STRATEGY PROS AND CONS',
+'HIGH-PROBABILITY A LOW-PROBABILITY DNI':'HIGH-PROBABILITY AND LOW-PROBABILITY DAYS','Príklad obchodu 1 (Short)':'Trade example 1 (Short)',
+'Nástroje: Futures':'Instruments: Futures','Štýl obchodovania: Day Trading':'Trading style: Day Trading',
+'Štýl obchodovania: Intradenný (Day Trading)':'Trading style: Intraday (Day Trading)',
+'Nástroje: Futures, indexy (ES)':'Instruments: Futures, indices (ES)','Nástroje: Akcie, futures, forex':'Instruments: Stocks, futures, forex',
+'Štýl obchodovania: Intradenný aj swingový':'Trading style: Intraday and swing',
+});
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
@@ -198,19 +276,40 @@ export const I18N_RULES=[
 [/^Stiahnutých (\d+) sviečok \((.+)\)$/,'Downloaded $1 candles ($2)'],
 [/^Uložených (\d+) sviečok pre (.+), pokrytie (.+)$/,'Saved $1 candles for $2, coverage $3'],
 [/^Sťahovanie zlyhalo: ([\s\S]+)$/,(m,p1)=>'Download failed: '+(I18N_EN[p1]||p1)],
+[/^Obnovenie zlyhalo: ([\s\S]+)$/,(m,p1)=>'Restore failed: '+(I18N_EN[p1]||p1)],
+[/^Pripojenie zlyhalo: ([\s\S]+)$/,(m,p1)=>'Connection failed: '+(I18N_EN[p1]||p1)],
+[/^⚠️ Chyba synchronizácie: ([\s\S]+)$/,(m,p1)=>'⚠️ Sync error: '+p1],
+[/^Nahrávanie zlyhalo \((\d+)\)$/,'Upload failed ($1)'],
+[/^Zoznam súborov zlyhal \((\d+)\)$/,'File list failed ($1)'],
+[/^Zoznam záloh zlyhal \((\d+)\)$/,'Backup list failed ($1)'],
+[/^Sťahovanie zlyhalo \((\d+)\)$/,'Download failed ($1)'],
 [/^nepokrýva čas tohto obchodu \((.+)\)\.$/,"does not cover this trade's time ($1)."],
 [/^(\d+) (obchodov|obchody|obchod)$/,(m,n)=>n+' '+(n==='1'?'trade':'trades')],
 [/^(\d+) riadkov na import$/,'$1 rows to import'],
-[/^Importované: (\d+), preskočené: (\d+)$/,'Imported: $1, skipped: $2'],
-[/^Importovaných (\d+) obchodov$/,'Imported $1 trades'],
+[/^Importované: (\d+), preskočené: (\d+)(?:, duplicity preskočené: (\d+))?(?:, doplnený stop pri (\d+) existujúcich)?$/,
+  (m,a,b,c,d)=>'Imported: '+a+', skipped: '+b+(c!=null?', duplicates skipped: '+c:'')+(d!=null?', stop backfilled on '+d+' existing':'')],
+[/^Importovaných (\d+) obchodov(?:, (\d+) duplicít preskočených)?(?:, doplnený stop pri (\d+))?$/,
+  (m,a,b,c)=>'Imported '+a+' trades'+(b!=null?', '+b+' duplicates skipped':'')+(c!=null?', stop backfilled on '+c:'')],
+[/^Spárovaných (\d+) obchodov(?: \((\d+) stále otvorených\))?( \+ poplatky doplnené)?$/,
+  (m,a,b,c)=>'Paired '+a+' trades'+(b!=null?' ('+b+' still open)':'')+(c?' + fees filled in':'')],
+[/^✅ Cash History pripojený \((\d+) riadkov\) – poplatky sa doplnia$/,'✅ Cash History attached ($1 rows) – fees will be filled in'],
+[/^Obnoviť zálohu z (.+)\? PREPÍŠE to aktuálne dáta v tomto prehliadači\.$/,'Restore backup from $1? This will OVERWRITE the current data in this browser.'],
+[/^Záloha z (.+) obnovená$/,'Backup from $1 restored'],
+[/^✅ Pripojené( · posledná synchronizácia [^·]+)?( · denná záloha .+)?$/,
+  (m,a,b)=>'✅ Connected'+(a?a.replace(' · posledná synchronizácia ',' · last sync '):'')+(b?b.replace(' · denná záloha ',' · daily backup '):'')],
+[/^(.+) dáta u Yahoo siahajú len ~60 dní dozadu – tento obchod je starší, skús 1h\/denný alebo nahraj CSV\.$/,'$1 Yahoo data only goes ~60 days back – this trade is older, try 1h/daily or upload a CSV.'],
 [/^multiplikátor (.+)$/,'multiplier $1'],
 [/^(.+) \((\d+) sviečok\)$/,'$1 ($2 candles)'],
 [/^Obchod #(\d+) – (.+)$/,'Trade #$1 – $2'],
 [/^Obchody (\d.+)$/,'Trades $1'],
 [/^Obchody \((\d+)\)$/,'Trades ($1)'],
+[/^Scenáre \((\d+)\)$/,'Scenarios ($1)'],
 [/^(\d+) mes\.$/,'$1 mo.'],
 [/^Účet: (.+)$/,'Account: $1'],
 [/^Účet "(.+)" má obchody\. Presunúť ich do účtu "(.+)"\?$/,'Account "$1" has trades. Move them to account "$2"?'],
+[/^\(denný limit (\d+%)\)$/,'(daily limit $1)'],
+[/^riziko ([\d.]+%(?: \/ [\d.]+%)?)$/,'risk $1'],
+[/^ nepokrýva čas tohto obchodu \((.+)\)\.$/," does not cover this trade's time ($1)."],
 ];
 export const I18N_REV={};
 Object.entries(I18N_EN).forEach(([k,v])=>{if(k!==v)I18N_REV[v]=k;});
@@ -227,6 +326,16 @@ export function translateText(s,dir){
   return s;
 }
 export function tr(s){return state.settings.lang==='en'?translateText(s,'fwd'):s;}
+/** Preklad HTML (napr. rich-text poznámky stratégií) – prejde textové uzly cez translateText. */
+export function trHtml(html){
+  if(state.settings.lang!=='en'||!html)return html;
+  const tpl=document.createElement('template');
+  tpl.innerHTML=html;
+  translateDOM(tpl.content,'fwd');
+  const wrap=document.createElement('div');
+  wrap.appendChild(tpl.content);
+  return wrap.innerHTML;
+}
 export function translateDOM(root,dir){
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];

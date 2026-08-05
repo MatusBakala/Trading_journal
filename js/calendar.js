@@ -11,14 +11,14 @@ export function calMove(d){state.calDate=new Date(state.calDate.getFullYear(),st
 export function renderCalendar(){
   const y=state.calDate.getFullYear(),m=state.calDate.getMonth();
   const months=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
-  $('calMonthName').textContent=months[m]+' '+y;
+  $('calMonthName').textContent=tr(months[m]+' '+y);
   const daily={};
   accTrades().forEach(t=>{const k=dayKey(tTime(t));(daily[k]=daily[k]||{pnl:0,n:0});daily[k].pnl+=computePnl(t);daily[k].n++;});
   const first=new Date(y,m,1);
   let startDow=(first.getDay()+6)%7; // Monday first
   const dim=new Date(y,m+1,0).getDate();
   const dows=['Po','Ut','St','Št','Pi','So','Ne'];
-  let html=dows.map(d=>`<div class="dow">${d}</div>`).join('');
+  let html=dows.map(d=>`<div class="dow">${tr(d)}</div>`).join('');
   for(let i=0;i<startDow;i++)html+='<div class="day other"></div>';
   let monthTotal=0;
   for(let d=1;d<=dim;d++){
@@ -27,12 +27,12 @@ export function renderCalendar(){
     let cls='day',inner=`<div class="dn">${d}</div>`;
     if(info){monthTotal+=info.pnl;
       cls+=' has '+(info.pnl>0?'win':(info.pnl<0?'loss':''));
-      inner+=`<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div><div class="dc">${info.n} ${info.n===1?'obchod':(info.n<5?'obchody':'obchodov')}</div>`;
+      inner+=`<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div><div class="dc">${info.n} ${tr(info.n===1?'obchod':(info.n<5?'obchody':'obchodov'))}</div>`;
     }
     html+=`<div class="${cls}" ${info?`data-day="${k}"`:''}>${inner}</div>`;
   }
   $('calGrid').innerHTML=html;
-  $('calTotal').innerHTML=`Mesiac: <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
+  $('calTotal').innerHTML=`${tr('Mesiac:')} <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
   // panel s obchodmi dňa musí prežiť prekreslenie kalendára - úprava aj zmazanie
   // obchodu priamo z neho volá renderCalendar(), inak by zoznam zakaždým zmizol
   if(state.calSelectedDay&&daily[state.calSelectedDay])showDay(state.calSelectedDay);
@@ -44,7 +44,7 @@ export function showDay(k){
   if(!dayTrades.length){state.calSelectedDay=null;p.style.display='none';return;}
   state.calSelectedDay=k;
   p.style.display='block';
-  p.innerHTML=`<h3>Obchody ${k.split('-').reverse().join('.')} `+
+  p.innerHTML=`<h3>${tr('Obchody')} ${k.split('-').reverse().join('.')} `+
     `<button type="button" class="btn secondary small" data-action="exportDay" data-day="${k}" style="margin-left:8px">📥 ${tr('Export JSON pre AI')}</button></h3>`+
     tradeTableHTML(dayTrades);
 }

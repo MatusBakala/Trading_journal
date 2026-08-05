@@ -1,13 +1,10 @@
 import { activeStartBalance } from './accounts.js';
-import { shotsByTrade } from './db.js';
-import { scheduleAutoSync } from './gdrive.js';
-import { ask } from './i18n.js';
+import { shotsByTrade, idbAdd, idbAll, idbDel, idbGet, idbPut, stratShotsByStrategy } from './db.js';
+import { scheduleAutoSync, gdriveSetLastLocalChange } from './gdrive.js';
+import { ask, tr, trHtml } from './i18n.js';
 import { goToTab } from './tabs.js';
 import { renderTrades, tradeTableHTML } from './trades-list.js';
 import { fmtDT, fmtMoney, toast } from './utils.js';
-import { idbAdd, idbAll, idbDel, idbGet, idbPut, stratShotsByStrategy } from './db.js';
-import { gdriveSetLastLocalChange } from './gdrive.js';
-import { tr } from './i18n.js';
 import { blobToB64 } from './settings.js';
 import { state } from './state.js';
 import { avg } from './stats.js';
@@ -661,7 +658,7 @@ export function renderStrategyDetail(box){
     }else{
       const htmlNotes=isHtmlNotes(s.notes);
       body=(s.notes||'').trim()
-        ?`<div style="margin-bottom:10px"><button class="btn secondary small" data-action="toggleStrategyNotesEdit">Upraviť</button></div><div class="notesView">${htmlNotes?s.notes:renderNotesHTML(tr(s.notes),{})}</div>`
+        ?`<div style="margin-bottom:10px"><button class="btn secondary small" data-action="toggleStrategyNotesEdit">Upraviť</button></div><div class="notesView">${htmlNotes?trHtml(s.notes):renderNotesHTML(tr(s.notes),{})}</div>`
         :`<div class="hint" style="margin-bottom:10px">Táto stratégia zatiaľ nemá poznámky.</div><button class="btn small" data-action="toggleStrategyNotesEdit">+ Pridať poznámky</button>`;
     }
   }else if(state.strategyDetailTab==='scenarios'){

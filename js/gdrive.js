@@ -317,14 +317,17 @@ export function gdriveDisconnect(){
 export function renderGDriveStatus(status){
   const el=$('gdriveStatus');if(!el)return;
   const connectBtn=$('gdriveConnectBtn'),disconnectBtn=$('gdriveDisconnectBtn');
-  if(status instanceof Error){el.textContent='⚠️ Chyba synchronizácie: '+status.message;el.style.color='var(--red)';}
-  else if(status==='syncing'){el.textContent='⏳ Synchronizujem…';el.style.color='';}
+  if(status instanceof Error){el.textContent=tr('⚠️ Chyba synchronizácie: ')+status.message;el.style.color='var(--red)';}
+  else if(status==='syncing'){el.textContent=tr('⏳ Synchronizujem…');el.style.color='';}
   else{
     el.style.color='';
-    if(!state.settings.gConnected)el.textContent='Nepripojené.';
-    else el.textContent='✅ Pripojené'
-      +(state.settings.gLastSync?(' · posledná synchronizácia '+new Date(state.settings.gLastSync).toLocaleTimeString('sk-SK')):'')
-      +(gLastSnapshotDate?(' · denná záloha '+gLastSnapshotDate):'');
+    if(!state.settings.gConnected)el.textContent=tr('Nepripojené.');
+    else{
+      const loc=state.settings.lang==='en'?'en-GB':'sk-SK';
+      el.textContent=tr('✅ Pripojené')
+        +(state.settings.gLastSync?(tr(' · posledná synchronizácia ')+new Date(state.settings.gLastSync).toLocaleTimeString(loc)):'')
+        +(gLastSnapshotDate?(tr(' · denná záloha ')+gLastSnapshotDate):'');
+    }
   }
   if($('gClientId')&&document.activeElement!==$('gClientId'))$('gClientId').value=state.settings.gClientId||'';
   if(connectBtn)connectBtn.style.display=state.settings.gConnected?'none':'';

@@ -1,10 +1,17 @@
-Vytvorenie podobnej aplikácie ako je Tradezella.
-Je to web/app štatistika mojich tradov a setup-ov/ stratégií. Pokiaľ nájdeš niečo čo by si zlepšil, pridal tak to navrhni.
+Vytvorenie dvojjazyčnej web app/ dashboard na denné analyzovanie tradov.
+Tento nástroj bude v dvoch jazykoch- Slovensky, Anglicky.
+Záloha- iCloud sync pre zatiaľ a export JSON. Neskôr možno nejaka databáza.
 
-Odpovedaj stručne a vecne, vždy otestuj čo si vykonal či to funguje. Neponukaj upload na github, urobim si to sám.
 
+## Nasadzovanie a cache
 
-Treba mať aj nejaký back-up plan. Teda obsah sa musí uploadovať niekde cloudove úložisko každý deň.
+Pri každej zmene JS/CSS bumpni `v` v `app-version.json`. Boot skript v `index.html` z tohto súboru zároveň číta pole `modules` a postaví z neho import mapu, ktorá pridá `?v=` **všetkým** modulom – bez nej by sa relatívne importy (`import './init.js'`) ťahali z cache a po nasadení by bežal mix nového `app.js` so starým zvyškom appky.
+
+Keď pribudne alebo zmizne súbor v `js/`, spusti `npm run manifest`. Ak sa na to zabudne, `npm test` to zachytí a povie čo spustiť.
+
+## Zmena návratovej hodnoty zdieľanej funkcie
+
+Keď zmeníš tvar/kontrakt návratovej hodnoty existujúcej zdieľanej funkcie (napr. pridáš nový možný stav ako `{mismatch:true}` do `excursionFor()`), **hneď na to `grep` VŠETKY miesta, ktoré tú funkciu volajú** (`grep -rn "menoFunkcie"` cez `js/`) – nielen to jedno, kde si zmenu potreboval. Inak zostanú "tiché" rozbité miesta, ktoré predpokladajú starý tvar (napr. `$NaN` v agregovaných štatistikách, pád pri `undefined.toFixed()` v AI exporte) – presne toto sa stalo pri MAE/MFE `mismatch` fixe, kde `excursionFor()` má 4 rôznych volajúcich (`trade-modal.js` 2×, `stats.js`, `calendar.js`) a opravený bol najprv len jeden.
 
 ## Nasadzovanie a cache
 
