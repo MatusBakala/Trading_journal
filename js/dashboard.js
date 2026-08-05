@@ -1,5 +1,6 @@
 import { accTrades, activeStartBalance } from './accounts.js';
 import { renderBreakdown } from './ai.js';
+import { tr } from './i18n.js';
 import { renderPatterns } from './patterns.js';
 import { cssVar, state } from './state.js';
 import { tTime } from './strategy-notes.js';
@@ -51,7 +52,7 @@ function renderRiskBanner(startBalance){
   const lossPct=todayNet<0?Math.abs(todayNet)/startBalance*100:0;
   const overLimit=lossPct>limit;
   el.innerHTML=`<div class="card" style="border:1px solid ${overLimit?'var(--red)':'var(--border)'};margin-bottom:14px">
-    <div class="lbl">${overLimit?'⚠️ ':''}Dnešné využité riziko <span class="hint">(denný limit ${limit}%)</span></div>
+    <div class="lbl">${overLimit?'⚠️ ':''}${tr('Dnešné využité riziko')} <span class="hint">${tr('(denný limit')} ${limit}%)</span></div>
     <div class="val ${overLimit?'neg':''}" style="font-size:20px;font-weight:700">${lossPct.toFixed(2)}%</div>
   </div>`;
 }
