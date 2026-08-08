@@ -1,5 +1,5 @@
 {
-  "v": 36,
+  "v": 37,
   "modules": [
     "accounts.js",
     "ai.js",
@@ -9,6 +9,7 @@
     "csv-parser.js",
     "dashboard.js",
     "data/default-strategies.js",
+    "data/strategy-i18n-en.js",
     "db.js",
     "gdrive.js",
     "i18n.js",

@@ -1,5 +1,6 @@
 import { renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
+import { STRATEGY_I18N_EN } from './data/strategy-i18n-en.js';
 
 /* ================= I18N ================= */
 export const I18N_EN={
@@ -368,6 +369,7 @@ export const I18N_RULES=[
 [/^riziko ([\d.]+%(?: \/ [\d.]+%)?)$/,'risk $1'],
 [/^ nepokrýva čas tohto obchodu \((.+)\)\.$/," does not cover this trade's time ($1)."],
 ];
+Object.assign(I18N_EN, STRATEGY_I18N_EN);
 export const I18N_REV={};
 Object.entries(I18N_EN).forEach(([k,v])=>{if(k!==v)I18N_REV[v]=k;});
 export function translateText(s,dir){
