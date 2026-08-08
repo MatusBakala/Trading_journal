@@ -134,6 +134,7 @@ export function renderExcursion(t){
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
+    (x.badTicks?`<div class="hint" style="margin-top:4px" title="${esc(tr('Sviečka mala fúz mnohonásobne dlhší než bežné rozpätie v okolí a cena sa v tom istom bare hneď vrátila – typický zaseknutý tick v dátach z Yahoo. Do MAE/MFE sa nezapočítal.'))}">⚠️ ${x.badTicks} ${esc(tr('sviečok s chybným tickom sa ignorovalo'))}</div>`:'')+
     (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
       (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }
@@ -380,7 +381,7 @@ export function bindGlobal(){
 }
 
 /* ---- modal chart ---- */
-export const TF_SEC={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1d':86400};
+export const TF_SEC={'1m':60,'2m':120,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1d':86400};
 export function destroyModalChart(){if(state.modalChart){state.modalChart.remove();state.modalChart=null;}
   if(state.modalChartRsi){state.modalChartRsi.remove();state.modalChartRsi=null;}
   $('tChartRsi').style.display='none';
@@ -412,7 +413,7 @@ export function pickDataset(sym,tEntry,tExit){
   }
   return best;
 }
-export const TF_LIST=['1m','5m','15m','30m'];
+export const TF_LIST=['1m','2m','5m','15m','30m'];
 export function renderTfBar(sym,activeTf){
   const bar=$('tfBar');
   if(!sym){bar.innerHTML='';return;}

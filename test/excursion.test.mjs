@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 const close = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-6, `${actual} !~ ${expected}`);
 
-const { excursionFor, buildPositionSegments } = await import('../js/strategy-notes.js');
+const { excursionFor, buildPositionSegments, plausibleBarRange, medianBarRange } = await import('../js/strategy-notes.js');
 const { state } = await import('../js/state.js');
 
 const bar = (t, h, l) => ({ t, o: h, h, l, c: h });
@@ -195,6 +195,84 @@ test('excursionFor: pri škálovanom výstupe sa zaráta cena samotného fillu, 
   const x = excursionFor(t);
   assert.equal(x.approx, false);
   close(x.mfeMoney, 160); // (108-100) × 2 kontrakty × mult 10
+});
+
+/* ---- chybné ticky v dátach ---- */
+
+test('excursionFor: zaseknutý chybný tick (dlhý fúz) sa nezaráta do MFE', () => {
+  // Presný tvar z reálnych dát: sviečky sa hýbu v pásme ~$3, jedna má high $27 nad telom.
+  // Bar je celý vnútri okna, takže orezanie okna ho nezachytí - musí ho zachytiť filter.
+  const bars = [];
+  for (let i = 0; i < 12; i++) bars.push(ohlc(1200 + i * 120, 4160, 4162, 4159, 4161));
+  bars[6] = ohlc(1200 + 6 * 120, 4159.2, 4186.9, 4158.2, 4158.7); // chybný tick
+  state.ohlcSets = [{ key: 'MGC|2m', symbol: 'MGC', tf: '2m', bars }];
+  const x = excursionFor({
+    id: 30, symbol: 'MGC', account: 1, dir: 1, qty: 1, entry: 4160, exit: 4159,
+    tEntry: 1200, tExit: 1200 + 12 * 120, fees: 0, pnlOverride: null, stop: null,
+  });
+  assert.equal(x.badTicks, 1);
+  close(x.mfeMoney, 20); // z reálneho high 4162, nie zo 4186.9
+});
+
+test('excursionFor: prudký, ale reálny pohyb (veľké telo sviečky) sa NEorezáva', () => {
+  // Rovnako veľký rozsah ako pri chybnom ticku, ale cena tam naozaj došla a zostala -
+  // prejaví sa to na tele (open→close), nie ako fúz, ktorý sa hneď vráti.
+  const bars = [];
+  for (let i = 0; i < 6; i++) bars.push(ohlc(1200 + i * 120, 4160, 4162, 4159, 4161));
+  bars.push(ohlc(1200 + 6 * 120, 4161, 4187, 4160, 4186)); // skutočný výstrel, close hore
+  for (let i = 7; i < 12; i++) bars.push(ohlc(1200 + i * 120, 4186, 4188, 4185, 4187));
+  state.ohlcSets = [{ key: 'MGC|2m', symbol: 'MGC', tf: '2m', bars }];
+  const x = excursionFor({
+    id: 31, symbol: 'MGC', account: 1, dir: 1, qty: 1, entry: 4160, exit: 4187,
+    tEntry: 1200, tExit: 1200 + 12 * 120, fees: 0, pnlOverride: null, stop: null,
+  });
+  assert.equal(x.badTicks, 0, 'reálny pohyb sa nesmie orezať');
+  close(x.mfeMoney, 280); // (4188-4160) × mult 10
+});
+
+test('plausibleBarRange: bez odhadu bežného rozpätia sa neorezáva nič', () => {
+  const b = ohlc(0, 100, 999, 1, 100);
+  assert.deepEqual(plausibleBarRange(b, 0), { hi: 999, lo: 1, clamped: false });
+});
+
+test('medianBarRange: ignoruje nulové rozpätia a vracia medián', () => {
+  assert.equal(medianBarRange([ohlc(0, 1, 3, 1, 2), ohlc(1, 1, 1, 1, 1), ohlc(2, 1, 9, 1, 5)]), 8);
+});
+
+/* ---- rozlišovanie kontraktných mesiacov ---- */
+
+test('excursionFor: dataset presného kontraktu má prednosť pred jemnejším koreňovým', () => {
+  // MGC|1m je spojitá front-month séria, ktorá sa už prerollovala na iný mesiac (hladina
+  // 4230), kým obchod beží na MGCQ6 okolo 4160. Jemnejší timeframe tu nesmie rozhodnúť -
+  // inak MAE/MFE vyjde z cien cudzieho kontraktu.
+  state.ohlcSets = [
+    { key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
+      ohlc(1200, 4230, 4232, 4229, 4231), ohlc(1260, 4231, 4233, 4230, 4232),
+    ] },
+    { key: 'MGCQ6|5m', symbol: 'MGCQ6', tf: '5m', bars: [
+      ohlc(1200, 4160, 4163, 4159, 4162), ohlc(1500, 4162, 4165, 4161, 4164),
+    ] },
+  ];
+  const x = excursionFor({
+    id: 20, symbol: 'MGCQ6', account: 1, dir: 1, qty: 1, entry: 4160, exit: 4164,
+    tEntry: 1200, tExit: 1800, fees: 0, pnlOverride: null, stop: null,
+  });
+  assert.equal(x.tf, '5m', 'musí vyhrať dataset presného kontraktu, nie jemnejší koreňový');
+  close(x.mfeMoney, 50); // (4165-4160) × mult 10
+});
+
+test('excursionFor: pri rovnakej presnosti symbolu rozhoduje jemnejší timeframe', () => {
+  state.ohlcSets = [
+    { key: 'MGCQ6|5m', symbol: 'MGCQ6', tf: '5m', bars: [ohlc(1200, 4160, 4170, 4159, 4164)] },
+    { key: 'MGCQ6|1m', symbol: 'MGCQ6', tf: '1m', bars: [
+      ohlc(1200, 4160, 4163, 4159, 4162), ohlc(1260, 4162, 4165, 4161, 4164),
+    ] },
+  ];
+  const x = excursionFor({
+    id: 21, symbol: 'MGCQ6', account: 1, dir: 1, qty: 1, entry: 4160, exit: 4164,
+    tEntry: 1200, tExit: 1320, fees: 0, pnlOverride: null, stop: null,
+  });
+  assert.equal(x.tf, '1m');
 });
 
 test('excursionFor: jeden entry leg zodpovedajúci t.qty/t.entry dá identický výsledok ako bez legov', () => {

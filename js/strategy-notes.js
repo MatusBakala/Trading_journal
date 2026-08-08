@@ -847,6 +847,28 @@ export function buildPositionSegments(entryLegs,exitLegs,tEntry,tExit){
    Bez tohto sa do MAE/MFE započíta pohyb z času, keď pozícia ešte/už nebola otvorená -
    presne tak vznikalo MFE $1326 na 16-minútovom obchode, ktorý skončil -$91 (posledná 5m
    sviečka pokračovala 2 minúty po výstupe a mala v nich svoje high). */
+/* Yahoo pri agregovaných intervaloch občas "zasekne" chybný tick a rozotrie ho cez desiatky
+   sviečok: v reálnych dátach mala hodnota 4186.90 rolu high v 47 z 17196 dvojminútoviek,
+   kým sa cena vtedy hýbala v pásme $2-3 (a v 5m sérii to isté s 4173.20 ako low 39×).
+   Jediný taký tick vystrelí MFE o stovky dolárov. Reálny prudký pohyb sa prejaví na TELE
+   sviečky (open→close); chybný tick je fúz, ktorý sa v tej istej sviečke hneď vráti - preto
+   sa orezáva len fúz neúmerne dlhý voči bežnému rozpätiu sviečok v okolí obchodu. */
+export const BAD_TICK_WICK_MULT=8;
+export function medianBarRange(bars){
+  const r=[];
+  for(const b of bars){const d=b.h-b.l;if(d>0)r.push(d);}
+  if(!r.length)return 0;
+  r.sort((a,b)=>a-b);
+  return r[Math.floor(r.length/2)];
+}
+export function plausibleBarRange(b,typicalRange){
+  if(!(typicalRange>0))return {hi:b.h,lo:b.l,clamped:false};
+  const bodyHi=Math.max(b.o,b.c),bodyLo=Math.min(b.o,b.c);
+  const lim=BAD_TICK_WICK_MULT*typicalRange;
+  const hi=(isFinite(bodyHi)&&b.h-bodyHi>lim)?bodyHi:b.h;
+  const lo=(isFinite(bodyLo)&&bodyLo-b.l>lim)?bodyLo:b.l;
+  return {hi,lo,clamped:hi!==b.h||lo!==b.l};
+}
 export function barRangeInWindow(b,tfSec,t1,t2){
   const bS=b.t,bE=b.t+tfSec;
   if(bS>=t1&&bE<=t2)return{hi:b.h,lo:b.l};
@@ -865,18 +887,41 @@ export function excursionFor(t){
   if(!t||!isFinite(t.entry)||!t.tEntry||!t.tExit)return null;
   if(typeof datasetsForSymbol!=='function')return null;
   const t1=Math.min(t.tEntry,t.tExit),t2=Math.max(t.tEntry,t.tExit);
+  /* Dataset pre presne ten istý kontrakt (napr. MGCQ6) má prednosť pred spoločným
+     koreňovým (MGC), aj keď je koreňový jemnejší: koreňový pochádza zo spojitej
+     front-month série, ktorá sa pri rollovaní prepne na iný mesiac s cenovou hladinou
+     inde. Až pri rovnakej presnosti symbolu rozhoduje jemnejší timeframe. */
+  const exactSym=String(t.symbol||'').toUpperCase().trim();
   let best=null;
   for(const d of datasetsForSymbol(t.symbol)){
     const tf=TF_SEC[d.tf]||300;
     const bars=(d.bars||[]).filter(b=>b.t+tf>t1&&b.t<=t2);
     if(!bars.length)continue;
-    if(!best||tf<best.tfSec)best={tfSec:tf,tf:d.tf,bars}; // jemnejší timeframe = presnejšie
+    const exact=String(d.symbol||'').toUpperCase().trim()===exactSym;
+    const better=!best||(exact&&!best.exact)||(exact===best.exact&&tf<best.tfSec);
+    if(better)best={tfSec:tf,tf:d.tf,bars,exact,all:d.bars||[]};
   }
   if(!best)return null;
+  /* Bežné rozpätie sviečky sa berie zo širšieho okolia (±2h), nie len z okna obchodu:
+     pri krátkom obchode by pár sviečok - z ktorých jedna môže byť práve tá chybná -
+     dalo nespoľahlivý medián. */
+  const nb=best.all.filter(b=>b.t>=t1-7200&&b.t<=t2+7200);
+  const typical=medianBarRange(nb.length>=10?nb:best.bars);
+  // Set (nie počítadlo) - rangeOf beží viackrát (dolná aj horná hranica, pri legoch znova)
+  const badTickTimes=new Set();
+  const clean=b=>{
+    const p=plausibleBarRange(b,typical);
+    if(!p.clamped)return b;
+    badTickTimes.add(b.t);
+    return {t:b.t,o:b.o,c:b.c,h:p.hi,l:p.lo};
+  };
   // clip=true → dolná hranica (z krajných sviečok len dokázateľne dotknuté ceny),
   // clip=false → horná hranica (celé h/l zo všetkých sviečok). Obe idú cez to isté
   // jadro, nech sa výpočty časom nerozídu.
-  const rangeOf=(b,clip)=>clip?barRangeInWindow(b,best.tfSec,t1,t2):{hi:b.h,lo:b.l};
+  const rangeOf=(b,clip)=>{
+    const s=clean(b);
+    return clip?barRangeInWindow(s,best.tfSec,t1,t2):{hi:s.h,lo:s.l};
+  };
   const envelope=clip=>{
     // entry a exit trh dosiahol z definície - pri orezanom výpočte sú to jediné isté body,
     // keď okno pokrýva len časť krajnej sviečky (alebo sviečka pre výstup v dátach chýba)
@@ -938,7 +983,7 @@ export function excursionFor(t){
   const mMax=hasLegs?legsMoney(false):flatMoney(full);
   const risk=(t.stop!=null&&isFinite(t.stop))?Math.abs(t.entry-t.stop)*qty*mult:0;
   return {
-    tf:best.tf,barCount:best.bars.length,
+    tf:best.tf,barCount:best.bars.length,badTicks:badTickTimes.size,
     maePrice:dir===1?clipped.lo:clipped.hi,mfePrice:dir===1?clipped.hi:clipped.lo,
     maeMoney:m.maeMoney,mfeMoney:m.mfeMoney,
     maeMoneyMax:mMax.maeMoney,mfeMoneyMax:mMax.mfeMoney,
