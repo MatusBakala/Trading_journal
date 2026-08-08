@@ -8,40 +8,121 @@ import { $, computePnl, dayKey, emotionLabel, sessionOf, toast, tsToLocalInput }
 
 /* ================= Calendar ================= */
 export function calMove(d){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()+d,1);state.calSelectedDay=null;renderCalendar();}
+
+function buildDailyStats(){
+  const daily={};
+  accTrades().forEach(t=>{
+    const k=dayKey(tTime(t));
+    if(!daily[k])daily[k]={pnl:0,n:0,wins:0};
+    const pnl=computePnl(t);
+    daily[k].pnl+=pnl;
+    daily[k].n++;
+    if(pnl>0)daily[k].wins++;
+  });
+  return daily;
+}
+
+function trTradeCount(n){
+  return `${n} ${tr(n===1?'obchod':(n<5?'obchody':'obchodov'))}`;
+}
+
+function trDayCount(n){
+  if(state.settings.lang==='en')return n===1?'1 day':`${n} days`;
+  return n===1?'1 deň':`${n} dní`;
+}
+
+function dayKeyFor(y,m,d){
+  return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+}
+
+function dayCellHtml(d,k,info){
+  let cls='day has';
+  cls+=info.pnl>0?' win':(info.pnl<0?' loss':'');
+  const winPct=info.n?+(info.wins/info.n*100).toFixed(1):0;
+  return `<div class="${cls}" data-day="${k}">`+
+    `<div class="dn">${d}</div>`+
+    `<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div>`+
+    `<div class="dc">${trTradeCount(info.n)}</div>`+
+    `<div class="dw">${winPct}%</div>`+
+    `</div>`;
+}
+
+function emptyDayHtml(d){
+  return `<div class="day"><div class="dn">${d}</div></div>`;
+}
+
+function weekSumHtml(weekNum,weekPnl,weekDays){
+  if(!weekDays){
+    return `<div class="cal-week-sum empty"><span class="cw-label">${tr('Týždeň')} ${weekNum}</span></div>`;
+  }
+  const cls=weekPnl>0?'win':(weekPnl<0?'loss':'');
+  return `<div class="cal-week-sum ${cls}">`+
+    `<span class="cw-label">${tr('Týždeň')} ${weekNum}</span>`+
+    `<span class="cw-pnl ${moneyCls(weekPnl)}">${fmtMoney(weekPnl)}</span>`+
+    `<span class="cw-days">${trDayCount(weekDays)}</span>`+
+    `</div>`;
+}
+
 export function renderCalendar(){
+  const grid=$('calGrid');
+  const monthEl=$('calMonthName');
+  const totalEl=$('calTotal');
+  if(!grid||!monthEl||!totalEl)return;
+
   const y=state.calDate.getFullYear(),m=state.calDate.getMonth();
   const months=['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
-  $('calMonthName').textContent=tr(months[m]+' '+y);
-  const daily={};
-  accTrades().forEach(t=>{const k=dayKey(tTime(t));(daily[k]=daily[k]||{pnl:0,n:0});daily[k].pnl+=computePnl(t);daily[k].n++;});
-  const first=new Date(y,m,1);
-  let startDow=(first.getDay()+6)%7; // Monday first
+  monthEl.textContent=tr(months[m]+' '+y);
+  const daily=buildDailyStats();
+  const startDow=(new Date(y,m,1).getDay()+6)%7; // Monday first
   const dim=new Date(y,m+1,0).getDate();
   const dows=['Po','Ut','St','Št','Pi','So','Ne'];
-  let html=dows.map(d=>`<div class="dow">${tr(d)}</div>`).join('');
-  for(let i=0;i<startDow;i++)html+='<div class="day other"></div>';
-  let monthTotal=0;
+
+  const cells=[];
+  for(let i=0;i<startDow;i++)cells.push({type:'pad'});
   for(let d=1;d<=dim;d++){
-    const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const info=daily[k];
-    let cls='day',inner=`<div class="dn">${d}</div>`;
-    if(info){monthTotal+=info.pnl;
-      cls+=' has '+(info.pnl>0?'win':(info.pnl<0?'loss':''));
-      inner+=`<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div><div class="dc">${info.n} ${tr(info.n===1?'obchod':(info.n<5?'obchody':'obchodov'))}</div>`;
-    }
-    html+=`<div class="${cls}" ${info?`data-day="${k}"`:''}>${inner}</div>`;
+    const k=dayKeyFor(y,m,d);
+    cells.push({type:'day',d,k,info:daily[k]});
   }
-  $('calGrid').innerHTML=html;
-  $('calTotal').innerHTML=`${tr('Mesiac:')} <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
-  // panel s obchodmi dňa musí prežiť prekreslenie kalendára - úprava aj zmazanie
-  // obchodu priamo z neho volá renderCalendar(), inak by zoznam zakaždým zmizol
+  while(cells.length%7!==0)cells.push({type:'pad'});
+
+  let html='<div class="cal-dow-row"><div class="cal-week-days">';
+  html+=dows.map(d=>`<div class="dow">${tr(d)}</div>`).join('');
+  html+='</div><div class="dow dow-week" aria-hidden="true"></div></div>';
+
+  let monthTotal=0;
+  let weekNum=0;
+  for(let i=0;i<cells.length;i+=7){
+    weekNum++;
+    let weekPnl=0,weekDays=0;
+    let daysHtml='';
+    for(let j=0;j<7;j++){
+      const c=cells[i+j];
+      if(c.type==='day'&&c.info){
+        monthTotal+=c.info.pnl;
+        weekPnl+=c.info.pnl;
+        weekDays++;
+        daysHtml+=dayCellHtml(c.d,c.k,c.info);
+      }else if(c.type==='day'){
+        daysHtml+=emptyDayHtml(c.d);
+      }else{
+        daysHtml+='<div class="day other"></div>';
+      }
+    }
+    html+=`<div class="cal-week-row"><div class="cal-week-days">${daysHtml}</div>${weekSumHtml(weekNum,weekPnl,weekDays)}</div>`;
+  }
+
+  grid.innerHTML=html;
+  totalEl.innerHTML=`${tr('Mesiac:')} <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
+
+  const panel=$('calDayPanel');
   if(state.calSelectedDay&&daily[state.calSelectedDay])showDay(state.calSelectedDay);
-  else{state.calSelectedDay=null;$('calDayPanel').style.display='none';}
+  else{state.calSelectedDay=null;if(panel)panel.style.display='none';}
 }
+
 export function showDay(k){
   const dayTrades=accTrades().filter(t=>dayKey(tTime(t))===k).sort((a,b)=>tTime(a)-tTime(b));
   const p=$('calDayPanel');
-  if(!dayTrades.length){state.calSelectedDay=null;p.style.display='none';return;}
+  if(!p||!dayTrades.length){state.calSelectedDay=null;if(p)p.style.display='none';return;}
   state.calSelectedDay=k;
   p.style.display='block';
   p.innerHTML=`<h3>${tr('Obchody')} ${k.split('-').reverse().join('.')} `+

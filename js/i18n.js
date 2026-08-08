@@ -83,6 +83,7 @@ export const I18N_EN={
 'Priemerný denný P&L':'Average daily P&L','Priemerný ziskový deň':'Average winning day','Priemerný stratový deň':'Average losing day',
 'Priem. denný objem (kontrakty)':'Avg daily volume (contracts)','Očakávaná hodnota / obchod':'Trade expectancy','Priemerný realizovaný R-multiple':'Average realized R-multiple',
 'Mesiac:':'Month:','Po':'Mo','Ut':'Tu','St':'We','Št':'Th','Pi':'Fr','So':'Sa','Ne':'Su',
+'Týždeň':'Week',
 'Pondelok':'Monday','Utorok':'Tuesday','Streda':'Wednesday','Štvrtok':'Thursday','Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
 'Všetky symboly':'All symbols','Hľadať v poznámkach/tagoch...':'Search notes/tags...','Dátum':'Date','Smer':'Side','Množstvo':'Quantity','Vstup':'Entry','Výstup':'Exit','Trvanie':'Duration','Tagy':'Tags',
 'Žiadne obchody. Pridaj ručne alebo importuj CSV.':'No trades yet. Add one manually or import a CSV.','Filter podľa tagov:':'Filter by tags:','✕ Zrušiť filter':'✕ Clear filter',
