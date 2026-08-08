@@ -438,4 +438,50 @@ export const TRANSLATIONS = {
   'Stop loss umiestni za liquidity sweep.': 'Place stop loss beyond the liquidity sweep.',
   'Cieľ na ďalšej HTF úrovni alebo external liquidity zóne.': 'Target the next HTF level or external liquidity zone.',
   'Uisti sa, že pomer risk-to-reward je aspoň 1:2 alebo lepší.': 'Make sure risk-to-reward is at least 1:2 or better.',
+
+  // ── Stacked EMAs ──
+  'Stacked EMAs je London session model s časovými vstupmi, stackom EMA (5/9/13/21) a Trident Patternom (doji do 50 % FVG) pre obchody s vysokým R-multiple. Bias z 200 EMA na dennom grafe.':
+    'Stacked EMAs is a London session model with time-based entries, an EMA stack (5/9/13/21), and Trident Pattern (doji into 50% FVG) for high R-multiple trades. Bias from the 200 EMA on the daily chart.',
+  'Obchod len v London Kill Zone (3:00–6:30 NY čas)': 'Trade only in London Kill Zone (3:00–6:30 NY time)',
+  'EMA 5, 9, 13 (15) a 21 sú jasne stacked v smere obchodu': 'EMA 5, 9, 13 (15), and 21 are clearly stacked in trade direction',
+  'Bias podľa 200 EMA – long len nad, short len pod': 'Bias from 200 EMA – long only above, short only below',
+  'FVG vytvorený v obchodnom okne (ideálne 2:30–4:00 NY)': 'FVG formed in the trading window (ideally 2:30–4:00 NY)',
+  'Doji wickuje do 50 % FVG (Trident Pattern)': 'Doji wicks into 50% FVG (Trident Pattern)',
+  'Potvrdenie: ďalšia sviečka zatvorí pod high doji (short) / nad low doji (long)':
+    'Confirmation: next candle closes below doji high (short) / above doji low (long)',
+  'Stop pod low FVG (long) / nad high FVG (short)': 'Stop below FVG low (long) / above FVG high (short)',
+  'Exit pri strate EMA stacku alebo silnej reversal sviečke na daily':
+    'Exit on loss of EMA stack or strong reversal candle on daily',
+  'Nástroje: Forex, zlato (XAUUSD)': 'Instruments: Forex, gold (XAUUSD)',
+  'Platné páry: USDJPY, EURUSD, GBPUSD, NZDUSD, USDCAD, XAUUSD':
+    'Valid pairs: USDJPY, EURUSD, GBPUSD, NZDUSD, USDCAD, XAUUSD',
+  'Štýl obchodovania: Intradenný (London session)': 'Trading style: Intraday (London session)',
+  'Stacked EMAs je silný London session model, ktorý kombinuje stack EMA, časové vstupy a Trident Pattern na zachytenie obchodov s vysokým R-multiple s presnosťou. Vstup na 30-minútovom grafe, bias a ciele na dennom grafe.':
+    'Stacked EMAs is a strong London session model combining EMA stack, time-based entries, and Trident Pattern to capture high R-multiple trades with precision. Entry on the 30-minute chart, bias and targets on the daily chart.',
+  'INDIKÁTORY A NASTAVENIA': 'INDICATORS AND SETTINGS',
+  'Stack EMA (5, 9, 13 alebo 15, 21) – musia byť jasne „stacked“ v smere obchodu (napr. long: 5 > 9 > 13 > 21). Ak sa prekrývajú alebo sú zamotané, setup je neplatný.':
+    'Stack EMA (5, 9, 13 or 15, 21) – must be clearly stacked in trade direction (e.g. long: 5 > 9 > 13 > 21). If they overlap or tangle, the setup is invalid.',
+  '200 EMA (bias) – cena nad 200 EMA: iba long setupy. Cena pod 200 EMA: iba short setupy.':
+    '200 EMA (bias) – price above 200 EMA: long setups only. Price below 200 EMA: short setups only.',
+  'Bull Trading Candle Strength na dennom grafe (momentum): zelená = silný bullish, modrá = mierný bullish, červená = silný bearish, čierna = mierný bearish.':
+    'Bull Trading Candle Strength on the daily chart (momentum): green = strong bullish, blue = mild bullish, red = strong bearish, black = mild bearish.',
+  'ČASOVÉ OKNO (LONDON KILL ZONE)': 'TIME WINDOW (LONDON KILL ZONE)',
+  'Obchoduj len medzi 3:00 a 6:30 ráno New York čas. FVG sa ideálne formuje medzi 2:30 a 4:00 NY čas.':
+    'Trade only between 3:00 and 6:30 AM New York time. FVG ideally forms between 2:30 and 4:00 NY time.',
+  'TRIDENT PATTERN – VSTUP': 'TRIDENT PATTERN – ENTRY',
+  'Všetky podmienky musia súhlasiť:': 'All conditions must align:',
+  'EMA 5, 9, 13 a 21 sú stacked v smere obchodu': 'EMA 5, 9, 13, and 21 are stacked in trade direction',
+  'Cena je na správnej strane 200 EMA (bias)': 'Price is on the correct side of the 200 EMA (bias)',
+  'Formuje sa Fair Value Gap (FVG)': 'Fair Value Gap (FVG) is forming',
+  'Doji sviečka wickuje do aspoň 50 % (stred) FVG zóny': 'Doji candle wicks into at least 50% (midpoint) of the FVG zone',
+  'Potvrdenie: ďalšia sviečka zatvorí pod high doji (short) alebo nad low doji (long)':
+    'Confirmation: next candle closes below doji high (short) or above doji low (long)',
+  'STOP LOSS A EXIT': 'STOP LOSS AND EXIT',
+  'Stop loss pod low FVG sviečky (long) alebo nad high FVG sviečky (short)':
+    'Stop loss below FVG candle low (long) or above FVG candle high (short)',
+  'Uzavri obchod, ak EMA stratia stack alebo sa otočia': 'Close the trade if EMAs lose stack or flip',
+  'Uzavri obchod pri silnej reversal sviečke na dennom grafe': 'Close the trade on a strong reversal candle on the daily chart',
+  'PRÍKLAD SETUPU': 'SETUP EXAMPLE',
+  'Na 30M grafe je viditeľný stack EMA v smere shortu, FVG v kill zone a Trident Pattern – doji do polovice FVG s potvrdením na ďalšej sviečke. Stop nad high FVG, cieľ na ďalšej štruktúre alebo podľa denného biasu.':
+    'On the 30M chart, EMA stack in short direction, FVG in kill zone, and Trident Pattern – doji into half of FVG with confirmation on the next candle. Stop above FVG high, target at next structure or per daily bias.',
 };

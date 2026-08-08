@@ -266,5 +266,30 @@
     "Stop loss umiestni za liquidity sweep.",
     "Cieľ na ďalšej HTF úrovni alebo external liquidity zóne.",
     "Uisti sa, že pomer risk-to-reward je aspoň 1:2 alebo lepší."
+  ],
+  "Stacked EMAs": [
+    "Nástroje: Forex, zlato (XAUUSD)",
+    "Platné páry: USDJPY, EURUSD, GBPUSD, NZDUSD, USDCAD, XAUUSD",
+    "Štýl obchodovania: Intradenný (London session)",
+    "Stacked EMAs je silný London session model, ktorý kombinuje stack EMA, časové vstupy a Trident Pattern na zachytenie obchodov s vysokým R-multiple s presnosťou. Vstup na 30-minútovom grafe, bias a ciele na dennom grafe.",
+    "INDIKÁTORY A NASTAVENIA",
+    "Stack EMA (5, 9, 13 alebo 15, 21) – musia byť jasne „stacked“ v smere obchodu (napr. long: 5 > 9 > 13 > 21). Ak sa prekrývajú alebo sú zamotané, setup je neplatný.",
+    "200 EMA (bias) – cena nad 200 EMA: iba long setupy. Cena pod 200 EMA: iba short setupy.",
+    "Bull Trading Candle Strength na dennom grafe (momentum): zelená = silný bullish, modrá = mierný bullish, červená = silný bearish, čierna = mierný bearish.",
+    "ČASOVÉ OKNO (LONDON KILL ZONE)",
+    "Obchoduj len medzi 3:00 a 6:30 ráno New York čas. FVG sa ideálne formuje medzi 2:30 a 4:00 NY čas.",
+    "TRIDENT PATTERN – VSTUP",
+    "Všetky podmienky musia súhlasiť:",
+    "EMA 5, 9, 13 a 21 sú stacked v smere obchodu",
+    "Cena je na správnej strane 200 EMA (bias)",
+    "Formuje sa Fair Value Gap (FVG)",
+    "Doji sviečka wickuje do aspoň 50 % (stred) FVG zóny",
+    "Potvrdenie: ďalšia sviečka zatvorí pod high doji (short) alebo nad low doji (long)",
+    "STOP LOSS A EXIT",
+    "Stop loss pod low FVG sviečky (long) alebo nad high FVG sviečky (short)",
+    "Uzavri obchod, ak EMA stratia stack alebo sa otočia",
+    "Uzavri obchod pri silnej reversal sviečke na dennom grafe",
+    "PRÍKLAD SETUPU",
+    "Na 30M grafe je viditeľný stack EMA v smere shortu, FVG v kill zone a Trident Pattern – doji do polovice FVG s potvrdením na ďalšej sviečke. Stop nad high FVG, cieľ na ďalšej štruktúre alebo podľa denného biasu."
   ]
 }

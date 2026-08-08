@@ -25,7 +25,7 @@ function chunksFromHtml(html) {
   return out;
 }
 
-const order = ['AMD Playbook', 'Low Volume Node', 'iFVG Model', 'Break & Retest', 'ICT Model 3'];
+const order = ['AMD Playbook', 'Low Volume Node', 'iFVG Model', 'Break & Retest', 'ICT Model 3', 'Stacked EMAs'];
 const report = {};
 
 for (const name of order) {
