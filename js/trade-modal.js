@@ -127,6 +127,12 @@ export function renderExcursion(t){
   // zmysel len keď mohla byť časť pozície zavretá skôr a MAE/MFE to nevidí
   const flatWarn=x.flatQtyRisk?`<div class="hint" style="margin-top:4px;color:var(--red)" title="${esc(tr('Tento obchod nemá uložený rozpis jednotlivých fillov, takže sa počíta, akoby si všetky kontrakty držal po celý čas. Ak si časť pozície zavrel skôr, skutočné MAE/MFE je nižšie. Rozpis fillov majú len obchody naimportované z broker CSV s objednávkami (orders).'))}">⚠️ ${esc(tr(`Bez rozpisu fillov – počíta sa s ${t.qty} kontraktmi po celý čas, čiastočné zatvorenie nie je zarátané`))}</div>`:'';
   const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
+  // Pri postupnom predávaní je MFE "najväčší papierový zisk v jedinom okamihu" - realizovaný
+  // zisk je súčet viacerých predajov v RÔZNOM čase s rôznym množstvom, takže ho môže prekročiť
+  // (napr. skorší čiastočný predaj + neskorší predaj na vyššom vrchole spolu dajú viac, než
+  // koľko kedy ukazovala CELÁ pozícia naraz). Nie je to chyba výpočtu, len iná otázka.
+  const staggeredNote=(t.exitLegs&&t.exitLegs.length>1&&x.mfeMoney<computePnl(t))
+    ?`<div class="hint" style="margin-top:4px" title="${esc(tr('Pri postupnom predávaní je MFE najväčší papierový zisk v jedinom okamihu (tu pri držaní menšieho počtu kontraktov po prvom predaji). Realizovaný zisk je súčet viacerých predajov v rôznom čase s rôznym množstvom, takže ho môže prekročiť - to je normálne, nie chyba výpočtu.'))}">ℹ️ ${esc(tr('Pri postupnom predávaní môže byť realizovaný zisk vyšší než MFE - sčítavajú sa predaje z rôzneho času'))}</div>`:'';
   // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
   // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
   const ge=x.exact?'':`<span class="hint" title="${esc(tr(`Dolná hranica – krajná sviečka presahuje mimo obchodu, takže sa počíta len s cenou dosiahnutou preukázateľne počas pozície. Horný odhad zo všetkých sviečok: MAE ${fmtMoney(x.maeMoneyMax)} / MFE ${fmtMoney(x.mfeMoneyMax)}.`))}">≥</span> `;
@@ -138,7 +144,7 @@ export function renderExcursion(t){
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
     (x.badTicks?`<div class="hint" style="margin-top:4px" title="${esc(tr('Sviečka mala fúz mnohonásobne dlhší než bežné rozpätie v okolí a cena sa v tom istom bare hneď vrátila – typický zaseknutý tick v dátach z Yahoo. Do MAE/MFE sa nezapočítal.'))}">⚠️ ${x.badTicks} ${esc(tr('sviečok s chybným tickom sa ignorovalo'))}</div>`:'')+
-    flatWarn+
+    flatWarn+staggeredNote+
     (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
       (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }
