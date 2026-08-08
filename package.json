@@ -5,6 +5,7 @@
   "description": "Statická web appka - package.json slúži len na spúšťanie testov cez Node, appka samotná nemá build ani závislosti.",
   "scripts": {
     "test": "node --test 'test/**/*.mjs'",
-    "manifest": "node tools/gen-manifest.mjs"
+    "manifest": "node tools/gen-manifest.mjs",
+    "serve": "python3 -m http.server 5501"
   }
 }
