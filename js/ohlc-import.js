@@ -7,6 +7,7 @@ import { normH } from './import-csv.js';
 import { saveBars } from './ohlc-fetch.js';
 import { barsForTrade } from './patterns.js';
 import { state } from './state.js';
+import { excursionFor } from './strategy-notes.js';
 import { goToTab } from './tabs.js';
 import { datasetsForSymbol } from './trade-modal.js';
 import { $, dayKey, num, parseDT, toast } from './utils.js';
@@ -66,13 +67,31 @@ export function computeOhlcCoverage(){
   const closed=state.trades.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
   const bySymbolDay={};
   let missingTotal=0;
+  /* Samotná prítomnosť sviečky nestačí - barsForTrade() vráti "pokryté" aj vtedy, keď
+     4-minútový obchod prekrýva jediná denná sviečka. Preto sa popri chýbajúcich dátach
+     zbiera aj kvalita: aký timeframe sa reálne použil, koľko obchodov skončí len s dolnou
+     hranicou MAE/MFE (krajná sviečka presahuje mimo obchodu) a koľko ich má cenu mimo
+     rozsahu datasetu (iný kontrakt-mesiac). */
+  const quality={};
   for(const t of closed){
-    if(barsForTrade(t))continue;
-    missingTotal++;
     const sym=String(t.symbol||'?').toUpperCase();
-    const day=dayKey(t.tEntry);
-    bySymbolDay[sym]=bySymbolDay[sym]||{};
-    bySymbolDay[sym][day]=(bySymbolDay[sym][day]||0)+1;
+    if(!barsForTrade(t)){
+      missingTotal++;
+      const day=dayKey(t.tEntry);
+      bySymbolDay[sym]=bySymbolDay[sym]||{};
+      bySymbolDay[sym][day]=(bySymbolDay[sym][day]||0)+1;
+      continue;
+    }
+    const q=quality[sym]=quality[sym]||{symbol:sym,covered:0,bounded:0,mismatch:0,thin:0,badTicks:0,flatQty:0,tfs:{}};
+    q.covered++;
+    const x=excursionFor(t);
+    if(!x)continue;
+    if(x.mismatch){q.mismatch++;continue;}
+    q.tfs[x.tf]=(q.tfs[x.tf]||0)+1;
+    if(!x.exact)q.bounded++;
+    if(x.barCount<=2)q.thin++; // celý obchod pokrývajú 1-2 sviečky
+    if(x.badTicks)q.badTicks++;
+    if(x.flatQtyRisk)q.flatQty++;
   }
   const groups=Object.keys(bySymbolDay).sort().map(sym=>{
     const days=Object.keys(bySymbolDay[sym]).sort();
@@ -89,14 +108,36 @@ export function computeOhlcCoverage(){
     if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
     return {symbol:sym,totalMissing:days.reduce((a,d)=>a+bySymbolDay[sym][d],0),ranges,hasDataset:datasetsForSymbol(sym).length>0};
   });
-  return {totalClosed:closed.length,missingTotal,groups};
+  return {totalClosed:closed.length,missingTotal,groups,
+    quality:Object.values(quality).sort((a,b)=>a.symbol.localeCompare(b.symbol))};
+}
+/* Kvalita pokrytia - odpovedá na "dá sa týmto číslam veriť", nielen "existujú sviečky". */
+function coverageQualityHTML(quality){
+  if(!quality.length)return '';
+  const rows=quality.map(q=>{
+    const tfs=Object.keys(q.tfs).sort((a,b)=>q.tfs[b]-q.tfs[a]).map(tf=>`${tf}×${q.tfs[tf]}`).join(', ');
+    const notes=[];
+    if(q.bounded)notes.push(`${q.bounded} ${tr('s dolnou hranicou MAE/MFE')}`);
+    if(q.thin)notes.push(`<span style="color:var(--red)">${q.thin} ${esc(tr('pokrytých len 1–2 sviečkami'))}</span>`);
+    if(q.badTicks)notes.push(`${q.badTicks} ${esc(tr('s ignorovaným chybným tickom'))}`);
+    if(q.flatQty)notes.push(`<span style="color:var(--red)">${q.flatQty} ${esc(tr('bez rozpisu fillov (čiastočné zatvorenie sa neráta)'))}</span>`);
+    if(q.mismatch)notes.push(`<span style="color:var(--red)">${q.mismatch} ${esc(tr('s cenou mimo datasetu – iný kontrakt-mesiac'))}</span>`);
+    return `<div style="margin-top:6px"><b>${esc(q.symbol)}</b> – ${q.covered} ${esc(tr('obchodov so sviečkami'))}`+
+      (tfs?` <span class="hint">(${esc(tfs)})</span>`:'')+
+      (notes.length?`<div style="margin-left:14px;margin-top:2px" class="hint">• ${notes.join(' · ')}</div>`:
+        `<div style="margin-left:14px;margin-top:2px;color:var(--green)" class="hint">• ${esc(tr('presné MAE/MFE'))}</div>`)+
+      `</div>`;
+  }).join('');
+  return `<div style="margin-top:14px"><div class="lbl">${esc(tr('Kvalita pokrytia'))}</div>${rows}`+
+    `<div class="hint" style="margin-top:8px">${esc(tr('„Dolná hranica" znamená, že krajná sviečka presahuje mimo obchodu, takže skutočné MAE/MFE môže byť vyššie. Zúžiš to jemnejšími sviečkami: Yahoo dáva 1m len ~7 dní dozadu, pre staršie obchody nahraj CSV z TradingView (panel vyššie).'))}</div></div>`;
 }
 export function runOhlcCoverageCheck(){
   const box=$('ohlcCoverageResult');
   if(!box)return;
   const res=computeOhlcCoverage();
+  const qualityHtml=coverageQualityHTML(res.quality);
   if(!res.missingTotal){
-    box.innerHTML=`<div class="hint" style="color:var(--green)">✓ ${esc(tr('Všetky uzavreté obchody majú kompletné sviečkové dáta.'))}</div>`;
+    box.innerHTML=`<div class="hint" style="color:var(--green)">✓ ${esc(tr('Každý uzavretý obchod má nejaké sviečkové dáta.'))}</div>`+qualityHtml;
     return;
   }
   const rows=res.groups.map(g=>{
@@ -107,7 +148,7 @@ export function runOhlcCoverageCheck(){
     const noDatasetNote=g.hasDataset?'':` <span style="color:var(--red)">(${esc(tr('žiadny dataset pre tento symbol'))})</span>`;
     return `<div style="margin-top:10px"><b>${esc(g.symbol)}</b>${noDatasetNote} – ${g.totalMissing} ${esc(tr('obchodov bez dát'))}${rangesHtml}</div>`;
   }).join('');
-  box.innerHTML=`<div class="hint">${esc(tr('Chýbajú sviečkové dáta pre'))} <b>${res.missingTotal}</b> ${esc(tr('z'))} ${res.totalClosed} ${esc(tr('uzavretých obchodov'))}:</div>${rows}`;
+  box.innerHTML=`<div class="hint">${esc(tr('Chýbajú sviečkové dáta pre'))} <b>${res.missingTotal}</b> ${esc(tr('z'))} ${res.totalClosed} ${esc(tr('uzavretých obchodov'))}:</div>${rows}${qualityHtml}`;
 }
 export function goToOhlcCoverage(){
   goToTab('data');

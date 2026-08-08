@@ -69,6 +69,8 @@ export function dayTradeToJson(t){
     r:riskR(t),
     mae:x?+x.maeMoney.toFixed(2):null,
     mfe:x?+x.mfeMoney.toFixed(2):null,
+    // false = MAE/MFE je dolná hranica (krajná sviečka presahuje mimo obchodu)
+    maeMfePresne:x?!!x.exact:null,
     scaled:!!((t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1)),
     session:sessionOf(t),
     emotionIn:emotionLabel(t.emotionIn),emotionOut:emotionLabel(t.emotionOut),

@@ -840,62 +840,162 @@ export function buildPositionSegments(entryLegs,exitLegs,tEntry,tExit){
   if(openQty>0&&tExit>segStart)segments.push({tStart:segStart,tEnd:tExit,qty:openQty,avgPrice:openNotional/openQty});
   return segments;
 }
+/* Krajná (prvá/posledná) sviečka okna obchodu zasahuje aj mimo skutočne otvorenej pozície
+   a z OHLC sa nedá zistiť, kedy vnútri sviečky jej high/low nastalo. Zo sviečky celej vnútri
+   okna sa preto berie plný rozsah, z čiastočne prekrývajúcej len to, čo je dokázateľné:
+   open (ak sa otvorila už počas pozície) a/alebo close (ak sa zavrela ešte počas nej).
+   Bez tohto sa do MAE/MFE započíta pohyb z času, keď pozícia ešte/už nebola otvorená -
+   presne tak vznikalo MFE $1326 na 16-minútovom obchode, ktorý skončil -$91 (posledná 5m
+   sviečka pokračovala 2 minúty po výstupe a mala v nich svoje high). */
+/* Yahoo pri agregovaných intervaloch občas "zasekne" chybný tick a rozotrie ho cez desiatky
+   sviečok: v reálnych dátach mala hodnota 4186.90 rolu high v 47 z 17196 dvojminútoviek,
+   kým sa cena vtedy hýbala v pásme $2-3 (a v 5m sérii to isté s 4173.20 ako low 39×).
+   Jediný taký tick vystrelí MFE o stovky dolárov. Reálny prudký pohyb sa prejaví na TELE
+   sviečky (open→close); chybný tick je fúz, ktorý sa v tej istej sviečke hneď vráti - preto
+   sa orezáva len fúz neúmerne dlhý voči bežnému rozpätiu sviečok v okolí obchodu. */
+export const BAD_TICK_WICK_MULT=8;
+export function medianBarRange(bars){
+  const r=[];
+  for(const b of bars){const d=b.h-b.l;if(d>0)r.push(d);}
+  if(!r.length)return 0;
+  r.sort((a,b)=>a-b);
+  return r[Math.floor(r.length/2)];
+}
+export function plausibleBarRange(b,typicalRange){
+  if(!(typicalRange>0))return {hi:b.h,lo:b.l,clamped:false};
+  const bodyHi=Math.max(b.o,b.c),bodyLo=Math.min(b.o,b.c);
+  const lim=BAD_TICK_WICK_MULT*typicalRange;
+  const hi=(isFinite(bodyHi)&&b.h-bodyHi>lim)?bodyHi:b.h;
+  const lo=(isFinite(bodyLo)&&bodyLo-b.l>lim)?bodyLo:b.l;
+  return {hi,lo,clamped:hi!==b.h||lo!==b.l};
+}
+export function barRangeInWindow(b,tfSec,t1,t2){
+  const bS=b.t,bE=b.t+tfSec;
+  if(bS>=t1&&bE<=t2)return{hi:b.h,lo:b.l};
+  let hi=-Infinity,lo=Infinity;
+  if(bS>=t1){if(b.o>hi)hi=b.o;if(b.o<lo)lo=b.o;}
+  if(bE<=t2){if(b.c>hi)hi=b.c;if(b.c<lo)lo=b.c;}
+  return isFinite(hi)?{hi,lo}:null;
+}
 /* MAE/MFE – ako hlboko šla pozícia proti tebe (Maximum Adverse Excursion) a ako
    ďaleko v tvoj prospech (Maximum Favourable Excursion), kým si ju zavrel.
-   Počíta sa z uložených sviečok; bez OHLC dát vráti null. */
+   Počíta sa z uložených sviečok; bez OHLC dát vráti null.
+   maeMoney/mfeMoney sú DOLNÁ hranica (orezané okno, viď barRangeInWindow) - nikdy
+   nenafúknu, môžu mierne podhodnotiť. maeMoneyMax/mfeMoneyMax sú horná hranica z plných
+   h/l; keď sa rovnajú, dáta na presný výpočet stačili a exact je true. */
 export function excursionFor(t){
   if(!t||!isFinite(t.entry)||!t.tEntry||!t.tExit)return null;
   if(typeof datasetsForSymbol!=='function')return null;
   const t1=Math.min(t.tEntry,t.tExit),t2=Math.max(t.tEntry,t.tExit);
+  /* Dataset pre presne ten istý kontrakt (napr. MGCQ6) má prednosť pred spoločným
+     koreňovým (MGC), aj keď je koreňový jemnejší: koreňový pochádza zo spojitej
+     front-month série, ktorá sa pri rollovaní prepne na iný mesiac s cenovou hladinou
+     inde. Až pri rovnakej presnosti symbolu rozhoduje jemnejší timeframe. */
+  const exactSym=String(t.symbol||'').toUpperCase().trim();
   let best=null;
   for(const d of datasetsForSymbol(t.symbol)){
     const tf=TF_SEC[d.tf]||300;
     const bars=(d.bars||[]).filter(b=>b.t+tf>t1&&b.t<=t2);
     if(!bars.length)continue;
-    if(!best||tf<best.tfSec)best={tfSec:tf,tf:d.tf,bars}; // jemnejší timeframe = presnejšie
+    const exact=String(d.symbol||'').toUpperCase().trim()===exactSym;
+    const better=!best||(exact&&!best.exact)||(exact===best.exact&&tf<best.tfSec);
+    if(better)best={tfSec:tf,tf:d.tf,bars,exact,all:d.bars||[]};
   }
   if(!best)return null;
-  let hi=-Infinity,lo=Infinity;
-  for(const b of best.bars){if(b.h>hi)hi=b.h;if(b.l<lo)lo=b.l;}
-  if(!isFinite(hi)||!isFinite(lo))return null;
+  /* Bežné rozpätie sviečky sa berie zo širšieho okolia (±2h), nie len z okna obchodu:
+     pri krátkom obchode by pár sviečok - z ktorých jedna môže byť práve tá chybná -
+     dalo nespoľahlivý medián. */
+  const nb=best.all.filter(b=>b.t>=t1-7200&&b.t<=t2+7200);
+  const typical=medianBarRange(nb.length>=10?nb:best.bars);
+  // Set (nie počítadlo) - rangeOf beží viackrát (dolná aj horná hranica, pri legoch znova)
+  const badTickTimes=new Set();
+  const clean=b=>{
+    const p=plausibleBarRange(b,typical);
+    if(!p.clamped)return b;
+    badTickTimes.add(b.t);
+    return {t:b.t,o:b.o,c:b.c,h:p.hi,l:p.lo};
+  };
+  // clip=true → dolná hranica (z krajných sviečok len dokázateľne dotknuté ceny),
+  // clip=false → horná hranica (celé h/l zo všetkých sviečok). Obe idú cez to isté
+  // jadro, nech sa výpočty časom nerozídu.
+  const rangeOf=(b,clip)=>{
+    const s=clean(b);
+    return clip?barRangeInWindow(s,best.tfSec,t1,t2):{hi:s.h,lo:s.l};
+  };
+  const envelope=clip=>{
+    // entry a exit trh dosiahol z definície - pri orezanom výpočte sú to jediné isté body,
+    // keď okno pokrýva len časť krajnej sviečky (alebo sviečka pre výstup v dátach chýba)
+    let hi=clip?t.entry:-Infinity,lo=clip?t.entry:Infinity;
+    if(clip&&isFinite(t.exit)){if(t.exit>hi)hi=t.exit;if(t.exit<lo)lo=t.exit;}
+    for(const b of best.bars){
+      const r=rangeOf(b,clip);
+      if(!r)continue;
+      if(r.hi>hi)hi=r.hi;
+      if(r.lo<lo)lo=r.lo;
+    }
+    return isFinite(hi)&&isFinite(lo)?{hi,lo}:null;
+  };
+  const full=envelope(false);
+  if(!full)return null;
   // Sviečky priradené cez koreňový symbol (napr. "MGC" pre MGCQ6 aj MGCZ6, viď
   // datasetsForSymbol) môžu patriť inému kontraktu-mesiacu na inej cenovej hladine
   // (kontango) - vtedy by MAE/MFE vyšlo z nesúvisiacich čísel. Namiesto tichého
-  // zavádzajúceho výsledku to označíme ako mismatch.
-  const range=hi-lo,tol=Math.max(range*0.5,hi*0.01);
-  if(t.entry<lo-tol||t.entry>hi+tol)return{mismatch:true,tf:best.tf};
-  const dir=t.dir,mult=multFor(t.symbol);
-  const hasLegs=(t.entryLegs&&t.entryLegs.length)||(t.exitLegs&&t.exitLegs.length);
-  let maeMoney,mfeMoney;
-  if(hasLegs){
-    const segments=buildPositionSegments(t.entryLegs,t.exitLegs,t1,t2);
-    maeMoney=0;mfeMoney=0;
+  // zavádzajúceho výsledku to označíme ako mismatch. Ide o hladinu celého datasetu,
+  // preto sa kontroluje voči neorezaným h/l.
+  const range=full.hi-full.lo,tol=Math.max(range*0.5,full.hi*0.01);
+  if(t.entry<full.lo-tol||t.entry>full.hi+tol)return{mismatch:true,tf:best.tf};
+  const clipped=envelope(true);
+  const dir=t.dir,mult=multFor(t.symbol),qty=t.qty||1;
+  const rawLegs=(t.entryLegs&&t.entryLegs.length)||(t.exitLegs&&t.exitLegs.length);
+  const segments=rawLegs?buildPositionSegments(t.entryLegs,t.exitLegs,t1,t2):null;
+  // prázdne segmenty (legy bez množstva) by nižšie padli na segments[0] - vtedy radšej
+  // plošný výpočet, rovnako ako pri obchode bez rozpisu fillov
+  const hasLegs=!!(segments&&segments.length);
+  const legsMoney=clip=>{
+    let maeMoney=0,mfeMoney=0;
+    // Sviečka tesne pred tEntry (bežné pri 5m+ timeframe, viď filter vyššie) nespadá
+    // do žiadneho segmentu - patrí prvému (pozícia sa ešte len otvárala), nie
+    // poslednému, inak by sa jej rozsah nesprávne váhoval finálnym (často väčším) qty.
+    const segAt=ts=>segments.find(s=>ts>=s.tStart&&ts<s.tEnd)
+      ||(ts<segments[0].tStart?segments[0]:segments[segments.length-1]);
+    const take=(price,seg)=>{
+      if(!seg)return;
+      const d=(price-seg.avgPrice)*dir*seg.qty*mult;
+      if(d>mfeMoney)mfeMoney=d;
+      if(d<maeMoney)maeMoney=d;
+    };
     for(const b of best.bars){
-      // Sviečka tesne pred tEntry (bežné pri 5m+ timeframe, viď filter vyššie) nespadá
-      // do žiadneho segmentu - patrí prvému (pozícia sa ešte len otvárala), nie
-      // poslednému, inak by sa jej rozsah nesprávne váhoval finálnym (často väčším) qty.
-      const seg=segments.find(s=>b.t>=s.tStart&&b.t<s.tEnd)
-        ||(b.t<segments[0].tStart?segments[0]:segments[segments.length-1]);
-      if(!seg)continue;
-      const fav=(dir===1?b.h:b.l)-seg.avgPrice,adv=(dir===1?b.l:b.h)-seg.avgPrice;
-      const favMoney=fav*dir*seg.qty*mult,advMoney=adv*dir*seg.qty*mult;
-      if(favMoney>mfeMoney)mfeMoney=favMoney;
-      if(advMoney<maeMoney)maeMoney=advMoney;
+      const r=rangeOf(b,clip);
+      if(!r)continue;
+      const seg=segAt(b.t);
+      take(r.hi,seg);take(r.lo,seg);
     }
-  }else{
-    const qty=t.qty||1;
-    const maePrice=dir===1?lo:hi,mfePrice=dir===1?hi:lo;
-    maeMoney=Math.min(0,(maePrice-t.entry)*dir*qty*mult);
-    mfeMoney=Math.max(0,(mfePrice-t.entry)*dir*qty*mult);
-  }
-  const maePrice=dir===1?lo:hi,mfePrice=dir===1?hi:lo;
-  const qty=t.qty||1;
+    // každý fill je cena, ktorú trh v tom okamihu naozaj dosiahol - bez nich by škálovaný
+    // obchod mohol vykázať MFE nižšie než vlastný realizovaný zisk
+    for(const l of [...(t.entryLegs||[]),...(t.exitLegs||[])])take(l.price,segAt(l.t));
+    return {maeMoney,mfeMoney};
+  };
+  const flatMoney=env=>({
+    maeMoney:Math.min(0,((dir===1?env.lo:env.hi)-t.entry)*dir*qty*mult),
+    mfeMoney:Math.max(0,((dir===1?env.hi:env.lo)-t.entry)*dir*qty*mult),
+  });
+  const m=hasLegs?legsMoney(true):flatMoney(clipped);
+  const mMax=hasLegs?legsMoney(false):flatMoney(full);
   const risk=(t.stop!=null&&isFinite(t.stop))?Math.abs(t.entry-t.stop)*qty*mult:0;
   return {
-    tf:best.tf,barCount:best.bars.length,maePrice,mfePrice,maeMoney,mfeMoney,
+    tf:best.tf,barCount:best.bars.length,badTicks:badTickTimes.size,
+    /* Bez rozpisu fillov sa počíta s plným qty cez celé okno - pri viac ako jednom kontrakte
+       to znamená, že prípadné čiastočné zatvorenie nie je vidieť a MAE/MFE je nadhodnotené
+       o tú časť pozície, ktorá už bola zavretá. Pri qty=1 sa škálovať nedá, takže tam je
+       plošný výpočet presný. */
+    flatQtyRisk:!hasLegs&&qty>1,
+    maePrice:dir===1?clipped.lo:clipped.hi,mfePrice:dir===1?clipped.hi:clipped.lo,
+    maeMoney:m.maeMoney,mfeMoney:m.mfeMoney,
+    maeMoneyMax:mMax.maeMoney,mfeMoneyMax:mMax.mfeMoney,
     approx:!hasLegs,
-    maeR:risk>0?maeMoney/risk:null,
-    mfeR:risk>0?mfeMoney/risk:null,
-    leftOnTable:Math.max(0,mfeMoney-computePnl(t)),
+    exact:Math.abs(m.maeMoney-mMax.maeMoney)<0.005&&Math.abs(m.mfeMoney-mMax.mfeMoney)<0.005,
+    maeR:risk>0?m.maeMoney/risk:null,
+    mfeR:risk>0?m.mfeMoney/risk:null,
+    leftOnTable:Math.max(0,m.mfeMoney-computePnl(t)),
   };
 }

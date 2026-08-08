@@ -123,14 +123,22 @@ export function renderExcursion(t){
   }
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
   const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
+  // pri jednom kontrakte sa škálovať nedá, tam je plošný výpočet presný - varovanie má
+  // zmysel len keď mohla byť časť pozície zavretá skôr a MAE/MFE to nevidí
+  const flatWarn=x.flatQtyRisk?`<div class="hint" style="margin-top:4px;color:var(--red)" title="${esc(tr('Tento obchod nemá uložený rozpis jednotlivých fillov, takže sa počíta, akoby si všetky kontrakty držal po celý čas. Ak si časť pozície zavrel skôr, skutočné MAE/MFE je nižšie. Rozpis fillov majú len obchody naimportované z broker CSV s objednávkami (orders).'))}">⚠️ ${esc(tr(`Bez rozpisu fillov – počíta sa s ${t.qty} kontraktmi po celý čas, čiastočné zatvorenie nie je zarátané`))}</div>`:'';
   const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
+  // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
+  // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
+  const ge=x.exact?'':`<span class="hint" title="${esc(tr(`Dolná hranica – krajná sviečka presahuje mimo obchodu, takže sa počíta len s cenou dosiahnutou preukázateľne počas pozície. Horný odhad zo všetkých sviečok: MAE ${fmtMoney(x.maeMoneyMax)} / MFE ${fmtMoney(x.mfeMoneyMax)}.`))}">≥</span> `;
   el.innerHTML=
-    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+ge+
     `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
     ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
+    (x.badTicks?`<div class="hint" style="margin-top:4px" title="${esc(tr('Sviečka mala fúz mnohonásobne dlhší než bežné rozpätie v okolí a cena sa v tom istom bare hneď vrátila – typický zaseknutý tick v dátach z Yahoo. Do MAE/MFE sa nezapočítal.'))}">⚠️ ${x.badTicks} ${esc(tr('sviečok s chybným tickom sa ignorovalo'))}</div>`:'')+
+    flatWarn+
     (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
       (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }
@@ -236,6 +244,10 @@ export function buildTradeReviewData(t){
       maxProtiTebe:+x.maeMoney.toFixed(2),maxProtiTebeR:x.maeR!=null?+x.maeR.toFixed(2):null,
       maxVTvojProspech:+x.mfeMoney.toFixed(2),maxVTvojProspechR:x.mfeR!=null?+x.mfeR.toFixed(2):null,
       nechaneNaStole:pnl>0?+x.leftOnTable.toFixed(2):null,
+      // model musí vedieť, že pri presne=false sú čísla dolná hranica, nie meraná hodnota
+      presne:!!x.exact,
+      hornyOdhadProtiTebe:x.exact?null:+x.maeMoneyMax.toFixed(2),
+      hornyOdhadVTvojProspech:x.exact?null:+x.mfeMoneyMax.toFixed(2),
     }:null,
     strategia:strat?{nazov:strat.name,
       pravidla:(strat.rules||[]).map(rule=>({pravidlo:rule,dodrzane:(t.checkedRules||[]).includes(rule)}))}:null,
@@ -373,7 +385,7 @@ export function bindGlobal(){
 }
 
 /* ---- modal chart ---- */
-export const TF_SEC={'1m':60,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1d':86400};
+export const TF_SEC={'1m':60,'2m':120,'5m':300,'15m':900,'30m':1800,'1h':3600,'4h':14400,'1d':86400};
 export function destroyModalChart(){if(state.modalChart){state.modalChart.remove();state.modalChart=null;}
   if(state.modalChartRsi){state.modalChartRsi.remove();state.modalChartRsi=null;}
   $('tChartRsi').style.display='none';
@@ -405,7 +417,7 @@ export function pickDataset(sym,tEntry,tExit){
   }
   return best;
 }
-export const TF_LIST=['1m','5m','15m','30m'];
+export const TF_LIST=['1m','2m','5m','15m','30m'];
 export function renderTfBar(sym,activeTf){
   const bar=$('tfBar');
   if(!sym){bar.innerHTML='';return;}

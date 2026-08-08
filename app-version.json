@@ -1,5 +1,5 @@
 {
-  "v": 23,
+  "v": 30,
   "modules": [
     "accounts.js",
     "ai.js",

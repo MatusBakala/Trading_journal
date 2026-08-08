@@ -67,24 +67,29 @@ test('riskR: stop na vstupnej cene nedelí nulou', () => {
   assert.equal(riskR({ symbol: 'MNQ', dir: 1, qty: 1, entry: 100, exit: 110, stop: 100 }), null);
 });
 
+/* Tieto tri testy overujú znamienka a leftOnTable, nie prácu s hranicami okna - preto
+   tExit vždy zarovnávame na koniec sviečky, aby boli všetky sviečky celé vnútri okna.
+   Pri výstupe uprostred sviečky by sa jej h/l (správne) neuplatnilo, lebo z OHLC sa nedá
+   dokázať, či extrém nastal ešte za otvorenej pozície - to rieši excursion.test.mjs. */
+
 test('excursionFor: MAE je záporné, MFE kladné', () => {
   // long za 10, cena klesla na 9 a vyliezla na 13, zavreté na 12
   seedBars([bar(T0, 10, 11, 9, 10), bar(T0 + 60, 10, 13, 10, 12)], { symbol: 'MNQ' });
-  const x = excursionFor({ symbol: 'MNQ', dir: 1, qty: 1, entry: 10, exit: 12, tEntry: T0, tExit: T0 + 60 });
+  const x = excursionFor({ symbol: 'MNQ', dir: 1, qty: 1, entry: 10, exit: 12, tEntry: T0, tExit: T0 + 120 });
   assert.equal(x.maeMoney, (9 - 10) * 2, 'najhlbší pokles pod vstup');
   assert.equal(x.mfeMoney, (13 - 10) * 2, 'najvyšší bod nad vstupom');
 });
 
 test('excursionFor: short má MAE hore a MFE dole', () => {
   seedBars([bar(T0, 10, 12, 8, 9)], { symbol: 'MNQ' });
-  const x = excursionFor({ symbol: 'MNQ', dir: -1, qty: 1, entry: 10, exit: 9, tEntry: T0, tExit: T0 + 30 });
+  const x = excursionFor({ symbol: 'MNQ', dir: -1, qty: 1, entry: 10, exit: 9, tEntry: T0, tExit: T0 + 60 });
   assert.equal(x.maeMoney, (12 - 10) * -1 * 2, 'rast ceny ide proti shortu');
   assert.equal(x.mfeMoney, (8 - 10) * -1 * 2, 'pokles je v prospech shortu');
 });
 
 test('excursionFor: "nechané na stole" je rozdiel MFE a realizovaného zisku', () => {
   seedBars([bar(T0, 10, 14, 10, 12)], { symbol: 'MNQ' });
-  const t = { symbol: 'MNQ', dir: 1, qty: 1, entry: 10, exit: 12, tEntry: T0, tExit: T0 + 30 };
+  const t = { symbol: 'MNQ', dir: 1, qty: 1, entry: 10, exit: 12, tEntry: T0, tExit: T0 + 60 };
   // MFE = 4*2 = 8, reálny zisk = 2*2 = 4 -> na stole ostali 4
   assert.equal(excursionFor(t).leftOnTable, 4);
 });

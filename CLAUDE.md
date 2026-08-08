@@ -2,6 +2,17 @@ Vytvorenie dvojjazyčnej web app/ dashboard na denné analyzovanie tradov.
 Tento nástroj bude v dvoch jazykoch- Slovensky, Anglicky.
 Záloha- iCloud sync pre zatiaľ a export JSON. Neskôr možno nejaka databáza.
 
+## Testovacie dáta
+
+`test-data/trading-journal-zaloha-2026-08-08.json` je reálna záloha (export) z bežiacej appky
+zo dňa 2026-08-08 — nie sú to syntetické/vymyslené dáta. Použi tento súbor kedykoľvek treba
+otestovať import/restore zálohy, renderovanie, štatistiky alebo inú funkcionalitu na reálne
+vyzerajúcich dátach.
+
+Sú to reálne obchodné dáta používateľa. Repo je private, preto je bezpečné mať súbor tu — ale
+nikdy ho nekopíruj do public repa, neuploaduj do externých/3rd-party nástrojov ani ho nezdieľaj
+mimo tohto projektu.
+
 
 ## Nasadzovanie a cache
 
