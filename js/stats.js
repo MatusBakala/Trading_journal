@@ -111,7 +111,8 @@ export function collectExcursions(ts){
   for(const t of ts){
     const x=excursionFor(t);
     if(!x||x.mismatch)continue;
-    rows.push({trade:t,pnl:computePnl(t),mae:Math.abs(x.maeMoney),mfe:x.mfeMoney,leftOnTable:x.leftOnTable});
+    rows.push({trade:t,pnl:computePnl(t),mae:Math.abs(x.maeMoney),mfe:x.mfeMoney,leftOnTable:x.leftOnTable,
+      exact:x.exact,maeMax:Math.abs(x.maeMoneyMax),mfeMax:x.mfeMoneyMax});
   }
   return rows;
 }
@@ -128,16 +129,26 @@ export function renderExcursionChart(ts){
     return;
   }
   canvas.style.display='';
-  sub.textContent=`${rows.length} ${tr('z')} ${ts.length} ${tr('uzavretých obchodov má sviečkové dáta. Klikni na bod alebo riadok nižšie pre detail obchodu.')}`;
+  const bounded=rows.filter(r=>!r.exact).length;
+  sub.textContent=`${rows.length} ${tr('z')} ${ts.length} ${tr('uzavretých obchodov má sviečkové dáta. Klikni na bod alebo riadok nižšie pre detail obchodu.')}`+
+    (bounded?` ${tr(`Pri ${bounded} z nich krajná sviečka presahuje mimo obchodu, takže MAE/MFE je dolná hranica („aspoň toľko") – v grafe duté body, v priemeroch sú zarátané normálne.`)}`:'');
   const wins=rows.filter(r=>r.pnl>0),losses=rows.filter(r=>r.pnl<0);
-  const pt=r=>({x:r.mae,y:r.mfe,sym:String(r.trade.symbol||'').toUpperCase(),day:fmtD(tTime(r.trade)),pnl:r.pnl,id:r.trade.id});
+  const pt=r=>({x:r.mae,y:r.mfe,sym:String(r.trade.symbol||'').toUpperCase(),day:fmtD(tTime(r.trade)),pnl:r.pnl,id:r.trade.id,exact:r.exact,maeMax:r.maeMax,mfeMax:r.mfeMax});
+  // Bod, kde je MAE/MFE len dolná hranica, sa kreslí ako dutý krúžok - rozdiel je vidno
+  // priamo v grafe, netreba naň najsť myšou.
+  const fill=(list,color)=>list.map(r=>r.exact?color:'transparent');
+  const ring=list=>list.map(r=>r.exact?0:2);
   if(typeof Chart!=='undefined'){
     const gridColor=cssVar('--border'),tickColor=cssVar('--muted');
     state.excChartObj=new Chart(canvas,{
       type:'scatter',
       data:{datasets:[
-        {label:tr('Ziskové'),data:wins.map(pt),backgroundColor:cssVar('--green'),pointRadius:5,pointHoverRadius:7},
-        {label:tr('Stratové'),data:losses.map(pt),backgroundColor:cssVar('--red'),pointRadius:5,pointHoverRadius:7},
+        {label:tr('Ziskové'),data:wins.map(pt),backgroundColor:cssVar('--green'),
+          pointBackgroundColor:fill(wins,cssVar('--green')),pointBorderColor:cssVar('--green'),pointBorderWidth:ring(wins),
+          pointRadius:5,pointHoverRadius:7},
+        {label:tr('Stratové'),data:losses.map(pt),backgroundColor:cssVar('--red'),
+          pointBackgroundColor:fill(losses,cssVar('--red')),pointBorderColor:cssVar('--red'),pointBorderWidth:ring(losses),
+          pointRadius:5,pointHoverRadius:7},
       ]},
       options:{
         responsive:true,maintainAspectRatio:false,
@@ -153,8 +164,9 @@ export function renderExcursionChart(ts){
         plugins:{
           legend:{labels:{color:tickColor}},
           tooltip:{callbacks:{label:c=>{
-            const d=c.raw;
-            return `${d.sym} ${d.day} · MAE ${fmtMoney(-d.x)} · MFE ${fmtMoney(d.y)} · P&L ${fmtMoney(d.pnl)}`;
+            const d=c.raw,ge=d.exact?'':'≥ ';
+            return `${d.sym} ${d.day} · MAE ${ge}${fmtMoney(-d.x)} · MFE ${ge}${fmtMoney(d.y)} · P&L ${fmtMoney(d.pnl)}`+
+              (d.exact?'':` · ${tr('horný odhad')} ${fmtMoney(-d.maeMax)} / ${fmtMoney(d.mfeMax)}`);
           }}},
         },
         scales:{
@@ -175,7 +187,8 @@ export function renderExcursionChart(ts){
     [tr('Najhorší MAE víťaza'),fmtMoney(-worstWinMae),worstWinMae?'neg':'',tr('pod týmto by ťa stop vyhodil zo ziskového obchodu')],
     [tr('Priem. MFE stratových'),fmtMoney(avg(mfeLosses)),mfeLosses.length?'pos':'',tr('koľko zisku stratové obchody medzitým ukázali')],
     [tr('Nechané na stole'),fmtMoney(leftTotal),leftTotal?'pos':'',tr('rozdiel medzi MFE a reálnym ziskom víťazov')],
-  ].map(k=>`<div class="card"><div class="lbl">${esc(k[0])}</div><div class="val ${k[2]}">${k[1]}</div><div class="lbl" style="margin-top:4px">${esc(k[3])}</div></div>`).join('')+'</div>';
+  ].map(k=>`<div class="card"><div class="lbl">${esc(k[0])}</div><div class="val ${k[2]}">${k[1]}</div><div class="lbl" style="margin-top:4px">${esc(k[3])}</div></div>`).join('')+'</div>'+
+    (bounded?`<div class="hint" style="margin-top:8px">${esc(tr('Čísla vyššie sú dolné hranice: pri obchodoch, kde krajná sviečka presahuje mimo obchodu, sa počíta len s cenou, ktorú trh preukázateľne dosiahol počas otvorenej pozície. Jemnejšie sviečky (1m) hranicu zúžia.'))}</div>`:'');
   if(outliers)renderExcursionOutliers(outliers,wins);
 }
 /* Presné klikanie na malý bod v scatter grafe je na dotyku aj pri prekrývajúcich sa
@@ -193,7 +206,7 @@ function excursionOutlierRowsHTML(list,valueOf,label){
       `<td>${esc(fmtD(tTime(r.trade)))}</td>`+
       `<td><b>${esc(String(r.trade.symbol||'').toUpperCase())}</b></td>`+
       `<td class="${moneyCls(r.pnl)}">${esc(fmtMoney(r.pnl))}</td>`+
-      `<td class="hint">${esc(fmtMoney(valueOf(r)))}</td>`+
+      `<td class="hint"${r.exact?'':` title="${esc(tr('Dolná hranica – krajná sviečka presahuje mimo obchodu, skutočná hodnota môže byť vyššia'))}"`}>${r.exact?'':'≥ '}${esc(fmtMoney(valueOf(r)))}</td>`+
       `</tr>`).join('')}</tbody></table></div>`;
 }
 export function renderExcursionOutliers(box,wins){

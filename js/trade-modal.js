@@ -124,8 +124,11 @@ export function renderExcursion(t){
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
   const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
   const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
+  // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
+  // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
+  const ge=x.exact?'':`<span class="hint" title="${esc(tr(`Dolná hranica – krajná sviečka presahuje mimo obchodu, takže sa počíta len s cenou dosiahnutou preukázateľne počas pozície. Horný odhad zo všetkých sviečok: MAE ${fmtMoney(x.maeMoneyMax)} / MFE ${fmtMoney(x.mfeMoneyMax)}.`))}">≥</span> `;
   el.innerHTML=
-    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+ge+
     `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
     ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
@@ -236,6 +239,10 @@ export function buildTradeReviewData(t){
       maxProtiTebe:+x.maeMoney.toFixed(2),maxProtiTebeR:x.maeR!=null?+x.maeR.toFixed(2):null,
       maxVTvojProspech:+x.mfeMoney.toFixed(2),maxVTvojProspechR:x.mfeR!=null?+x.mfeR.toFixed(2):null,
       nechaneNaStole:pnl>0?+x.leftOnTable.toFixed(2):null,
+      // model musí vedieť, že pri presne=false sú čísla dolná hranica, nie meraná hodnota
+      presne:!!x.exact,
+      hornyOdhadProtiTebe:x.exact?null:+x.maeMoneyMax.toFixed(2),
+      hornyOdhadVTvojProspech:x.exact?null:+x.mfeMoneyMax.toFixed(2),
     }:null,
     strategia:strat?{nazov:strat.name,
       pravidla:(strat.rules||[]).map(rule=>({pravidlo:rule,dodrzane:(t.checkedRules||[]).includes(rule)}))}:null,
