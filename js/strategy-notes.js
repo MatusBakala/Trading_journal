@@ -984,6 +984,11 @@ export function excursionFor(t){
   const risk=(t.stop!=null&&isFinite(t.stop))?Math.abs(t.entry-t.stop)*qty*mult:0;
   return {
     tf:best.tf,barCount:best.bars.length,badTicks:badTickTimes.size,
+    /* Bez rozpisu fillov sa počíta s plným qty cez celé okno - pri viac ako jednom kontrakte
+       to znamená, že prípadné čiastočné zatvorenie nie je vidieť a MAE/MFE je nadhodnotené
+       o tú časť pozície, ktorá už bola zavretá. Pri qty=1 sa škálovať nedá, takže tam je
+       plošný výpočet presný. */
+    flatQtyRisk:!hasLegs&&qty>1,
     maePrice:dir===1?clipped.lo:clipped.hi,mfePrice:dir===1?clipped.hi:clipped.lo,
     maeMoney:m.maeMoney,mfeMoney:m.mfeMoney,
     maeMoneyMax:mMax.maeMoney,mfeMoneyMax:mMax.mfeMoney,

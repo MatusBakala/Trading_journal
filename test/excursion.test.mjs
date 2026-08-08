@@ -197,6 +197,26 @@ test('excursionFor: pri škálovanom výstupe sa zaráta cena samotného fillu, 
   close(x.mfeMoney, 160); // (108-100) × 2 kontrakty × mult 10
 });
 
+test('excursionFor: viac kontraktov bez rozpisu fillov sa označí ako flatQtyRisk', () => {
+  state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
+    bar(1005, 110, 99), bar(1050, 101, 98),
+  ] }];
+  // qty 5, žiadne legy -> počíta sa s 5 kontraktmi po celý čas, hoci časť mohla byť
+  // zavretá skôr; presne prípad obchodov naimportovaných bez detailu fillov
+  assert.equal(excursionFor(scaledShortTrade(false)).flatQtyRisk, true);
+  // s rozpisom fillov sa váži skutočne držaným množstvom - varovanie netreba
+  assert.equal(excursionFor(scaledShortTrade(true)).flatQtyRisk, false);
+});
+
+test('excursionFor: jeden kontrakt bez legov nie je riziko - škálovať sa nedá', () => {
+  state.ohlcSets = [{ key: 'MGC|1m', symbol: 'MGC', tf: '1m', bars: [
+    bar(1005, 110, 99), bar(1050, 101, 98),
+  ] }];
+  const t = scaledShortTrade(false);
+  t.qty = 1;
+  assert.equal(excursionFor(t).flatQtyRisk, false);
+});
+
 /* ---- chybné ticky v dátach ---- */
 
 test('excursionFor: zaseknutý chybný tick (dlhý fúz) sa nezaráta do MFE', () => {

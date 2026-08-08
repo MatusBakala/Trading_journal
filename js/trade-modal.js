@@ -123,6 +123,9 @@ export function renderExcursion(t){
   }
   const rTxt=v=>v==null?'':` (${v.toFixed(2)}R)`;
   const approxTitle=x.approx?esc(tr('Približné - bez rozpisu fillov sa počíta s konečným množstvom cez celé okno obchodu; presnejšie je to len pri obchodoch importovaných z broker CSV.')):'';
+  // pri jednom kontrakte sa škálovať nedá, tam je plošný výpočet presný - varovanie má
+  // zmysel len keď mohla byť časť pozície zavretá skôr a MAE/MFE to nevidí
+  const flatWarn=x.flatQtyRisk?`<div class="hint" style="margin-top:4px;color:var(--red)" title="${esc(tr('Tento obchod nemá uložený rozpis jednotlivých fillov, takže sa počíta, akoby si všetky kontrakty držal po celý čas. Ak si časť pozície zavrel skôr, skutočné MAE/MFE je nižšie. Rozpis fillov majú len obchody naimportované z broker CSV s objednávkami (orders).'))}">⚠️ ${esc(tr(`Bez rozpisu fillov – počíta sa s ${t.qty} kontraktmi po celý čas, čiastočné zatvorenie nie je zarátané`))}</div>`:'';
   const scaled=(t.entryLegs&&t.entryLegs.length>1)||(t.exitLegs&&t.exitLegs.length>1);
   // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
   // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
@@ -135,6 +138,7 @@ export function renderExcursion(t){
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
     (x.badTicks?`<div class="hint" style="margin-top:4px" title="${esc(tr('Sviečka mala fúz mnohonásobne dlhší než bežné rozpätie v okolí a cena sa v tom istom bare hneď vrátila – typický zaseknutý tick v dátach z Yahoo. Do MAE/MFE sa nezapočítal.'))}">⚠️ ${x.badTicks} ${esc(tr('sviečok s chybným tickom sa ignorovalo'))}</div>`:'')+
+    flatWarn+
     (scaled?`<div class="hint" style="margin-top:4px">⇄ ${esc(tr('Vstup'))}: ${esc(legsSummary(t.entryLegs))}`+
       (t.exitLegs&&t.exitLegs.length?` &nbsp;·&nbsp; ${esc(tr('Výstup'))}: ${esc(legsSummary(t.exitLegs))}`:'')+`</div>`:'');
 }

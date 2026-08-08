@@ -82,7 +82,7 @@ export function computeOhlcCoverage(){
       bySymbolDay[sym][day]=(bySymbolDay[sym][day]||0)+1;
       continue;
     }
-    const q=quality[sym]=quality[sym]||{symbol:sym,covered:0,bounded:0,mismatch:0,thin:0,badTicks:0,tfs:{}};
+    const q=quality[sym]=quality[sym]||{symbol:sym,covered:0,bounded:0,mismatch:0,thin:0,badTicks:0,flatQty:0,tfs:{}};
     q.covered++;
     const x=excursionFor(t);
     if(!x)continue;
@@ -91,6 +91,7 @@ export function computeOhlcCoverage(){
     if(!x.exact)q.bounded++;
     if(x.barCount<=2)q.thin++; // celý obchod pokrývajú 1-2 sviečky
     if(x.badTicks)q.badTicks++;
+    if(x.flatQtyRisk)q.flatQty++;
   }
   const groups=Object.keys(bySymbolDay).sort().map(sym=>{
     const days=Object.keys(bySymbolDay[sym]).sort();
@@ -119,6 +120,7 @@ function coverageQualityHTML(quality){
     if(q.bounded)notes.push(`${q.bounded} ${tr('s dolnou hranicou MAE/MFE')}`);
     if(q.thin)notes.push(`<span style="color:var(--red)">${q.thin} ${esc(tr('pokrytých len 1–2 sviečkami'))}</span>`);
     if(q.badTicks)notes.push(`${q.badTicks} ${esc(tr('s ignorovaným chybným tickom'))}`);
+    if(q.flatQty)notes.push(`<span style="color:var(--red)">${q.flatQty} ${esc(tr('bez rozpisu fillov (čiastočné zatvorenie sa neráta)'))}</span>`);
     if(q.mismatch)notes.push(`<span style="color:var(--red)">${q.mismatch} ${esc(tr('s cenou mimo datasetu – iný kontrakt-mesiac'))}</span>`);
     return `<div style="margin-top:6px"><b>${esc(q.symbol)}</b> – ${q.covered} ${esc(tr('obchodov so sviečkami'))}`+
       (tfs?` <span class="hint">(${esc(tfs)})</span>`:'')+
