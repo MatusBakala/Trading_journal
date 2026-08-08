@@ -290,7 +290,7 @@ export async function doImport(){
   const iEntryLegs=csvHeaders.indexOf('EntryLegs'),iExitLegs=csvHeaders.indexOf('ExitLegs');
   const parseLegs=(r,idx)=>{if(idx<0)return null;try{const v=JSON.parse(r[idx]||'[]');return Array.isArray(v)&&v.length?v:null;}catch{return null;}};
   const account=parseInt($('importAccount').value,10)||defaultAccId();
-  let ok=0,skip=0,dup=0,backfilled=0;
+  let ok=0,skip=0,dup=0,backfilled=0,legsBackfilled=0;
   const dupIndex=buildDupIndex(state.trades);
   const newTrades=[];
   for(const r of csvRows){
@@ -304,12 +304,25 @@ export async function doImport(){
     const existing=findDuplicate(dupIndex,account,tEntry,symbol,entry);
     if(existing){
       dup++;
+      let changed=false;
       const stopRaw=num(get(r,'stop'));
       if((existing.stop==null||!isFinite(existing.stop))&&isFinite(stopRaw)){
         existing.stop=stopRaw;
-        await idbPut('trades',existing);
-        backfilled++;
+        changed=true;backfilled++;
       }
+      // Prvý import obchodu často predbehol prechod appky na broker-order converter (alebo
+      // sa nahral zo súhrnného exportu bez fillov) - dodatočný import tej istej objednávkovej
+      // histórie by inak skončil ako "duplicita" a rozpis fillov by sa nikdy nedostal do
+      // existujúceho záznamu, presne to bol dôvod, prečo re-import nič neopravil.
+      if(!(existing.entryLegs&&existing.entryLegs.length)&&!(existing.exitLegs&&existing.exitLegs.length)){
+        const elegs=parseLegs(r,iEntryLegs),xlegs=parseLegs(r,iExitLegs);
+        if(elegs||xlegs){
+          if(elegs)existing.entryLegs=elegs;
+          if(xlegs)existing.exitLegs=xlegs;
+          changed=true;legsBackfilled++;
+        }
+      }
+      if(changed)await idbPut('trades',existing);
       continue;
     }
     const t={
@@ -341,8 +354,12 @@ export async function doImport(){
     const ids=await idbAddMany('trades',newTrades);
     newTrades.forEach((t,i)=>{t.id=ids[i];state.trades.push(t);});
   }
-  $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+(backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'');
+  $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+
+    (backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'')+
+    (legsBackfilled?`, doplnený rozpis fillov pri ${legsBackfilled} existujúcich`:'');
   renderAfterTradeChange();
   scheduleAutoSync();
-  toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+(backfilled?`, doplnený stop pri ${backfilled}`:''));
+  toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+
+    (backfilled?`, doplnený stop pri ${backfilled}`:'')+
+    (legsBackfilled?`, rozpis fillov doplnený pri ${legsBackfilled}`:''));
 }
