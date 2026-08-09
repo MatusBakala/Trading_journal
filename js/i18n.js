@@ -328,6 +328,20 @@ Object.assign(I18N_EN,{
 ' alebo lepší.':' or better.',
 'Cieľ':'Target',
 });
+Object.assign(I18N_EN,{
+// ── Volume Profile ──
+'Tento playbook sa zameriava na obchodovanie vo chvíli, keď cena dosiahne hranu high-volume node na kľúčových aukčných úrovniach ako PDH, PDL, ONH alebo ONL. Keď cena na hrane volume profilu zareaguje, obchod smeruje z jednej strany hodnoty na druhú cez čistú cestu nízko-objemovými oblasťami.':'This playbook focuses on trading when price reaches the edge of a high-volume node at key auction levels like PDH, PDL, ONH, or ONL. Once price reacts at the volume profile edge, the trade aims to move from one side of value to the next using the clean path through low-volume areas.',
+'Cena sa dotýka hrany volume profilu (prechod z HVA do LVA alebo naopak)':'Price is touching a volume profile edge (transition from HVA to LVA or vice versa)',
+'Umiestnenie sa zhoduje s kľúčovou kontextovou úrovňou (ONH/ONL/PDH/PDL)':'Location aligns with a key contextual level (ONH/ONL/PDH/PDL)',
+'Vytvorila sa objemovo silná signálna sviečka s viditeľným knôtom a zatvorením v smere obchodu':'A high volume signal candle formed with a visible wick and closed in the trade direction',
+'Počkaj na zatvorenie signálnej sviečky, nikdy ju nepredbiehaj':'Wait for the signal candle to close, never front-run it',
+'Smerový bias potvrdený z vyššieho timeframe (Weekly/Daily)':'Directional bias confirmed from a higher timeframe (Weekly/Daily)',
+'Vstup po zatvorení signálnej sviečky na hrane objemu':'Entry after the signal candle closes at the volume edge',
+'Stop tesne za knôtom signálnej sviečky alebo za hranou high-value node':'Stop just beyond the signal candle\'s wick or the edge of the high-value node',
+'Cieľ na ďalšej hrane (edge-to-edge) – najbližšia high-volume oblasť':'Target the next edge (edge-to-edge) – the nearest high-volume area',
+'Vyhni sa obchodom v strede low-volume zóny':'Avoid trades in the middle of a low-volume zone',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
