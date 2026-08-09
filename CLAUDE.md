@@ -45,3 +45,30 @@ Appka má v `js/data/default-strategies.js` konštantu `DEFAULT_STRATEGIES` – 
 4. Ak `notes` obsahuje `<img src="https://...">` (externý odkaz, nie `data:` base64) – **zastav sa a spýtaj sa ma**, či mám právo/vlastníctvo k tým obrázkom, kým ich zabudujem natrvalo do kódu appky. Never ticho embedovať externé/cudzie obrázky bez potvrdenia.
 5. Over v prehliadači, že `DEFAULT_STRATEGIES[i].notes === strategyById(id).notes` (presná zhoda) a že sa stratégia správne zobrazuje (screenshot), predtým než to commitnem.
 6. `seedDefaultStrategies()` (v `js/strategy-notes.js`) porovnáva fingerprint aktuálneho `DEFAULT_STRATEGIES` s uloženým – ak sa líši, automaticky prepíše `description`/`rules`/`notes` existujúcich built-in stratégií aj na už-seedovaných inštaláciách (netreba ručne mazať/importovať dáta). **Dôležité:** kvôli veľkosti `default-strategies.js` (obsahuje base64 obrázky) sa tento fingerprint-check kvôli výkonu robí len keď sa zmení `app-version.json` – **pri každej zmene DEFAULT_STRATEGIES preto vždy bumpni aj `app-version.json`**, inak sa update na už-seedovaných inštaláciách neprejaví.
+
+## Ďalšie exporty od brokera (Tradovate cez Apex) – čo s nimi appka vie robiť
+
+Okrem **Order History** + **Cash History** (bežný import cez záložku Import CSV → rozpozná sa
+ako broker order CSV → spáruje fily do obchodov s `entryLegs`/`exitLegs`) existujú od brokera aj
+ďalšie exporty, ktoré má zmysel sťahovať priebežne popri Order History:
+
+- **Position History.csv** – broker vlastné spárovanie kúpa↔predaj (`Buy Fill ID`/`Sell Fill ID`/
+  `Paired Qty`/`P/L` na pár, s presným časom oboch strán). Appka ho zatiaľ priamo neimportuje,
+  ale je to výborný **nezávislý zdroj na krížovú kontrolu**: súčet stĺpca `P/L` by mal sedieť so
+  súčtom `computePnl()` (bez poplatkov) appky pre ten istý účet/obdobie. Overené 2026-08-08 na
+  účte FundedFutures 26.7 (29.7.–7.8.): CSV −$1 335.00 vs appka −$1 337.00 (0.15% rozdiel).
+  Má fill-úroveň presnosti (čas aj cena), takže ak niekedy chýba Order History pre nejaké
+  obdobie/účet, Position History za to isté obdobie je alternatívny zdroj s porovnateľnou
+  presnosťou – vieš z neho ručne dorekonštruovať entryLegs/exitLegs, aj keď na to appka zatiaľ
+  nemá priamy import.
+- **Performance.<timestamp>.pdf** – čitateľný report generovaný z tých istých spárovaných dát
+  (rovnaké obchody ako v Position History.csv, len naformátované + agregované štatistiky:
+  Gross P/L, win rate, avg trade time, max drawdown, max run-up s dátumami). Užitočné ako
+  rýchla vizuálna kontrola appkiných vlastných štatistík, nie je to zdroj nových dát na import.
+  Čítanie PDF na tomto stroji vyžaduje `pip install pypdf` (chýba `poppler`/`pdftotext`,
+  homebrew nie je nainštalovaný) – použi napr. `python3 -c "import pypdf; ..."`, nie `Read` tool
+  priamo (ten potrebuje `pdftoppm`).
+
+**Odporúčanie:** Position History (+ Performance PDF ako doplnok) sťahuj priebežne spolu s Order
+History/Cash History – nepridáva to nové obchody navyše, ale slúži ako overenie, že appkina
+rekonštrukcia fillov a P&L sedí s tým, čo hovorí sám broker.
