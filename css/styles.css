@@ -133,17 +133,34 @@ label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--mu
 /* calendar */
 .calhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
 .calhead .mname{font-size:17px;font-weight:700;min-width:180px;text-align:center}
-.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calgrid{display:flex;flex-direction:column;gap:6px}
+.cal-dow-row,.cal-week-row{display:flex;gap:6px;align-items:stretch}
+.cal-week-days{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;min-width:0}
+.cal-dow-row .dow-week{width:100px;flex-shrink:0}
 .calgrid .dow{text-align:center;color:var(--muted);font-size:12px;padding:4px}
-.day{background:var(--bg2);border:1px solid var(--border);border-radius:10px;min-height:78px;padding:7px;cursor:default}
+.day{background:var(--bg2);border:1px solid var(--border);border-radius:10px;min-height:88px;padding:8px 7px;cursor:default;display:flex;flex-direction:column;min-width:0}
 .day.other{opacity:.28}
-.day .dn{font-size:12px;color:var(--muted)}
+.day .dn{font-size:12px;color:var(--muted);align-self:flex-end;line-height:1}
 .day.win{background:rgba(38,166,154,.13);border-color:rgba(38,166,154,.4)}
 .day.loss{background:rgba(239,83,80,.12);border-color:rgba(239,83,80,.4)}
-.day .dp{font-weight:700;font-size:13.5px;margin-top:6px}
-.day .dc{font-size:11px;color:var(--muted)}
+.day.has .dp{font-weight:700;font-size:14px;margin-top:4px;text-align:center}
+.day.has .dc{font-size:11px;color:var(--muted);text-align:center;margin-top:2px}
+.day.has .dw{font-size:11px;color:var(--muted);text-align:center;margin-top:1px}
 .day.has{cursor:pointer}
 .day.has:hover{filter:brightness(1.25)}
+.cal-week-sum{width:100px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;min-height:88px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.cal-week-sum.win{background:rgba(38,166,154,.1);border-color:rgba(38,166,154,.35)}
+.cal-week-sum.loss{background:rgba(239,83,80,.1);border-color:rgba(239,83,80,.35)}
+.cal-week-sum.empty{opacity:.45}
+.cal-week-sum .cw-label{font-size:11px;color:var(--muted);font-weight:600}
+.cal-week-sum .cw-pnl{font-size:15px;font-weight:700;line-height:1.2}
+.cal-week-sum .cw-days{font-size:11px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:999px;padding:2px 8px}
+@media(max-width:700px){
+  .cal-dow-row .dow-week,.cal-week-sum{width:72px}
+  .day,.cal-week-sum{min-height:76px;padding:6px 4px}
+  .day.has .dp{font-size:12px}
+  .cal-week-sum .cw-pnl{font-size:13px}
+}
 /* modal */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;z-index:100;overflow-y:auto;padding:30px 16px}
 .overlay.open{display:block}

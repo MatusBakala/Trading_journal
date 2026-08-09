@@ -1,0 +1,549 @@
+/**
+ * SK → EN map for strategy HTML note text nodes.
+ * Used by tools/merge-strategy-i18n.mjs
+ */
+export const TRANSLATIONS = {
+  // ── AMD Playbook ──
+  'Tento playbook stojí na myšlienke, že trh sa pohybuje v troch opakujúcich sa fázach: Akumulácia, Manipulácia a Distribúcia (AMD). Cieľom je sledovať, ako cena buduje likviditu (Akumulácia), ako potom vyčistí stopy a nalapí obchodníkov (Manipulácia), a až následne vstupovať do obchodov vo chvíli, keď sa skutočný pohyb potvrdí vo fáze Distribúcie – nie počas samotného manipulačného sweepu.':
+    'This playbook is built on the idea that the market moves through three repeating phases: Accumulation, Manipulation, and Distribution (AMD). The goal is to watch how price builds liquidity (Accumulation), then clears stops and traps traders (Manipulation), and only then enter trades when the real move is confirmed in the Distribution phase – not during the manipulation sweep itself.',
+  'Hlavným cieľom je chrániť obchodný kapitál aj psychickú energiu tým, že sa vyhýbaš nekvalitným, rozsahovo obmedzeným podmienkam a zapájaš sa iba vtedy, keď trh ponúka jasný, vysoko pravdepodobný smerový pohyb vo fáze Distribúcie. Rozpoznaním týchto fáz a zosúladením obchodov s čistou trhovou štruktúrou tento prístup pomáha zostať na správnej strane likvidity, sústrediť sa na kvalitné risk/reward setupy a udržať si disciplínu naprieč rôznymi trhovými podmienkami.':
+    'The main goal is to protect trading capital and mental energy by avoiding low-quality, range-bound conditions and engaging only when the market offers a clear, high-probability directional move in the Distribution phase. By recognising these phases and aligning trades with clean market structure, this approach helps you stay on the right side of liquidity, focus on quality risk/reward setups, and maintain discipline across different market conditions.',
+  'Tento prístup odfiltruje chop a neistotu využitím dôležitých ekonomických správ a jasnej štruktúry na rozhodnutie, kedy stáť bokom a kedy sa zapojiť.':
+    'This approach filters out chop and uncertainty by using major economic releases and clear structure to decide when to stand aside and when to engage.',
+  'Najlepšie setupy sa objavujú vtedy, keď cena vyčistí likviditu tesne pred veľkým pohybom – často okolo správ ako CPI, FOMC alebo NFP – a následne potvrdí smer jasným displacementom na vyššom timeframe a platným retracementom na nižšom timeframe. Ak nie je prítomná čistá štruktúra alebo katalyzátor, najbezpečnejší obchod je žiadny obchod.':
+    'The best setups appear when price clears liquidity just before a major move – often around releases like CPI, FOMC, or NFP – and then confirms direction with clear displacement on a higher timeframe and a valid retracement on a lower timeframe. If there is no clean structure or catalyst, the safest trade is no trade.',
+  'Core concept': 'Core concept',
+  'Akumulácia: Cena sa pohybuje do strán, buduje likviditu a nalapáva obchodníkov v chope. Táto fáza sa ťažko obchoduje a často vedie k vyradeniu na stope.':
+    'Accumulation: Price moves sideways, builds liquidity, and traps traders in chop. This phase is hard to trade and often leads to getting stopped out.',
+  'Manipulácia: Prudký pohyb, ktorý vyčistí likviditu nad alebo pod rozsahom. Tento pohyb nalapí obchodníkov na nesprávnej strane trhu a pripraví skutočnú smerovú nohu. Manipuláciu je ťažké obchodovať priamo – cieľom je počkať na potvrdenie, že sa už stala.':
+    'Manipulation: A sharp move that clears liquidity above or below the range. This move traps traders on the wrong side and sets up the real directional leg. Manipulation is hard to trade directly – the goal is to wait for confirmation that it has already happened.',
+  'Distribúcia: Najčistejšia fáza na obchodovanie. Po tom, čo Manipulácia vyčistí likviditu, cena sa rozbehne so zámerom a trenduje k jasnému cieľu, ako sú equal highs/lows alebo nerovnováha na vyššom timeframe. Táto fáza ponúka silné pokračovanie pohybu a vyšší pomer risk/reward.':
+    'Distribution: The cleanest phase to trade. After Manipulation clears liquidity, price runs with intent and trends toward a clear target such as equal highs/lows or imbalance on a higher timeframe. This phase offers strong continuation and a better risk/reward ratio.',
+  'Displacement': 'Displacement',
+  'Platný setup vyžaduje jasný displacement – silné prerazenie swing high alebo low, ktoré po sebe necháva Fair Value Gap. Ak cena pri retracemente tento gap rešpektuje, pohyb je platný.':
+    'A valid setup requires clear displacement – a strong break of a swing high or low that leaves a Fair Value Gap behind. If price respects this gap on retracement, the move is valid.',
+  'Zosúladenie timeframov':
+    'Timeframe alignment',
+  'Použi vyššie timeframy (1H, 4H, denný) na určenie veľkého obrazu: draw on liquidity, kľúčové úrovne a hlavné FVG.':
+    'Use higher timeframes (1H, 4H, daily) to determine the big picture: draw on liquidity, key levels, and major FVGs.',
+  'Použi nižšie timeframy (1m, 5m, 15m) na potvrdenie displacementu, nájdenie fair value gapov a spresnenie vstupu. Ak je vyšší timeframe nejasný, nefoceruj setup na nižšom timeframe.':
+    'Use lower timeframes (1m, 5m, 15m) to confirm displacement, find fair value gaps, and refine entry. If the higher timeframe is unclear, do not force a setup on the lower timeframe.',
+  'Low-probability dni':
+    'Low-probability days',
+  'Žiadne dôležité správy s vysokým dopadom.':
+    'No major high-impact news releases.',
+  'Bankové sviatky alebo deň po sviatku.':
+    'Bank holidays or the day after a holiday.',
+  'Deň pred veľkými správami ako CPI, FOMC alebo NFP.':
+    'The day before major releases such as CPI, FOMC, or NFP.',
+  'Deň po veľkom pohybe, ktorý už dosiahol hlavný cieľ.':
+    'The day after a large move that has already reached its main target.',
+  'Cena má trhané highs a lows bez jasného smeru.':
+    'Price has choppy highs and lows with no clear direction.',
+  'High-probability dni':
+    'High-probability days',
+  'Dôležité plánované správy: CPI, NFP, GDP, FOMC, PPI.':
+    'Major scheduled releases: CPI, NFP, GDP, FOMC, PPI.',
+  'Silné vyčistenie likvidity, ktoré zmetie zjavné stopy.':
+    'A strong liquidity sweep that clears obvious stops.',
+  'Čistý displacement a fair value gapy viditeľné na vyšších timeframoch.':
+    'Clean displacement and fair value gaps visible on higher timeframes.',
+  'High-probability setupy sa zvyčajne objavujú počas New York session po správach, nie počas samotného spiku.':
+    'High-probability setups usually appear during the New York session after the news, not during the spike itself.',
+  'Skontroluj ekonomický kalendár':
+    'Check the economic calendar',
+  'Sleduj správy s vysokým dopadom, ktoré by mohli vyvolať čistý pohyb.':
+    'Watch high-impact releases that could trigger a clean move.',
+  'Skontroluj koreláciu trhov':
+    'Check market correlation',
+  'Uisti sa, že súvisiace trhy (napr. NASDAQ a S&P) sú zosúladené. Ak sa výrazne rozchádzajú, podmienky majú nižšiu pravdepodobnosť.':
+    'Make sure related markets (e.g. NASDAQ and S&P) are aligned. If they diverge significantly, conditions have lower probability.',
+  'Uisti sa, že súvisiace trhy (napr. NASDAQ a S&amp;P) sú zosúladené. Ak sa výrazne rozchádzajú, podmienky majú nižšiu pravdepodobnosť.':
+    'Make sure related markets (e.g. NASDAQ and S&P) are aligned. If they diverge significantly, conditions have lower probability.',
+  'Identifikuj draw on liquidity':
+    'Identify the draw on liquidity',
+  'Musí existovať jasný cieľ: equal highs/lows, nevyplnený fair value gap alebo čistý swing bod. Ak nie je zjavný cieľ, neobchoduj.':
+    'There must be a clear target: equal highs/lows, an unfilled fair value gap, or a clean swing point. If there is no obvious target, do not trade.',
+  'Sleduj displacement':
+    'Watch for displacement',
+  'Vstup a riadenie rizika':
+    'Entry and risk management',
+  'Vstupuj na retracemente do platného fair value gapu.':
+    'Enter on a retracement into a valid fair value gap.',
+  'Čiastočný zisk realizuj na logických cieľoch (swing úrovne alebo ďalší FVG).':
+    'Take partial profit at logical targets (swing levels or the next FVG).',
+  'Posúvaj stop na ochranu zisku, keď cena potvrdí pohyb.':
+    'Move the stop to protect profit when price confirms the move.',
+  'Ak nie je retracement, obchod vynechaj – nikdy nenaháňaj.':
+    'If there is no retracement, skip the trade – never chase.',
+  'Pravidlá exekúcie':
+    'Execution rules',
+  'Obmedz sa na dva obchody za session. Ak dostaneš dve straty, na zvyšok dňa prestaň.':
+    'Limit yourself to two trades per session. If you take two losses, stop for the rest of the day.',
+  'Zníž veľkosť pozície v dňoch pred dôležitými správami alebo počas rozpoznanej akumulačnej fázy.':
+    'Reduce position size on days before major releases or during a recognised accumulation phase.',
+  'Rešpektuj "makro okná" – silné pohyby sa často odohrávajú okolo 9:50–10:10 a 10:50–11:10 (východný čas).':
+    'Respect "macro windows" – strong moves often occur around 9:50–10:10 and 10:50–11:10 (Eastern time).',
+  'Ak podmienky neukazujú jasnú predpojatosť ani štruktúru, zostaň bokom.':
+    'If conditions show no clear bias or structure, stay aside.',
+  'Zameraj sa na disciplínu: niekedy vynechanie obchodu ochráni viac zisku, než keď obchod vynútiš.':
+    'Focus on discipline: sometimes skipping a trade protects more profit than forcing one.',
+  'Tento playbook je navrhnutý tak, aby prinášal kvalitné, opakovateľné setupy – no ako pri každej obchodnej stratégii, aj tu treba pred používaním poznať niekoľko dôležitých vecí.':
+    'This playbook is designed to deliver quality, repeatable setups – but as with any trading strategy, there are a few important things to know before using it.',
+  'Poznámka: nevýhody uvedené nižšie nie sú skutočné nevýhody. Sú to vlastnosti, o ktorých treba vedieť – vyžadujú si trpezlivosť, disciplínu a správny manažment, aby model fungoval efektívne.':
+    'Note: the drawbacks listed below are not true drawbacks. They are characteristics you need to be aware of – they require patience, discipline, and proper management for the model to work effectively.',
+  'Výhody': 'Advantages',
+  'Poskytuje jednoduchý denný filter na oddelenie dobrých a zlých dní.':
+    'Provides a simple daily filter to separate good and bad days.',
+  'Pomáha vyhnúť sa chopu a zbytočným obchodom v nekvalitných podmienkach.':
+    'Helps avoid chop and unnecessary trades in poor conditions.',
+  'Uľahčuje čakanie na čisté, silné pohyby s jasnými cieľmi.':
+    'Makes it easier to wait for clean, strong moves with clear targets.',
+  'Buduje disciplínu a trpezlivosť – žiadne vynucovanie obchodov každý deň.':
+    'Builds discipline and patience – no forcing trades every day.',
+  'Dáva väčšiu istotu držať pozíciu na väčší zisk, keď je štruktúra správna.':
+    'Gives more confidence to hold for a larger gain when structure is right.',
+  'Nevýhody (na čo si dať pozor)':
+    'Drawbacks (things to watch for)',
+  'Niektoré veľké pohyby sa nevrátia na retest – ľahko sa dajú prehliadnuť.':
+    'Some large moves never return for a retest – they are easy to miss.',
+  'Čakanie počas pomalých dní môže preveriť trpezlivosť.':
+    'Waiting through slow days can test patience.',
+  'Vynechané setupy môžu spôsobiť FOMO, ak sa nezvládnu.':
+    'Missed setups can cause FOMO if not managed.',
+  'Setupy môžu aj tak zlyhať – na stopoch a risk pravidlách záleží.':
+    'Setups can still fail – stops and risk rules matter.',
+  'Disciplína nie je voliteľná; plán funguje len vtedy, ak sa dodržiava.':
+    'Discipline is not optional; the plan works only when followed.',
+  'Príklad obchodu: CPI Short':
+    'Trade example: CPI Short',
+  'Kontext': 'Context',
+  'Správa CPI zverejnená o 8:30 ET.':
+    'CPI release at 8:30 ET.',
+  'Futures: Nasdaq (NQ).':
+    'Futures: Nasdaq (NQ).',
+  'Akumulácia': 'Accumulation',
+  'Cena sa pred správou pohybovala do strán a budovala likviditu nad aj pod premarket rozsahom.':
+    'Before the release, price moved sideways and built liquidity above and below the premarket range.',
+  'Manipulácia': 'Manipulation',
+  'Pri zverejnení správy cena prudko vyskočila nahor, vyčistila stopy nad rozsahom a nalapila breakout kupcov.':
+    'On the release, price spiked sharply upward, cleared stops above the range, and trapped breakout buyers.',
+  'Distribúcia': 'Distribution',
+  'Po spiku cena prerazila pod kľúčový premarket swing low so silným momentom a zanechala za sebou bearish Fair Value Gap. To potvrdilo, že skutočný pohyb smeruje nižšie.':
+    'After the spike, price broke below the key premarket swing low with strong momentum and left a bearish Fair Value Gap behind. That confirmed the real move was heading lower.',
+  'Exekúcia': 'Execution',
+  'Vstup do shortu na retracemente do fair value gapu.':
+    'Short entry on retracement into the fair value gap.',
+  'Stop loss umiestnený nad high manipulačného spiku.':
+    'Stop loss placed above the manipulation spike high.',
+  'Cieľ: premarket lows a equal lows pod rozsahom.':
+    'Target: premarket lows and equal lows below the range.',
+  'Čiastočný zisk realizovaný.':
+    'Partial profit taken.',
+  'Stop presunutý na ochranu zisku, keď cena pokračovala nižšie.':
+    'Stop moved to protect profit as price continued lower.',
+  'Výsledok': 'Result',
+  'Čistý short obchod vo fáze Distribúcie: jasný rozsah, manipulačný sweep, potvrdené prerazenie a presný vstup na retracemente. Pohyb priniesol približne 100 bodov na Nasdaq futures v priebehu pár minút.':
+    'A clean short in the Distribution phase: clear range, manipulation sweep, confirmed break, and precise retracement entry. The move delivered roughly 100 points on Nasdaq futures within a few minutes.',
+
+  // ── Low Volume Node ──
+  'Táto stratégia využíva volume-by-price profil na nájdenie miest, kadiaľ sa cena presunula rýchlo s minimálnym objemom – tzv. Low Volume Node (LVN). Ide o oblasti, kde sa obchodovalo len málo, čo často signalizuje agresívnu aktivitu veľkých hráčov. Keď cena túto zónu neskôr znova navštívi, sleduje sa cez heatmapu, footprint graf, deltu alebo order flow, či sa tam znova objaví silná kupujúca alebo predávajúca aktivita – to potvrdzuje, že veľkí hráči bránia svoju pozíciu. Vstup nastáva až po tomto potvrdení, s tesným stopom hneď za LVN zónou.':
+    'This strategy uses the volume-by-price profile to find places where price moved quickly with minimal volume – a Low Volume Node (LVN). These are areas with little trading activity, which often signals aggressive activity by large players. When price later revisits this zone, watch the heatmap, footprint chart, delta, or order flow for strong buying or selling activity again – that confirms large players are defending their position. Entry comes only after this confirmation, with a tight stop just beyond the LVN zone.',
+  'Označ úroveň záujmu': 'Mark the level of interest',
+  'Začni označením jasnej supply, demand, support alebo resistance úrovne. Hľadaj obdobie trhovej konsolidácie, po ktorom nasleduje impulzívny pohyb preč od tejto oblasti. Tento pohyb potvrdzuje prítomnosť silných kupcov alebo predávajúcich.':
+    'Start by marking a clear supply, demand, support, or resistance level. Look for a period of market consolidation followed by an impulsive move away from that area. That move confirms the presence of strong buyers or sellers.',
+  'Počkaj na pullback': 'Wait for a pullback',
+  'Nechaj cenu vzdialiť sa od úrovne. Toto ešte nie je vstup. Chceš vidieť, že cena najprv vyrazí alebo klesne preč, aby sa potvrdilo, že do trhu vstúpili veľkí účastníci.':
+    'Let price move away from the level. This is not entry yet. You want to see price first rally or drop away to confirm that large participants entered the market.',
+  'Identifikuj Low Volume Node (LVN)': 'Identify the Low Volume Node (LVN)',
+  'Použi volume-by-price profil na nájdenie oblasti, kde sa cena presunula rýchlo s malým alebo žiadnym objemom. Toto je LVN – oblasť, ktorú budeš sledovať pre návratný pohyb.':
+    'Use the volume-by-price profile to find an area where price moved quickly with little or no volume. This is the LVN – the area you will watch for a return move.',
+  'Je dôležité si uvedomiť, že LVN nemusí byť jedna presná cena – dá sa chápať ako zóna, kde bol objem tenký a trh ňou prešiel rýchlo.':
+    'It is important to realise that an LVN may not be one exact price – it can be understood as a zone where volume was thin and the market passed through quickly.',
+  'Počkaj, kým cena znova navštívi LVN': 'Wait for price to revisit the LVN',
+  'Teraz počkaj, kým sa trh vráti späť do LVN. V tomto bode sleduješ potvrdenie obrany zo strany kupcov alebo predávajúcich.':
+    'Now wait for the market to return into the LVN. At this point you watch for confirmation of defence from buyers or sellers.',
+  'Hľadaj potvrdenie': 'Look for confirmation',
+  'Použi heatmapu, footprint grafy, deltu alebo order flow na potvrdenie prítomnosti veľkých kupcov/predávajúcich.':
+    'Use the heatmap, footprint charts, delta, or order flow to confirm the presence of large buyers/sellers.',
+  'Vstup do obchodu': 'Trade entry',
+  'Po potvrdení:': 'After confirmation:',
+  'Choď do longu, ak sa odrážaš od demand alebo support.': 'Go long if bouncing from demand or support.',
+  'Choď do shortu, ak odmietaš supply alebo resistance.': 'Go short if rejecting supply or resistance.',
+  'Stop umiestni tesne nad alebo pod LVN, prípadne nedávny low/high.': 'Place the stop just above or below the LVN, or a recent low/high.',
+  'Veľkosť pozície priprav podľa vzdialenosti stopu tak, aby dolárové riziko zostalo rovnaké.':
+    'Size the position based on stop distance so dollar risk stays the same.',
+  'Stanovenie cieľa': 'Setting the target',
+  'Zameraj sa na logickú cenovú úroveň, napríklad:': 'Focus on a logical price level, for example:',
+  'High dňa / Low dňa.': 'Day high / day low.',
+  'Ďalšiu supply alebo demand zónu.': 'The next supply or demand zone.',
+  'Ďalší LVN.': 'The next LVN.',
+  'Support/resistance úrovne.': 'Support/resistance levels.',
+  'Časť pozície môžeš zobrať postupne (scale out) alebo zobrať celý zisk naraz, podľa kontextu a volatility.':
+    'You can scale out part of the position or take full profit at once, depending on context and volatility.',
+  'Riadenie rizika': 'Risk management',
+  'Vždy si vopred definuj dolárové riziko pred vstupom.': 'Always define dollar risk before entry.',
+  'Veľkosť pozície uprav podľa vzdialenosti stopu tak, aby riziko zostalo konzistentné.':
+    'Adjust position size based on stop distance so risk stays consistent.',
+  'Prijmi, že nie všetky obchody vyjdú, a zostaň disciplinovaný.': 'Accept that not every trade will work, and stay disciplined.',
+  'Podobne ako pri každom setupe, aj táto stratégia má svoje silné stránky aj obmedzenia. Je účinná pri používaní so sústredením a disciplínou, no vyžaduje pozornosť k detailu a exekúciu v reálnom čase.':
+    'Like any setup, this strategy has strengths and limitations. It is effective when used with focus and discipline, but it requires attention to detail and real-time execution.',
+  'Poznámka: nevýhody uvedené nižšie nie sú skutočné nevýhody. Sú to vlastnosti, o ktorých treba vedieť – vyžadujú si trpezlivosť, disciplínu a správny manažment, aby playbook fungoval efektívne.':
+    'Note: the drawbacks listed below are not true drawbacks. They are characteristics you need to be aware of – they require patience, discipline, and proper management for the playbook to work effectively.',
+  'Sleduje reálnu inštitucionálnu aktivitu.': 'Tracks real institutional activity.',
+  'Vysoký potenciál pomeru risk/reward.': 'High risk/reward potential.',
+  'Používa objektívne dáta (objem, order flow).': 'Uses objective data (volume, order flow).',
+  'Vyhýba sa hádaniu alebo naháňaniu obchodov.': 'Avoids guessing or chasing trades.',
+  'Vyžaduje silné sústredenie a pozornosť k detailu.': 'Requires strong focus and attention to detail.',
+  'Môže sa objaviť viacero LVN – výber toho správneho si vyžaduje skúsenosť.':
+    'Multiple LVNs may appear – picking the right one takes experience.',
+  'Príklad obchodu: Long z LVN': 'Trade example: Long from LVN',
+  'Kľúčová zóna v tomto scenári bola demand zóna, označená na základe predchádzajúceho price action. Táto zóna už predtým ukázala silný záujem kupcov a bola sledovaná ako potenciálna oblasť, kde by cena mohla znovu zareagovať.':
+    'The key zone in this scenario was a demand zone marked based on prior price action. This zone had already shown strong buyer interest and was watched as a potential area where price might react again.',
+  'Pri otvorení trh vypredal a spadol priamo do tejto demand zóny. Cena tam našla podporu a čisto sa odrazila, čo ukázalo, že kupci znova vstupujú do trhu.':
+    'At the open, the market sold off and dropped straight into this demand zone. Price found support there and bounced cleanly, showing buyers were entering again.',
+  'Pri odraze trh vyrazil so silným momentom. Počas tohto pohybu sa vytvorili dva Low Volume Nodes (LVN) – prvý na úrovni 5563 a druhý hlbšie okolo 5550. Tieto LVN označovali oblasti, kde sa cena presunula rýchlo s minimálnym objemom, čo je znak agresívnej kupnej aktivity.':
+    'On the bounce, the market rallied with strong momentum. During this move, two Low Volume Nodes (LVN) formed – the first at 5563 and a second deeper around 5550. These LVNs marked areas where price moved quickly with minimal volume, a sign of aggressive buying.',
+  'Ako to vidno aj na heatmape.': 'As also visible on the heatmap.',
+  'Neskôr počas session sa cena vrátila späť do LVN na 5563 a začalo sa objavovať potvrdenie:':
+    'Later during the session, price returned to the LVN at 5563 and confirmation began to appear:',
+  'Pasívni kupci držali úroveň, kým na trh dopadali predajné príkazy.':
+    'Passive buyers held the level while sell orders hit the market.',
+  'Agresívni predávajúci sa pokúšali potlačiť cenu nižšie, no cena neprerazila – čo ukazuje absorpciu.':
+    'Aggressive sellers tried to push price lower, but price did not break through – showing absorption.',
+  'Zakaždým, keď cena prerazila low, bola rýchlo vykúpená späť, čo ukazovalo, že predávajúci sa chytali do pasce.':
+    'Each time price broke a low, it was quickly bought back, showing sellers were getting trapped.',
+  'So všetkými signálmi ukazujúcimi na silnú obranu kupcov bol long vstup zrealizovaný na 5561, s tesným stopom tesne pod zónou na definovanie rizika.':
+    'With all signals pointing to strong buyer defence, a long entry was taken at 5561 with a tight stop just below the zone to define risk.',
+  'Cieľom bol high dňa, ktorý cena krátko potom dosiahla, keď sa čisto rozbehla od LVN.':
+    'The target was the day high, which price reached shortly after as it ran cleanly away from the LVN.',
+
+  // ── iFVG Model ──
+  'Táto stratégia stojí na myšlienke, že keď cena vyčistí likviditu a agresívne sa presunie cez Fair Value Gap (FVG) opačným smerom, často to signalizuje začiatok smerového pohybu. Model iFVG identifikuje tieto momenty zvratu kombináciou kľúčových ICT konceptov: SMT divergencie a iFVG po likviditnej udalosti. Je to vysoko pravdepodobnostná, na pravidlách založená intradenná stratégia, najlepšie použiteľná na korelované aktíva, najefektívnejšie na NQ a ES počas New York session.':
+    'This strategy is built on the idea that when price clears liquidity and aggressively moves through a Fair Value Gap (FVG) in the opposite direction, it often signals the start of a directional move. The iFVG model identifies these reversal moments by combining key ICT concepts: SMT divergence and iFVG after a liquidity event. It is a high-probability, rules-based intraday strategy, best used on correlated assets, most effective on NQ and ES during the New York session.',
+  'Aby si model iFVG naplno pochopil, je dôležité najprv zvládnuť dva kľúčové koncepty, na ktorých stojí: Inverse Fair Value Gaps (iFVG) a SMT Divergenciu. Tieto nástroje pomáhajú identifikovať, kedy sa trh môže s vysokou pravdepodobnosťou otáčať.':
+    'To fully understand the iFVG model, it is important to master the two key concepts it rests on: Inverse Fair Value Gaps (iFVG) and SMT Divergence. These tools help identify when the market is likely to reverse.',
+  'Inverse Fair Value Gap (iFVG)': 'Inverse Fair Value Gap (iFVG)',
+  'Fair Value Gap (FVG) vzniká, keď je medzera medzi knôtmi troch po sebe idúcich sviečok, zvyčajne v dôsledku agresívneho nákupu alebo predaja, ktorý za sebou zanechá nerovnováhu. V tradičnej ICT teórii sú FVG vnímané ako oblasti, kam sa cena môže vrátiť, aby sa "vybalansovala" predtým, než bude pokračovať v pôvodnom smere.':
+    'A Fair Value Gap (FVG) forms when there is a gap between the wicks of three consecutive candles, usually from aggressive buying or selling that leaves imbalance behind. In traditional ICT theory, FVGs are seen as areas price may return to "rebalance" before continuing in the original direction.',
+  'Inverse Fair Value Gap setup tento koncept obracia.': 'The Inverse Fair Value Gap setup flips this concept.',
+  'V modeli iFVG hľadáš:': 'In the iFVG model you look for:',
+  'Liquidity sweep – cena vyčistí stopy nad high alebo pod low.': 'Liquidity sweep – price clears stops above a high or below a low.',
+  'Následne sa cena silno presunie opačným smerom a prerazí existujúci FVG namiesto toho, aby ho rešpektovala.':
+    'Then price moves strongly in the opposite direction and breaks through an existing FVG instead of respecting it.',
+  'Táto inverzia (čisté prerazenie FVG) naznačuje, že trh už nemá záujem o vybalansovanie – smer sa mení.':
+    'This inversion (a clean FVG break) suggests the market no longer wants to rebalance – direction is changing.',
+  'Tento zvrat je často skorým signálom väčšieho pohybu a iFVG sa stáva tvojím vstupným triggerom po potvrdení.':
+    'This reversal is often an early sign of a larger move, and the iFVG becomes your entry trigger after confirmation.',
+  'SMT Divergencia': 'SMT Divergence',
+  'SMT Divergencia nastáva, keď sa dva korelované nástroje rozídu – čo odhaľuje skrytú stopu o skutočnom smere alebo o riadenej likvidite.':
+    'SMT Divergence occurs when two correlated instruments diverge – revealing a hidden clue about true direction or engineered liquidity.',
+  'SMT Divergencia nastáva, keď:': 'SMT Divergence occurs when:',
+  'Dve korelované aktíva (napr. ES & NQ, SPY & QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.':
+    'Two correlated assets (e.g. ES & NQ, SPY & QQQ, EURUSD and GBPUSD) behave differently at key levels.',
+  'Dve korelované aktíva (napr. ES &amp; NQ, SPY &amp; QQQ, EURUSD a GBPUSD) sa na kľúčových úrovniach správajú odlišne.':
+    'Two correlated assets (e.g. ES & NQ, SPY & QQQ, EURUSD and GBPUSD) behave differently at key levels.',
+  'Jedno vytvorí vyšší high (alebo nižší low), zatiaľ čo druhé nie – čo signalizuje divergenciu.':
+    'One makes a higher high (or lower low) while the other does not – signalling divergence.',
+  'Povedzme, že obchoduješ NQ a sleduješ ES ako potvrdenie.': 'Say you trade NQ and watch ES for confirmation.',
+  'NQ vyčistí low a vytvorí nižší low.': 'NQ clears a low and makes a lower low.',
+  'ES to isté neurobí – drží svoj predchádzajúci low (vyšší low).': 'ES does not do the same – it holds its prior low (higher low).',
+  'Toto ukazuje bullish SMT divergenciu – smart money pravdepodobne vyčistilo likviditu na NQ, zatiaľ čo ES držalo. Vďaka tomu má tvoj iFVG long oveľa vyššiu pravdepodobnosť úspechu.':
+    'This shows bullish SMT divergence – smart money likely swept liquidity on NQ while ES held. That gives your iFVG long a much higher chance of success.',
+  'Symboly: NQ a ES. Tieto korelované futures nástroje sa používajú spolu na identifikáciu SMT divergencie a realizáciu vysoko pravdepodobnostných obchodov.':
+    'Symbols: NQ and ES. These correlated futures are used together to identify SMT divergence and execute high-probability trades.',
+  'Timeframy: Na presné vstupy použi 1-minútový, 2-minútový, 3-minútový alebo 5-minútový graf. Vyššie timeframy ako 1-hodinový a 4-hodinový slúžia len na určenie smerového biasu a liquidity cieľov.':
+    'Timeframes: Use 1-minute, 2-minute, 3-minute, or 5-minute charts for precise entries. Higher timeframes such as 1-hour and 4-hour are only for directional bias and liquidity targets.',
+  'Session: Iba New York session. Model je navrhnutý na použitie počas NY open (od 9:30 EST), keď sú objem, volatilita a liquidity sweepy najaktívnejšie.':
+    'Session: New York session only. The model is designed for use during the NY open (from 9:30 EST), when volume, volatility, and liquidity sweeps are most active.',
+  'Kontext (nastavenie biasu)': 'Context (setting bias)',
+  '- Začni so 4H alebo 1H grafom, aby si určil, či cena pravdepodobne pôjde hore alebo dole.':
+    '- Start with a 4H or 1H chart to determine whether price is likely to go up or down.',
+  '- Identifikuj draw on liquidity. Cielime na highs alebo lows?':
+    '- Identify the draw on liquidity. Are we targeting highs or lows?',
+  '- Označ kľúčové swing highs/lows a otvorenia session.':
+    '- Mark key swing highs/lows and session opens.',
+  'Liquidity Sweep': 'Liquidity Sweep',
+  '- Cena musí vyčistiť zjavný interný high/low.': '- Price must clear an obvious internal high/low.',
+  '- Malo by to byť jasné – čistá, zjavná, na trhovej štruktúre založená likvidita.':
+    '- It should be clear – clean, obvious, structure-based liquidity.',
+  '- Ak po sweepe dostaneš SMT, výrazne to zvyšuje pravdepodobnosť fungovania inverzného setupu.':
+    '- If you get SMT after the sweep, it greatly increases the odds the inverse setup works.',
+  'Formácia FVG': 'FVG formation',
+  '- Hľadaj čistý fair value gap po sweepe.': '- Look for a clean fair value gap after the sweep.',
+  '- Ideálne jeden jediný FVG – viacero FVG v rámci pohybu znižuje presnosť.':
+    '- Ideally a single FVG – multiple FVGs within the move reduce precision.',
+  'Inverzia (potvrdenie)': 'Inversion (confirmation)',
+  '- Počkaj, kým sa cena uzavrie späť cez FVG z opačného smeru.':
+    '- Wait for price to close back through the FVG from the opposite direction.',
+  '- Tým sa FVG mení na inverse FVG.': '- The FVG becomes an inverse FVG.',
+  '- Vstup pri návrate k iFVG (limitný alebo market vstup).':
+    '- Enter on return to the iFVG (limit or market entry).',
+  '- Vstup pri uzavretí sviečky cez iFVG, ak je jasná displacement.':
+    '- Enter on the candle close through the iFVG if displacement is clear.',
+  '- Na vstup použi rovnaký timeframe ako pri inverzii – napr. 3M iFVG potrebuje 3M close cez neho.':
+    '- Use the same timeframe for entry as for inversion – e.g. a 3M iFVG needs a 3M close through it.',
+  'Take Profit': 'Take Profit',
+  '- Prvý cieľ = interná likvidita (nedávny high/low).': '- First target = internal liquidity (recent high/low).',
+  '- Finálny cieľ = hlavný swing high/low alebo draw on liquidity.':
+    '- Final target = major swing high/low or draw on liquidity.',
+  'Pravidlo breakeven': 'Breakeven rule',
+  'Ak je zasiahnutá prvá interná likvidita a nedôjde k ďalšej displacement, predpokladaj, že sa trh len rotuje, a chráň kapitál.':
+    'If the first internal liquidity is hit and there is no further displacement, assume the market is only rotating and protect capital.',
+  'Viac než jeden FVG v pohybe?': 'More than one FVG in the move?',
+  'Setup radšej vynechaj alebo sa pozri na vyšší timeframe – viacero FVG znamená neistotu.':
+    'Skip the setup or look at a higher timeframe – multiple FVGs mean uncertainty.',
+  'Cena vyčistí predchádzajúci swing high, čím spustí buy-side liquidity grab. Ide o kľúčový stop-hunt nad známym highom.':
+    'Price clears the prior swing high, triggering a buy-side liquidity grab. This is a key stop-hunt above a known high.',
+  'Formácia Fair Value Gap (FVG)': 'Fair Value Gap (FVG) formation',
+  'Počas tohto agresívneho pohybu vzniká Fair Value Gap (FVG), keďže cena za sebou necháva nerovnováhu medzi knôtmi troch po sebe idúcich sviečok.':
+    'During this aggressive move a Fair Value Gap (FVG) forms as price leaves imbalance between the wicks of three consecutive candles.',
+  'Potvrdenie iFVG': 'iFVG confirmation',
+  'Cena prerazí FVG so silnou medvedou displacement, čo naznačuje, že trh odmietol nerovnováhu a momentum je teraz smerom dole. Toto čisté prerazenie potvrdzuje iFVG setup.':
+    'Price breaks the FVG with strong bearish displacement, suggesting the market rejected the imbalance and momentum is now downward. This clean break confirms the iFVG setup.',
+  'Vstup sa realizuje pri retest FVG zospodu, kde sa cena vráti do zóny iFVG pred ďalším pádom.':
+    'Entry is taken on retest of the FVG from below, where price returns into the iFVG zone before the next drop.',
+  'Stop Loss': 'Stop Loss',
+  'Stop je umiestnený tesne nad iFVG alebo nad high sviečky, ktorá spôsobila sweep.':
+    'The stop is placed just above the iFVG or above the high of the candle that caused the sweep.',
+  'Prvý cieľ je najbližšia oblasť sell-side likvidity, označená rovnakými lows nižšie. Rozšírený cieľ je demand zóna (sivý box), kde cena nakoniec zareaguje.':
+    'The first target is the nearest sell-side liquidity area, marked by equal lows below. The extended target is a demand zone (grey box) where price eventually reacts.',
+  'Príklad obchodu 2 (Long)': 'Trade example 2 (Long)',
+  'Na low pohybu je prítomná SMT divergencia – jedno korelované aktívum (napr. ES) vytvorí nižší low, zatiaľ čo druhé (napr. NQ) drží vyššie. Toto signalizuje narušenie korelácie a naznačuje možný zvrat.':
+    'At the move low there is SMT divergence – one correlated asset (e.g. ES) makes a lower low while the other (e.g. NQ) holds higher. This signals a correlation break and suggests a possible reversal.',
+  'Cena vyčistí predchádzajúci low, čím spustí sell-side liquidity grab. Stopy sú vyčistené pod týmto low pred prudkým zvratom.':
+    'Price clears the prior low, triggering a sell-side liquidity grab. Stops are cleared below that low before a sharp reversal.',
+  'Počas agresívneho pohybu dole vzniká FVG. Táto medzera sa tvorí medzi knôtmi troch po sebe idúcich sviečok.':
+    'During the aggressive move down an FVG forms. This gap is between the wicks of three consecutive candles.',
+  'Cena prerazí FVG smerom hore a odmietne nerovnováhu. Toto potvrdzuje, že cena sa už nevybalansováva – mení smer. Pohyb spĺňa podmienky iFVG setupu.':
+    'Price breaks the FVG upward and rejects the imbalance. This confirms price is no longer rebalancing – it is changing direction. The move meets iFVG setup conditions.',
+  'Vstup sa realizuje pri retest iFVG, keď sa cena vráti do zóny a udrží sa.':
+    'Entry is taken on iFVG retest when price returns into the zone and holds.',
+  'Stop je umiestnený tesne pod FVG alebo pod swing low vytvoreným sweepom.':
+    'The stop is placed just below the FVG or below the swing low created by the sweep.',
+  'Prvý cieľ je interný high. Finálny cieľ je buy-side likvidita nad predchádzajúcim highom.':
+    'The first target is the internal high. The final target is buy-side liquidity above the prior high.',
+
+  // ── Break & Retest ──
+  'Nástroje: Akcie, opcie, futures': 'Instruments: Stocks, options, futures',
+  'Táto stratégia stojí na jednoduchom, no účinnom princípe: keď cena prelomí nad alebo pod dôležitú úroveň – napríklad predchádzajúci deň high alebo low – často sa vráti otestovať práve túto úroveň, než pokračuje pôvodným smerom. Obchod sa neotvára na samotnom breakoute, ale až na reteste, v oblasti nazývanej battle zone (bojová zóna).':
+    'This strategy rests on a simple but effective principle: when price breaks above or below an important level – such as the previous day high or low – it often returns to test that level before continuing in the original direction. The trade is not opened on the breakout itself, but on the retest, in an area called the battle zone.',
+  'Battle zone je miesto, kde sa deje samotná exekúcia. Je to pullback oblasť, kde treba počkať na jasné potvrdenie, než sa vstúpi do pozície.':
+    'The battle zone is where execution happens. It is the pullback area where you wait for clear confirmation before entering.',
+  'Zároveň si treba definovať aj oblasť, kde sa obchodovať nemá – tzv. No Trade Zone (NTZ). Ide o rozsah, kde sa cena pravdepodobne bude len preplietať (chopovať), chytať obchodníkov do pascí a neponúkať žiadnu reálnu výhodu.':
+    'You also need to define an area where you should not trade – the No Trade Zone (NTZ). This is a range where price will likely only chop, trap traders, and offer no real edge.',
+  'Najčastejšie pôjde o oblasť medzi predchádzajúcim denným high a premarket low, no nemusí to tak byť vždy – treba sa pozrieť na graf a identifikovať, kde je trh pravdepodobne nerozhodný.':
+    'Most often this is the area between the previous day high and premarket low, but not always – look at the chart and identify where the market is likely undecided.',
+  'Kombinácia čakania na čistý breakout, sledovania správania ceny počas retestu a vyhýbania sa NTZ je to, čo robí tento setup efektívnym. Je to štruktúrovaná stratégia, ktorá odmeňuje trpezlivosť a disciplínu, nie predbiehanie trhu.':
+    'Waiting for a clean breakout, watching price behaviour on retest, and avoiding the NTZ is what makes this setup effective. It is a structured strategy that rewards patience and discipline, not getting ahead of the market.',
+  'Označ kľúčovú úroveň': 'Mark the key level',
+  'Identifikuj hlavnú predchádzajúcu úroveň – najčastejšie high alebo low predchádzajúceho dňa, premarket high/low, alebo supply/demand zónu. Toto sa stáva tvojím referenčným bodom.':
+    'Identify the main prior level – most often the previous day high or low, premarket high/low, or a supply/demand zone. This becomes your reference point.',
+  'Počkaj na čistý breakout': 'Wait for a clean breakout',
+  'Počkaj, kým cena úroveň prelomí. Nevstupuj počas samotného breakoutu – setup začína až pri pullbacku.':
+    'Wait for price to break the level. Do not enter during the breakout itself – the setup begins on the pullback.',
+  'Retest – Battle Zone': 'Retest – Battle Zone',
+  'Počkaj na retest zóny. Toto je kľúčová oblasť, kde prebieha exekúcia. Sleduj správanie ceny:':
+    'Wait for a retest of the zone. This is the key area where execution happens. Watch price behaviour:',
+  'Pri longoch: hľadaj bullish knôty a silné zatvorenia nad úrovňou.':
+    'For longs: look for bullish wicks and strong closes above the level.',
+  'Pri shortoch: hľadaj odmietnutia (rejections) a neúspešné pokusy vrátiť sa nad úroveň.':
+    'For shorts: look for rejections and failed attempts to get back above the level.',
+  'Potvrdzujúca sviečka': 'Confirming candle',
+  'Vstup sa berie až po jasnom signáli – typicky sviečka, ktorá knôtom zájde do úrovne a zatvorí sa v smere obchodu (bullish pri longoch, bearish pri shortoch). Zatvorenie pod úrovňou pri shortoch, nad úrovňou pri longoch.':
+    'Entry is taken only after a clear signal – typically a candle that wicks into the level and closes in the trade direction (bullish for longs, bearish for shorts). Close below the level for shorts, above for longs.',
+  'Stop loss a cieľ': 'Stop loss and target',
+  'Stop sa umiestňuje tesne za bod invalidácie (pod úroveň pri longoch, nad úroveň pri shortoch).':
+    'The stop is placed just beyond the invalidation point (below the level for longs, above for shorts).',
+  'Prvý cieľ (TP1) je najbližší predchádzajúci high (pri longoch) alebo low (pri shortoch).':
+    'The first target (TP1) is the nearest prior high (for longs) or low (for shorts).',
+  'Po dosiahnutí TP1 sa realizuje čiastočný zisk, zvyčajne 25–50 % pozície.':
+    'After TP1 is reached, take partial profit, usually 25–50% of the position.',
+  'Zvyšok pozície (runner) sa necháva bežať, kým pohyb pokračuje.':
+    'The remainder (runner) is left to run while the move continues.',
+  'No Trade Zone (NTZ)': 'No Trade Zone (NTZ)',
+  'Označ NTZ – zvyčajne ide o rozsah medzi predchádzajúcim denným high a premarket low. Nemusia to byť vždy presne tieto úrovne, princíp je ale rovnaký: nájdi oblasť, kde cena pravdepodobne bude len chopovať.':
+    'Mark the NTZ – usually the range between the previous day high and premarket low. These levels are not always exact, but the principle is the same: find the area where price will likely only chop.',
+  'Vyhýbaj sa obchodovaniu vo vnútri tejto zóny – nie je tam žiadna výhoda. Počkaj na čistý breakout a retest mimo tohto rozsahu, až potom konaj.':
+    'Avoid trading inside this zone – there is no edge there. Wait for a clean breakout and retest outside this range, then act.',
+  'Tento model je navrhnutý tak, aby prinášal kvalitné, opakovateľné setupy – no ako pri každej obchodnej metóde, aj tu treba pred používaním poznať niekoľko dôležitých vecí.':
+    'This model is designed to deliver quality, repeatable setups – but as with any trading method, there are a few important things to know before using it.',
+  'Poznámka: nevýhody uvedené nižšie nie sú skutočné nevýhody. Sú to vlastnosti, o ktorých treba vedieť – vyžadujú si trpezlivosť, disciplínu a správny money management, aby model fungoval efektívne.':
+    'Note: the drawbacks listed below are not true drawbacks. They are characteristics you need to be aware of – they require patience, discipline, and proper money management for the model to work effectively.',
+  'Vysoko pravdepodobný setup: eliminuje chop tým, že čaká na čistý breakout a retest mimo definovaného rozsahu.':
+    'High-probability setup: eliminates chop by waiting for a clean breakout and retest outside the defined range.',
+  'Jasný risk manažment: stop loss je vždy tesne nad/pod retest úrovňou – žiadne hádanie, žiadne široké stopy.':
+    'Clear risk management: stop loss is always just above/below the retest level – no guessing, no wide stops.',
+  'Zabraňuje naháňaniu ceny: núti k disciplíne tým, že sa nikdy nevstupuje na samotnom breakoute – vyhneš sa fakeoutom.':
+    'Prevents chasing: enforces discipline by never entering on the breakout itself – you avoid fakeouts.',
+  'Opakovateľný proces: rovnaká štruktúra zakaždým – označ úrovne, počkaj na breakout, potvrď retest, exekvuj. Nič sa nemení.':
+    'Repeatable process: same structure every time – mark levels, wait for breakout, confirm retest, execute. Nothing changes.',
+  'Funguje naprieč timeframami: dá sa použiť na intradenné aj swingové obchody – rovnaká logika, rovnaká exekúcia.':
+    'Works across timeframes: usable for intraday and swing trades – same logic, same execution.',
+  'Vyžaduje trpezlivosť: veľa obchodov sa nevráti na retest hneď – niektoré len prelomia a pokračujú ďalej. Treba sa zmieriť s tým, že takéto obchody vynecháš.':
+    'Requires patience: many trades do not return for retest right away – some just break and keep going. You must accept missing those trades.',
+  'Môže minúť rýchle pohyby: keďže sa nevstupuje na breakoute, občas minieš veľké pohyby, ktoré sa už nevrátia.':
+    'Can miss fast moves: since you do not enter on breakout, you sometimes miss large moves that never return.',
+  'Vyžaduje presnú exekúciu: vstup musí byť čistý, tesne od úrovne. Ak zaváhaš alebo naháňaš neskoro, pomer risk/reward sa zhorší.':
+    'Requires precise execution: entry must be clean, right at the level. If you hesitate or chase late, risk/reward worsens.',
+  'Chaotické retesty môžu zmiasť: nie každý retest je čistý – treba mať skúsenosť s čítaním správania sviečok v battle zone.':
+    'Messy retests can confuse: not every retest is clean – you need experience reading candle behaviour in the battle zone.',
+  'NQ Short': 'NQ Short',
+  'Označ high predchádzajúceho dňa': 'Mark the previous day high',
+  'Označ high predchádzajúceho dňa pred otvorením trhu. Toto sa stáva kľúčovou úrovňou záujmu.':
+    'Mark the previous day high before the market opens. This becomes the key level of interest.',
+  'Označ premarket low': 'Mark the premarket low',
+  'Keď je rozsah jasný, označ premarket low. Cena teraz obchoduje medzi PDH a PML.':
+    'When the range is clear, mark the premarket low. Price is now trading between PDH and PML.',
+  'Cena otvára pod PDH': 'Price opens below PDH',
+  'Cena otvára a konsoliduje pod high predchádzajúceho dňa. Počas tohto obdobia sa neobchoduje.':
+    'Price opens and consolidates below the previous day high. No trading during this period.',
+  'Definuj No Trade Zone (NTZ)': 'Define the No Trade Zone (NTZ)',
+  'Zóna medzi high predchádzajúceho dňa a premarket low je NTZ. Vnútri tohto rozsahu sa neuvažuje o žiadnych obchodoch.':
+    'The zone between the previous day high and premarket low is the NTZ. No trades are considered inside this range.',
+  'Počkaj na breakout': 'Wait for breakout',
+  'Počkaj, kým cena silným momentom prelomí pod premarket low. Nevstupuj počas samotného breakoutu – naháňanie tu zvyšuje riziko, že sa chytíš do falošného pohybu.':
+    'Wait for price to break below the premarket low with strong momentum. Do not enter during the breakout – chasing here increases the risk of a false move.',
+  'Počkaj na retest – Battle Zone': 'Wait for retest – Battle Zone',
+  'Po breakoute počkaj, kým sa cena vráti a otestuje úroveň. Toto je battle zone, kde je pred vstupom do obchodu potrebné potvrdenie. Cena musí držať pod úrovňou a ukazovať znaky odmietnutia (rejection).':
+    'After the breakout, wait for price to return and test the level. This is the battle zone where confirmation is required before entry. Price must hold below the level and show signs of rejection.',
+  'Vstup a stop': 'Entry and stop',
+  'Vstup do shortu nastáva po objavení sa potvrdenia (napr. rejection sviečky, bearish engulfing, knôty do úrovne bez zatvorenia nad ňou).':
+    'Short entry occurs after confirmation appears (e.g. rejection candle, bearish engulfing, wicks into the level without closing above it).',
+  'Stop sa umiestni tesne nad high knôtu retest štruktúry. Ak sa cena zatvorí nad touto úrovňou, setup je neplatný.':
+    'The stop is placed just above the retest structure wick high. If price closes above this level, the setup is invalid.',
+  'TP1 nastav na posledný intradenný low. Po dosiahnutí TP1:': 'Set TP1 at the last intraday low. After TP1 is hit:',
+  'Zober 25–50 % pozície zo stola': 'Take 25–50% of the position off',
+  'Zníž riziko': 'Reduce risk',
+  'Zamkni čiastočný zisk': 'Lock in partial profit',
+  'Zvyšok pozície nechaj bežať pre pokračovanie pohybu.': 'Let the remainder run for continuation.',
+
+  // ── ICT Model 3 ──
+  'ICT Model 3 (HTF POI + MSS + FVG + OTE) kombinuje niekoľko kľúčových ICT konceptov: High-Timeframe Point of Interest (HTF POI), Market Structure Shift (MSS) potvrdený displacementom, Fair Value Gap (FVG) a Optimal Trade Entry (OTE). Keď sa tieto prvky zosúladia, vytvárajú vysoko pravdepodobný setup s jasným smerovým biasom a definovaným rizikom.':
+    'ICT Model 3 (HTF POI + MSS + FVG + OTE) combines several key ICT concepts: High-Timeframe Point of Interest (HTF POI), Market Structure Shift (MSS) confirmed by displacement, Fair Value Gap (FVG), and Optimal Trade Entry (OTE). When these elements align, they create a high-probability setup with a clear directional bias and defined risk.',
+  'Fair Value Gap (FVG)': 'Fair Value Gap (FVG)',
+  'Pre short setup cena musí sweepovať nad predchádzajúci high.': 'For a short setup, price must sweep above the prior high.',
+  'Pre long setup cena musí sweepovať pod predchádzajúci low.': 'For a long setup, price must sweep below the prior low.',
+  'Zlomenie s displacementom – silný, impulzívny pohyb, ktorý ukazuje reálny momentum.':
+    'Break with displacement – a strong, impulsive move showing real momentum.',
+  'Počas displacementu sa zvyčajne vytvorí FVG – medzera medzi sviečkami z agresívneho pohybu. Táto zóna je potenciálna oblasť vstupu.':
+    'During displacement an FVG usually forms – a gap between candles from aggressive movement. This zone is a potential entry area.',
+  'Pre long uisti sa, že FVG je v discount zóne (pod 50 % pohybu).':
+    'For longs, make sure the FVG is in the discount zone (below 50% of the move).',
+  'Pre short uisti sa, že FVG je v premium zóne (nad 50 % pohybu).':
+    'For shorts, make sure the FVG is in the premium zone (above 50% of the move).',
+  'Vstup spresni pomocou Fibonacci retracement – od low k high (long) alebo high k low (short). Zameraj sa na zónu 62 % až 79 % retracementu – „sweet spot“. Najvyššia pravdepodobnosť je, keď OTE zóna súhlasí s FVG.':
+    'Refine entry with Fibonacci retracement – from low to high (long) or high to low (short). Focus on the 62% to 79% retracement zone – the "sweet spot". Highest probability is when the OTE zone aligns with the FVG.',
+  'Keď cena retracuje do zóny FVG + OTE:': 'When price retraces into the FVG + OTE zone:',
+  'Stop loss umiestni za liquidity sweep.': 'Place stop loss beyond the liquidity sweep.',
+  'Cieľ na ďalšej HTF úrovni alebo external liquidity zóne.': 'Target the next HTF level or external liquidity zone.',
+  'Uisti sa, že pomer risk-to-reward je aspoň 1:2 alebo lepší.': 'Make sure risk-to-reward is at least 1:2 or better.',
+
+  // ── Stacked EMAs ──
+  'Stacked EMAs je London session model s časovými vstupmi, stackom EMA (5/9/13/21) a Trident Patternom (doji do 50 % FVG) pre obchody s vysokým R-multiple. Bias z 200 EMA na dennom grafe.':
+    'Stacked EMAs is a London session model with time-based entries, an EMA stack (5/9/13/21), and Trident Pattern (doji into 50% FVG) for high R-multiple trades. Bias from the 200 EMA on the daily chart.',
+  'Obchod len v London Kill Zone (3:00–6:30 NY čas)': 'Trade only in London Kill Zone (3:00–6:30 NY time)',
+  'EMA 5, 9, 13 (15) a 21 sú jasne stacked v smere obchodu': 'EMA 5, 9, 13 (15), and 21 are clearly stacked in trade direction',
+  'Bias podľa 200 EMA – long len nad, short len pod': 'Bias from 200 EMA – long only above, short only below',
+  'FVG vytvorený v obchodnom okne (ideálne 2:30–4:00 NY)': 'FVG formed in the trading window (ideally 2:30–4:00 NY)',
+  'Doji wickuje do 50 % FVG (Trident Pattern)': 'Doji wicks into 50% FVG (Trident Pattern)',
+  'Potvrdenie: ďalšia sviečka zatvorí pod high doji (short) / nad low doji (long)':
+    'Confirmation: next candle closes below doji high (short) / above doji low (long)',
+  'Stop pod low FVG (long) / nad high FVG (short)': 'Stop below FVG low (long) / above FVG high (short)',
+  'Exit pri strate EMA stacku alebo silnej reversal sviečke na daily':
+    'Exit on loss of EMA stack or strong reversal candle on daily',
+  'Nástroje: Forex, zlato (XAUUSD)': 'Instruments: Forex, gold (XAUUSD)',
+  'Platné páry: USDJPY, EURUSD, GBPUSD, NZDUSD, USDCAD, XAUUSD':
+    'Valid pairs: USDJPY, EURUSD, GBPUSD, NZDUSD, USDCAD, XAUUSD',
+  'Štýl obchodovania: Intradenný (London session)': 'Trading style: Intraday (London session)',
+  'Silný London session model so stacked EMAs, časovými vstupmi a Trident Patternom na obchody s vysokým R-multiple a presnosťou.':
+    'A strong London session model with stacked EMAs, time-based entries, and Trident Pattern for high R-multiple trades with precision.',
+  'Táto stratégia je navrhnutá na zachytenie obchodov s vysokým risk-to-reward tým, že obchoduje len počas London session, keď sa momentum a volatilita zvyčajne zosúladia. Nasleduje jasný, štruktúrovaný model so stacked EMAs, fair value gaps (FVG) a časovo podmienenými vstupmi na identifikáciu presných setupov s vysokou pravdepodobnosťou.':
+    'This strategy is designed to capture high risk-to-reward trades by trading only during the London session when momentum and volatility usually align. It follows a clear, structured model with stacked EMAs, fair value gaps (FVG), and time-based entries to identify precise, high-probability setups.',
+  'Stratégia je postavená okolo vstupnej formácie Trident Pattern – čistý FVG, wick doji sviečky do polovice FVG a potvrdenie na ďalšej sviečke. Obchod len keď sú splnené všetky podmienky: zosúladenie viacerých EMA a potvrdenie z vyššieho timeframe biasu.':
+    'The strategy is built around the Trident Pattern entry – a clean FVG, doji wick into half of the FVG, and confirmation on the next candle. Trade only when all conditions are met: alignment of multiple EMAs and confirmation from higher-timeframe bias.',
+  'Hoci uprednostňuje long setupy na prirodzene bullish aktívach (Gold, Nasdaq), model je smerový a funguje aj na shorty. Zameranie na kvalitu nad kvantitou – čakanie na ideálne setupy v úzkom okne a maximalizácia zisku cez pokračovanie trendu na dennom grafe.':
+    'While it favors long setups on naturally bullish assets (Gold, Nasdaq), the model is directional and works for shorts too. Focus on quality over quantity – waiting for ideal setups in a narrow window and maximizing reward through trend continuation on the daily chart.',
+  'INDIKÁTORY A NASTAVENIA': 'INDICATORS AND SETTINGS',
+  'Timeframes: vstup na 30-minútovom grafe; bias a take-profit na dennom grafe.':
+    'Timeframes: entry on the 30-minute chart; bias and take-profit on the daily chart.',
+  'Stack EMA (5, 9, 13 alebo 15, 21) – musia byť jasne „stacked“ v smere obchodu (napr. long: 5 > 9 > 13 > 21). Ak sa prekrývajú alebo sú zamotané, setup je neplatný.':
+    'Stack EMA (5, 9, 13 or 15, 21) – must be clearly stacked in trade direction (e.g. long: 5 > 9 > 13 > 21). If they overlap or tangle, the setup is invalid.',
+  '200 EMA (bias) – cena nad 200 EMA: iba long setupy. Cena pod 200 EMA: iba short setupy.':
+    '200 EMA (bias) – price above 200 EMA: long setups only. Price below 200 EMA: short setups only.',
+  'Bull Trading Candle Strength na dennom grafe (momentum): zelená = silný bullish, modrá = mierný bullish, červená = silný bearish, čierna = mierný bearish.':
+    'Bull Trading Candle Strength on the daily chart (momentum): green = strong bullish, blue = mild bullish, red = strong bearish, black = mild bearish.',
+  'ČASOVÉ OKNO (LONDON KILL ZONE)': 'TIME WINDOW (LONDON KILL ZONE)',
+  'Obchoduj len medzi 3:00 a 6:30 ráno New York čas. Vstupy musia byť v tomto okne – podľa backtestu najvyššia pravdepodobnosť.':
+    'Trade only between 3:00 and 6:30 AM New York time. Entries must be inside this window – highest probability based on backtesting.',
+  'FVG sa ideálne formuje medzi 2:30 a 4:00 NY čas. FVG mimo kill zone ignoruj.':
+    'FVG ideally forms between 2:30 and 4:00 NY time. Ignore FVGs outside the kill zone.',
+  'TRIDENT PATTERN – VSTUP': 'TRIDENT PATTERN – ENTRY',
+  'Keď si v London Kill Zone, hľadaj presne toto:': 'Once you are in the London Kill Zone, look for exactly this:',
+  '1. Fair Value Gap (FVG)': '1. Fair Value Gap (FVG)',
+  'Na 30M grafe hľadaj 3-sviečkový FVG.': 'Look for a 3-candle FVG on the 30M chart.',
+  'Ideálne medzi 2:30 a 4:00 NY čas.': 'Ideally between 2:30 and 4:00 NY time.',
+  '2. Úroveň 50 % (Consequent Encroachment)': '2. 50% Level (Consequent Encroachment)',
+  'Označ stred FVG – tam chceš vidieť reakciu.': 'Mark the midpoint of the FVG – that is where you want to see a reaction.',
+  '3. Trident sviečka (doji)': '3. Trident candle (doji)',
+  'Malé doji sviečka musí formovať hneď po FVG.': 'A small doji candle must form right after the FVG.',
+  'Wick musí siahať do zóny 50 % FVG.': 'The wick must reach into the 50% FVG zone.',
+  'Wick ukazuje, že jedna strana trhu sa pokúsila presunúť cenu, ale druhá ju stiahla späť.':
+    'The wick shows one side tried to push price, but the other pulled it back.',
+  '4. Potvrdenie na ďalšej sviečke': '4. Confirmation on the next candle',
+  'Long: sviečka po doji zatvorí nad low doji.': 'Long: the candle after the doji closes above the doji low.',
+  'Short: sviečka po doji zatvorí pod high doji.': 'Short: the candle after the doji closes below the doji high.',
+  'Ak zatvorí na nesprávnej strane, setup je neplatný.': 'If it closes on the wrong side, the setup is invalid.',
+  '5. Vstup': '5. Entry',
+  'Vstup na potvrdení alebo limit na 50 % FVG, ak si v setupe skoro.':
+    'Enter on confirmation or place a limit at 50% FVG if you are early in the setup.',
+  '6. Stop loss': '6. Stop loss',
+  'Long: pod low sviečky, ktorá vytvorila FVG.': 'Long: below the low of the candle that formed the FVG.',
+  'Short: nad high sviečky, ktorá vytvorila FVG.': 'Short: above the high of the candle that formed the FVG.',
+  'Na Gold sa často nepoužíva hard stop – hlboké liquidity wicky pred behom; filter zatvorenia sviečky znižuje predčasné vyradenie.':
+    'On Gold a hard stop is often not used – deep liquidity wicks before the run; a closing-candle filter reduces premature stop-outs.',
+  '7. Take profit a manažment': '7. Take profit and management',
+  'Ciele podľa štruktúry na dennom grafe – drž trend, kým je platný.':
+    'Targets based on daily structure – hold the trend while it remains valid.',
+  'Uzavri, ak EMA stratia stack alebo sa otočia.': 'Close if EMAs lose stack or flip.',
+  'Uzavri pri výraznej reversal sviečke, ktorá invaliduje štruktúru.':
+    'Close on a strong reversal candle that invalidates the structure.',
+  'Model je navrhnutý na kvalitné, opakovateľné setupy. „Nevýhody“ nie sú slabiny – sú to vlastnosti, ktoré vyžadujú disciplínu a správny manažment.':
+    'The model is designed for quality, repeatable setups. The "cons" are not weaknesses – they are traits that require discipline and proper management.',
+  'Výhody': 'Pros',
+  'Vysoký risk-to-reward – veľké pohyby v pomere k riziku.': 'High risk-to-reward – large moves relative to risk.',
+  'Vysoká win rate – okolo 90 % pri dodržaní všetkých pravidiel.': 'High win rate – around 90% when all rules are followed.',
+  'Jasné pravidlá – trend, čas a pattern bez zbytočnej komplikácie.': 'Clear rules – trend, time, and pattern without overcomplication.',
+  'Žiadny overtrading – max. ~3,5 hodiny obchodovania denne.': 'No overtrading – max. ~3.5 hours of trading per day.',
+  'Silné v trendových trhoch – najlepšie na Gold a Nasdaq.': 'Strong in trending markets – best on Gold and Nasdaq.',
+  'Nevýhody (na čo si dať pozor)': 'Cons (things to watch)',
+  'Patience – setup môže prísť len niekoľkokrát ročne.': 'Patience – the setup may appear only a handful of times per year.',
+  'Úzke časové okno – musíš byť pripravený počas London session.': 'Narrow time window – you must be ready during the London session.',
+  'PNL fluktuácie – cena môže ísť +10R a stiahnuť sa na +5R pred ďalším behom.':
+    'PNL fluctuations – price may go +10R and pull back to +5R before running again.',
+  'Prop firm – hybrid drawdown modely môžu zničiť obchod kvôli equity resetom.':
+    'Prop firm – hybrid drawdown models can ruin trades due to equity resets.',
+  'Psychológia – ak nevydržíš sedieť na rukách, stratíš edge.': 'Psychology – if you cannot sit on your hands, you will lose the edge.',
+  'Aktívum: USDJPY': 'Asset: USDJPY',
+  'Kontext timeframov (daily)': 'Timeframe context (daily)',
+  'Cena obchoduje nad 200 EMA – bullish bias.': 'Price trades above the 200 EMA – bullish bias.',
+  'EMA 5, 9, 13 a 21 sú čisto stacked – silný upward momentum.': 'EMA 5, 9, 13, and 21 are cleanly stacked – strong upward momentum.',
+  'Denná štruktúra je zosúladená nahor – hľadaj len long setupy.': 'Daily structure is aligned upward – look for long setups only.',
+  'Kill zone': 'Kill zone',
+  'Čas setupu: 4:00 NY – v rámci London Kill Zone.': 'Setup time: 4:00 NY – within the London Kill Zone.',
+  'Formácia FVG (30M)': 'FVG formation (30M)',
+  'Čistý 3-sviečkový Fair Value Gap na 30-minútovom grafe v kill zone.':
+    'A clean 3-candle Fair Value Gap on the 30-minute chart in the kill zone.',
+  'Validácia Trident Patternu': 'Trident Pattern validation',
+  'Doji sviečka hneď po FVG, wick do 50 % FVG (consequent encroachment).':
+    'Doji candle right after the FVG, wick into 50% FVG (consequent encroachment).',
+  'Wick ukázal absorpciu agresie predchádzajúcej strany – vysoká pravdepodobnosť reakcie.':
+    'The wick showed absorption of prior-side aggression – high probability reaction area.',
+  'Ďalšia sviečka zatvorila nad low doji – Trident pattern potvrdený (long).':
+    'The next candle closed above the doji low – Trident pattern confirmed (long).',
+  'Vstup, stop a riziko': 'Entry, stop, and risk',
+  'Vstup: ihneď po zatvorení potvrdenia.': 'Entry: immediately after the confirmation close.',
+  'Stop loss: tesne pod low FVG sviečky.': 'Stop loss: just below the FVG candle low.',
+  'Cieľ: manažment podľa denného trendu – drž, kým EMA zostávajú stacked.':
+    'Target: manage using the daily trend – hold while EMAs remain stacked.',
+};

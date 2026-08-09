@@ -1,5 +1,6 @@
 import { renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
+import { STRATEGY_I18N_EN } from './data/strategy-i18n-en.js';
 
 /* ================= I18N ================= */
 export const I18N_EN={
@@ -82,6 +83,7 @@ export const I18N_EN={
 'Priemerný denný P&L':'Average daily P&L','Priemerný ziskový deň':'Average winning day','Priemerný stratový deň':'Average losing day',
 'Priem. denný objem (kontrakty)':'Avg daily volume (contracts)','Očakávaná hodnota / obchod':'Trade expectancy','Priemerný realizovaný R-multiple':'Average realized R-multiple',
 'Mesiac:':'Month:','Po':'Mo','Ut':'Tu','St':'We','Št':'Th','Pi':'Fr','So':'Sa','Ne':'Su',
+'Týždeň':'Week',
 'Pondelok':'Monday','Utorok':'Tuesday','Streda':'Wednesday','Štvrtok':'Thursday','Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
 'Všetky symboly':'All symbols','Hľadať v poznámkach/tagoch...':'Search notes/tags...','Dátum':'Date','Smer':'Side','Množstvo':'Quantity','Vstup':'Entry','Výstup':'Exit','Trvanie':'Duration','Tagy':'Tags',
 'Žiadne obchody. Pridaj ručne alebo importuj CSV.':'No trades yet. Add one manually or import a CSV.','Filter podľa tagov:':'Filter by tags:','✕ Zrušiť filter':'✕ Clear filter',
@@ -269,6 +271,63 @@ Object.assign(I18N_EN,{
 'Nástroje: Futures, indexy (ES)':'Instruments: Futures, indices (ES)','Nástroje: Akcie, futures, forex':'Instruments: Stocks, futures, forex',
 'Štýl obchodovania: Intradenný aj swingový':'Trading style: Intraday and swing',
 });
+Object.assign(I18N_EN,{
+'ICT Model 3 kombinuje HTF Point of Interest, Market Structure Shift s displacementom, Fair Value Gap a Optimal Trade Entry. Keď sa tieto prvky zosúladia, vytvárajú vysoko pravdepodobný setup s jasným smerovým biasom a definovaným rizikom.':'ICT Model 3 combines a High-Timeframe Point of Interest, Market Structure Shift with displacement, Fair Value Gap, and Optimal Trade Entry. When these elements align, they create a high-probability setup with a clear directional bias and defined risk.',
+'Identifikovaný HTF POI (Order Block, Liquidity Zone alebo FVG)':'HTF POI identified (Order Block, Liquidity Zone, or FVG)',
+'Liquidity grab pri HTF POI (sweep nad high pre short / pod low pre long)':'Liquidity grab at HTF POI (sweep above high for short / below low for long)',
+'MSS s displacementom potvrdený (zlomenie interného high/low)':'MSS with displacement confirmed (break of internal high/low)',
+'FVG identifikovaný počas displacementu (discount pre long, premium pre short)':'FVG identified during displacement (discount for long, premium for short)',
+'OTE zóna 62–79 % v súlade s FVG':'OTE zone 62–79% aligned with FVG',
+'Vstup v zóne FVG + OTE, stop za liquidity sweep, cieľ na HTF/external liquidity, min. R:R 1:2':'Entry in FVG + OTE zone, stop beyond liquidity sweep, target at HTF/external liquidity, min. R:R 1:2',
+'Nástroje: Futures, forex':'Instruments: Futures, forex',
+'ICT Model 3 (':'ICT Model 3 (',
+') kombinuje niekoľko kľúčových ICT konceptov: ':' combines several key ICT concepts: ',
+', potvrdený ':' confirmed with ',
+'. Keď sa tieto prvky zosúladia, vytvárajú vysoko pravdepodobný setup s jasným smerovým biasom a definovaným rizikom.':'. When these align, they create a high-probability setup with a clear directional bias and defined risk.',
+'CHECKLIST – KROK ZA KROKOM':'CHECKLIST – STEP BY STEP',
+'Krok 1: Identifikuj High-Timeframe Point of Interest (HTF POI)':'Step 1: Identify the High-Timeframe Point of Interest (HTF POI)',
+'Začni nájdením významnej oblasti záujmu na vyššom timefram – môže to byť:':'Start by locating a significant area of interest on the higher timeframe – this can be:',
+'Order Block':'Order Block',
+'Liquidity Zone':'Liquidity Zone',
+'Tu očakávaš silnú reakciu ceny – buď zvrat, alebo prudký pohyb.':'This is where you expect price to react strongly – either reversing or making a sharp move.',
+'Krok 2: Počkaj na liquidity grab':'Step 2: Wait for a Liquidity Grab',
+'Nechaj cenu vyčistiť likviditu pri HTF POI:':'Allow price to grab liquidity near the HTF POI:',
+'Pre ':'For ',
+' cena musí sweepovať nad predchádzajúci high.':' price should sweep above a previous high.',
+' cena musí sweepovať pod predchádzajúci low.':' price should sweep below a previous low.',
+'short setup':'short setup',
+'long setup':'long setup',
+'Tento pohyb vyčistí stopy a nalapí breakout traderov, čím vytvorí „palivo“ pre zvrat.':'This move clears stop losses and traps breakout traders, providing fuel for a reversal.',
+'Krok 3: Sleduj Market Structure Shift (MSS) s displacementom':'Step 3: Watch for a Market Structure Shift (MSS) with Displacement',
+'Po liquidity grab hľadaj potvrdenie, že smer sa mení. Platný MSS vyžaduje:':'After the liquidity grab, look for confirmation that direction is shifting. A valid MSS requires:',
+'Zlomenie najbližšieho interného high (pre long) alebo low (pre short).':'Price breaks the most recent internal high (for longs) or low (for shorts).',
+'Zlomenie s ':'Break with ',
+' – silný, impulzívny pohyb, ktorý ukazuje reálny momentum.':' – a strong, impulsive move showing real momentum.',
+'displacementom':'displacement',
+'Toto potvrdí, že trh je pripravený ísť novým smerom.':'This confirms the market is ready to move in a new direction.',
+'Krok 4: Identifikuj Fair Value Gap (FVG)':'Step 4: Identify the Fair Value Gap (FVG)',
+'Počas displacementu sa zvyčajne vytvorí ':'During displacement, an ',
+' – medzera medzi sviečkami z agresívneho pohybu. Táto zóna je potenciálna oblasť vstupu.':' usually forms – a gap between candles from aggressive price movement. This zone is the potential entry area.',
+' uisti sa, že FVG je v ':' ensure the FVG is in the ',
+' (pod 50 % pohybu).':' (below 50% of the move).',
+' (nad 50 % pohybu).':' (above 50% of the move).',
+'discount zóne':'discount zone',
+'premium zóne':'premium zone',
+'Krok 5: Použi Optimal Trade Entry (OTE)':'Step 5: Use the Optimal Trade Entry (OTE)',
+'Vstup spresni pomocou ':'Refine the entry using the ',
+' – od low k high (long) alebo high k low (short). Zameraj sa na zónu ':' – from low to high (for longs) or high to low (for shorts). Focus on the ',
+' retracementu – „sweet spot“. Najvyššia pravdepodobnosť je, keď OTE zóna súhlasí s FVG.':' retracement zone – the “sweet spot”. Highest probability is when the OTE zone aligns with the FVG.',
+'Fibonacci retracement':'Fibonacci retracement',
+'62 % až 79 %':'62% to 79%',
+'Krok 6: Vykonaj vstup s riadným risk managementom':'Step 6: Execute with Proper Risk Management',
+'Keď cena retracuje do zóny ':'Once price retraces into the ',
+':':' zone:',
+' umiestni za liquidity sweep.':' place beyond the liquidity sweep.',
+' na ďalšej HTF úrovni alebo external liquidity zóne.':' at the next HTF level or external liquidity zone.',
+'Uisti sa, že pomer risk-to-reward je aspoň ':'Ensure the risk-to-reward ratio is at least ',
+' alebo lepší.':' or better.',
+'Cieľ':'Target',
+});
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
@@ -311,6 +370,7 @@ export const I18N_RULES=[
 [/^riziko ([\d.]+%(?: \/ [\d.]+%)?)$/,'risk $1'],
 [/^ nepokrýva čas tohto obchodu \((.+)\)\.$/," does not cover this trade's time ($1)."],
 ];
+Object.assign(I18N_EN, STRATEGY_I18N_EN);
 export const I18N_REV={};
 Object.entries(I18N_EN).forEach(([k,v])=>{if(k!==v)I18N_REV[v]=k;});
 export function translateText(s,dir){
