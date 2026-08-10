@@ -1,12 +1,13 @@
 import { renderBreakdown } from './ai.js';
 import { renderCalendar } from './calendar.js';
-import { tr } from './i18n.js';
+import { deleteDayNote, openJournalDay, renderJournal, saveDayNoteFromForm, setDayRating } from './day-notes.js';
+import { ask, tr } from './i18n.js';
 import { renderOhlcList } from './ohlc-import.js';
 import { renderPatterns } from './patterns.js';
 import { state } from './state.js';
 import { ruleEditRowHTML } from './strategy-notes.js';
 import { reportRowHTML, tradeRowHTML } from './trades-list.js';
-import { $, debounce } from './utils.js';
+import { $, dayKey, debounce } from './utils.js';
 import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
 import { calMove, exportDayJson, showDay } from './calendar.js';
@@ -154,6 +155,31 @@ document.getElementById('excOutliers').addEventListener('click', handleTradeTabl
 document.getElementById('calDayPanel').addEventListener('click', function(event){
   const btn = event.target.closest('[data-action="exportDay"]');
   if (btn) exportDayJson(btn.dataset.day);
+});
+
+/* denník: editor zhrnutia dňa v paneli dňa (day-notes.js dayNoteEditorHTML) */
+document.getElementById('calDayPanel').addEventListener('click', async function(event){
+  const el = event.target.closest('[data-action]');
+  if (!el) return;
+  const date = el.dataset.date;
+  if (el.dataset.action === 'setDayRating') setDayRating(date, parseInt(el.dataset.rating, 10) || 0);
+  else if (el.dataset.action === 'saveDayNote') { await saveDayNoteFromForm(date); renderCalendar(); renderJournal(); }
+  else if (el.dataset.action === 'deleteDayNote') {
+    if (await ask('Vymazať zhrnutie tohto dňa?')) { await deleteDayNote(date); renderCalendar(); renderJournal(); }
+  }
+});
+
+/* denník: zoznam zápisov + hľadanie (day-notes.js renderJournal) */
+document.getElementById('journalList').addEventListener('click', function(event){
+  const el = event.target.closest('[data-action="openJournalDay"]');
+  if (el) openJournalDay(el.dataset.date);
+});
+document.getElementById('journalSearch').addEventListener('input', debounce(function(event){
+  state.journalSearch = this.value;
+  renderJournal();
+}, 200));
+document.getElementById('btnJournalToday').addEventListener('click', function(event){
+  openJournalDay(dayKey(Math.floor(Date.now() / 1000)));
 });
 
 /* reports table rows (trades-list.js reportRowHTML) */

@@ -1,5 +1,6 @@
 import { renderAccSelects } from './accounts.js';
 import { renderCalendar } from './calendar.js';
+import { loadDayNotes, renderJournal } from './day-notes.js';
 import { renderDashboard } from './dashboard.js';
 import { idbAll, idbGet, idbOpen, idbPut } from './db.js';
 import { gdriveLoadSyncState, gdriveSyncNow } from './gdrive.js';
@@ -40,6 +41,7 @@ export async function init(){
   state.trades=await idbAll('trades');
   state.ohlcSets=await idbAll('ohlc');
   state.strategies=await idbAll('strategies');
+  await loadDayNotes();
   // musí byť pred seedDefaultStrategies() - to samo značku prepisuje
   await gdriveLoadSyncState();
   await seedDefaultStrategies();
@@ -54,6 +56,6 @@ export async function init(){
   }
 }
 export function saveSettings(){return idbPut('kv',{k:'settings',v:{balance:state.settings.balance,mults:state.settings.mults,multsExact:true,accounts:state.settings.accounts,activeAccount:state.settings.activeAccount,lang:state.settings.lang,theme:state.settings.theme,maxRiskPerTradePct:state.settings.maxRiskPerTradePct,maxDailyLossPct:state.settings.maxDailyLossPct,gClientId:state.settings.gClientId,gConnected:state.settings.gConnected,gLastSync:state.settings.gLastSync,anthropicKey:state.settings.anthropicKey,aiChatModel:state.settings.aiChatModel,aiInsightModel:state.settings.aiInsightModel,aiReviewModel:state.settings.aiReviewModel,aiReviewPromptTemplate:state.settings.aiReviewPromptTemplate}});}
-export function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();}
+export function renderAll(){renderAccSelects();renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderOhlcList();renderSettings();refreshSymbolFilter();renderStrategies();renderJournal();}
 /* Užšia verzia renderAll() pre zmeny tradov/P&L - vynecháva účty/OHLC/nastavenia, ktoré nie sú dotknuté. */
 export function renderAfterTradeChange(){renderDashboard();renderStats();renderCalendar();renderTrades();renderReports();renderStrategies();refreshSymbolFilter();}

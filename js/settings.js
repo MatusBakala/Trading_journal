@@ -90,10 +90,10 @@ export async function buildBackupPayload(){
   const settingsOut=Object.assign({},state.settings);
   delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
   delete settingsOut.anthropicKey; // API kľúč sa nezálohuje (citlivý údaj, len pre toto zariadenie)
-  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades:state.trades,ohlc:state.ohlcSets,shots:shotsOut,strategies:state.strategies,stratShots:stratShotsOut};
+  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades:state.trades,ohlc:state.ohlcSets,shots:shotsOut,strategies:state.strategies,stratShots:stratShotsOut,dayNotes:state.dayNotes};
 }
 export async function applyBackupPayload(p){
-  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');await idbClear('strategies');await idbClear('stratShots');
+  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');await idbClear('strategies');await idbClear('stratShots');await idbClear('dayNotes');
   const idMap={};
   for(const t of (p.trades||[])){
     const oldId=t.id;delete t.id;
@@ -117,9 +117,12 @@ export async function applyBackupPayload(p){
     state.settings.anthropicKey=keepAnthropicKey;
     await saveSettings();
   }
+  // dayNotes pribudli neskôr - staršia záloha ich nemá, vtedy zostane denník prázdny
+  for(const n of (p.dayNotes||[]))await idbPut('dayNotes',n);
   state.trades=p.trades||[];
   state.ohlcSets=p.ohlc||[];
   state.strategies=p.strategies||[];
+  state.dayNotes=p.dayNotes||[];
 }
 export async function exportBackup(){
   const payload=await buildBackupPayload();
@@ -146,9 +149,9 @@ export async function wipeAll(){
   if(!await ask('Naozaj vymazať VŠETKY obchody, screenshoty a dáta?'))return;
   if(!await ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
   await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
-  await idbClear('strategies');await idbClear('stratShots');
+  await idbClear('strategies');await idbClear('stratShots');await idbClear('dayNotes');
   await clearDefaultStrategySeedState();
-  state.trades=[];state.ohlcSets=[];state.strategies=[];
+  state.trades=[];state.ohlcSets=[];state.strategies=[];state.dayNotes=[];
   await gdriveResetLastLocalChange();
   await seedDefaultStrategies();
   renderAll();
