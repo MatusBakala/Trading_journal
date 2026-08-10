@@ -46,6 +46,26 @@ Appka má v `js/data/default-strategies.js` konštantu `DEFAULT_STRATEGIES` – 
 5. Over v prehliadači, že `DEFAULT_STRATEGIES[i].notes === strategyById(id).notes` (presná zhoda) a že sa stratégia správne zobrazuje (screenshot), predtým než to commitnem.
 6. `seedDefaultStrategies()` (v `js/strategy-notes.js`) porovnáva fingerprint aktuálneho `DEFAULT_STRATEGIES` s uloženým – ak sa líši, automaticky prepíše `description`/`rules`/`notes` existujúcich built-in stratégií aj na už-seedovaných inštaláciách (netreba ručne mazať/importovať dáta). **Dôležité:** kvôli veľkosti `default-strategies.js` (obsahuje base64 obrázky) sa tento fingerprint-check kvôli výkonu robí len keď sa zmení `app-version.json` – **pri každej zmene DEFAULT_STRATEGIES preto vždy bumpni aj `app-version.json`**, inak sa update na už-seedovaných inštaláciách neprejaví.
 
+## Obnova zálohy vs. kv značky (stav mimo zálohovaných stores)
+
+Záloha (`buildBackupPayload()`) obsahuje `trades`/`shots`/`ohlc`/`strategies`/`stratShots` +
+`settings`, ale **nie store `kv`**. Preto keď `applyBackupPayload()` prepíše niektorý store
+obsahom zo zálohy, všetky `kv` značky, ktoré ten store popisovali, zrazu **klamú** – ukazujú na
+stav, ktorý už v store nie je.
+
+Presne toto spôsobilo, že prehliadač, ktorý si stiahol staršiu zálohu (z Drive alebo ručne z
+JSON), zostal **natrvalo** na starej sade stratégií: `defaultStrategiesSeeded`/`AppVersion`/
+`Fingerprint` prežili obnovu, `seedDefaultStrategies()` sa preto hneď na začiatku ukončilo a
+stratégie pridané novšou verziou kódu (ICT Model 3, Stacked EMAs, Volume Profile) sa už nikdy
+nedoplnili. Všetky tri Drive cesty pritom `seedDefaultStrategies()` po obnove **volali** – len to
+bol no-op.
+
+**Pravidlo:** keď pridáš `kv` značku, ktorá popisuje obsah nejakého zálohovaného store, pridaj ju
+do `DEFAULT_STRATEGY_SEED_KEYS` (resp. analogického zoznamu) a zmaž ju v `applyBackupPayload()` –
+stráži to test `test/default-strategy-seed-state.test.mjs`. A guard nikdy nestavaj len na verzii
+appky: over aj to, že dáta naozaj v store sú (u stratégií sa porovnávajú mená z
+`defaultStrategiesNames`), inak sa už raz pokazená inštalácia nemá ako sama vyliečiť.
+
 ## Ďalšie exporty od brokera (Tradovate cez Apex) – čo s nimi appka vie robiť
 
 Okrem **Order History** + **Cash History** (bežný import cez záložku Import CSV → rozpozná sa

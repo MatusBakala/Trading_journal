@@ -5,7 +5,7 @@ import { gdriveResetLastLocalChange, renderGDriveStatus, scheduleAutoSync } from
 import { ask } from './i18n.js';
 import { renderAfterTradeChange, renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
-import { seedDefaultStrategies } from './strategy-notes.js';
+import { clearDefaultStrategySeedState, seedDefaultStrategies } from './strategy-notes.js';
 import { DEFAULT_TRADE_REVIEW_PROMPT } from './trade-modal.js';
 import { $, num, toast } from './utils.js';
 
@@ -106,6 +106,9 @@ export async function applyBackupPayload(p){
   }
   for(const d of (p.ohlc||[]))await idbPut('ohlc',d);
   for(const st of (p.strategies||[]))await idbPut('strategies',st);
+  // Obsah `strategies` je odteraz zo zálohy, nie z DEFAULT_STRATEGIES - kv značky
+  // o seedovaní by preto klamali a seedDefaultStrategies() by sa preskočilo.
+  await clearDefaultStrategySeedState();
   for(const s of (p.stratShots||[]))await idbAdd('stratShots',{strategyId:s.strategyId,blob:b64ToBlob(s.data),added:Date.now()});
   if(p.settings){
     const keepClientId=state.settings.gClientId,keepAnthropicKey=state.settings.anthropicKey;
@@ -133,6 +136,7 @@ export async function restoreBackup(input){
   const text=await file.text();
   let p;try{p=JSON.parse(text);}catch(e){toast('Neplatný JSON');return;}
   await applyBackupPayload(p);
+  await seedDefaultStrategies(); // built-in stratégie z kódu vyhrávajú nad starou zálohou
   renderAll();
   scheduleAutoSync();
   input.value='';
@@ -143,9 +147,7 @@ export async function wipeAll(){
   if(!await ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
   await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
   await idbClear('strategies');await idbClear('stratShots');
-  await idbDel('kv','defaultStrategiesSeeded');
-  await idbDel('kv','defaultStrategiesRevision');
-  await idbDel('kv','defaultStrategiesFingerprint');
+  await clearDefaultStrategySeedState();
   state.trades=[];state.ohlcSets=[];state.strategies=[];
   await gdriveResetLastLocalChange();
   await seedDefaultStrategies();

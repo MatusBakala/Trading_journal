@@ -47,6 +47,23 @@ export function defaultStrategiesFingerprint(defs){
     s.notes||''
   ].join('\x1e')).join('\x1f');
 }
+/* kv značky, ktorými si seedDefaultStrategies() pamätá, že built-in stratégie sú
+   v store `strategies` už aktuálne. Kto prepíše obsah `strategies` cudzími dátami
+   (t.j. obnova zálohy cez applyBackupPayload), MUSÍ ich zmazať - záloha totiž
+   obsahuje `strategies`, ale nie `kv`, takže inak značky prežijú a klamú:
+   seedDefaultStrategies() sa preskočí a stratégie pridané novšou verziou kódu
+   sa už nikdy nedoplnia. Presne toto nechávalo prehliadač, ktorý si stiahol
+   staršiu zálohu, natrvalo na starej sade stratégií. */
+export const DEFAULT_STRATEGY_SEED_KEYS=[
+  'defaultStrategiesSeeded',
+  'defaultStrategiesAppVersion',
+  'defaultStrategiesFingerprint',
+  'defaultStrategiesNames',
+  'defaultStrategiesRevision',
+];
+export async function clearDefaultStrategySeedState(){
+  for(const k of DEFAULT_STRATEGY_SEED_KEYS)await idbDel('kv',k);
+}
 export async function seedDefaultStrategies(){
   // DEFAULT_STRATEGIES is a 2.7MB module (embedded base64 images) - skip importing it
   // entirely once already seeded for the currently deployed app-version.json (bumped
@@ -55,12 +72,23 @@ export async function seedDefaultStrategies(){
   const storedVersion=await idbGet('kv','defaultStrategiesAppVersion');
   const prevAppVersion=storedVersion&&storedVersion.v!=null?String(storedVersion.v):'';
   const seededFlag=await idbGet('kv','defaultStrategiesSeeded');
-  if(seededFlag&&seededFlag.v&&appVersion&&appVersion===prevAppVersion)return;
+  // Verzia sama nestačí: obnova zálohy prepíše `strategies`, ale nie `kv`, takže
+  // značky môžu tvrdiť "naseedované" nad sadou, ktorá built-in stratégie nemá.
+  // Mená sú lacné (pár stringov), takže ich vieme overiť bez ťahania 4MB modulu -
+  // ak niektorá chýba, seedovanie musí prebehnúť a stav sa sám opraví.
+  const storedNames=await idbGet('kv','defaultStrategiesNames');
+  const prevNames=Array.isArray(storedNames&&storedNames.v)?storedNames.v:null;
+  const haveAllBuiltIns=prevNames!=null&&prevNames.every(n=>state.strategies.some(s=>s.name===n));
+  if(seededFlag&&seededFlag.v&&appVersion&&appVersion===prevAppVersion&&haveAllBuiltIns)return;
   const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
   const fp=defaultStrategiesFingerprint(DEFAULT_STRATEGIES);
   const stored=await idbGet('kv','defaultStrategiesFingerprint');
   const prevFp=stored&&stored.v!=null?String(stored.v):'';
-  const syncBuiltIns=prevFp!==fp;
+  // Keď značky klamali o menách, klame aj fingerprint: obsah `strategies` niekto
+  // vymenil (obnova zálohy zo staršej verzie), takže sa nesmieme spoľahnúť na to,
+  // že zhodný fingerprint znamená aktuálne poznámky. Bez tohto by sa doplnili len
+  // chýbajúce stratégie a tie zvyšné by ostali s prastarým textom zo zálohy.
+  const syncBuiltIns=prevFp!==fp||!haveAllBuiltIns;
   let changed=false;
   for(const def of DEFAULT_STRATEGIES){
     const existing=state.strategies.find(s=>s.name===def.name);
@@ -86,6 +114,7 @@ export async function seedDefaultStrategies(){
     if(typeof gdriveSetLastLocalChange==='function')gdriveSetLastLocalChange();
   }
   await idbPut('kv',{k:'defaultStrategiesAppVersion',v:appVersion});
+  await idbPut('kv',{k:'defaultStrategiesNames',v:DEFAULT_STRATEGIES.map(s=>s.name)});
 }
 export function strategyById(id){return id==null?null:state.strategies.find(s=>s.id===id)||null;}
 export function strategyNameOf(t){const s=strategyById(t.strategyId);return s?s.name:'– (bez stratégie)';}
