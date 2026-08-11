@@ -360,7 +360,8 @@ Object.assign(I18N_EN,{
 'Žiadny zápis nezodpovedá hľadaniu.':'No entry matches your search.',
 'Zatiaľ žiadne zápisy. Klikni na deň v kalendári a napíš zhrnutie – aj v deň, keď si neobchodoval.':'No entries yet. Click a day in the calendar and write a summary - even on a day you did not trade.',
 'Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Píše sa v kalendári pri konkrétnom dni; klikni na zápis nižšie a otvorí sa ti na úpravu.':'A summary of the whole day - how you felt, what influenced your decisions, what you learned. You write it in the calendar on a given day; click an entry below to open it for editing.',
-'zápis':'entry','zápisy':'entries','zápisov':'entries',
+'zápis':'entry','zápisy':'entries','zápisov':'entries','Späť na zoznam':'Back to list',
+'Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Klikni na zápis a otvorí sa ti na písanie tu, bez obchodov.':'A summary of the whole day - how you felt, what influenced your decisions, what you learned. Click an entry to open it for writing right here, without the trades.',
 });
 
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};

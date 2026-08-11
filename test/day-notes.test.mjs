@@ -9,8 +9,31 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const settingsSrc = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
 const dbSrc = fs.readFileSync(path.join(root, 'js/db.js'), 'utf8');
 
-const { emptyDayNote, isDayNoteEmpty, journalMatches, ratingStars, dayNoteForAi, skTradePlural } =
-  await import('../js/day-notes.js');
+const { emptyDayNote, isDayNoteEmpty, journalMatches, ratingStars, dayNoteForAi, skTradePlural,
+  stripHtml, noteTextToHtml } = await import('../js/day-notes.js');
+
+test('stripHtml: z rich-textu spraví čitateľný text pre výpis, hľadanie aj AI', () => {
+  assert.equal(stripHtml('<div><b>Silný deň</b></div><div>druhý riadok</div>'), 'Silný deň\ndruhý riadok');
+  assert.equal(stripHtml('a<br>b'), 'a\nb');
+  assert.equal(stripHtml('&lt;nie tag&gt; &amp; &nbsp;x'), '<nie tag> &  x'.trim());
+  assert.equal(stripHtml(''), '');
+  assert.equal(stripHtml(null), '');
+});
+
+test('isDayNoteEmpty: zápis s prázdnym HTML sa nepovažuje za vyplnený', () => {
+  // rich-text editor po vymazaní obsahu často nechá <div><br></div> - to nie je zápis
+  assert.equal(isDayNoteEmpty({ ...emptyDayNote('2026-08-10'), text: '<div><br></div>' }), true);
+  assert.equal(isDayNoteEmpty({ ...emptyDayNote('2026-08-10'), text: '<p>  </p>' }), true);
+  assert.equal(isDayNoteEmpty({ ...emptyDayNote('2026-08-10'), text: '<div>niečo</div>' }), false);
+});
+
+test('noteTextToHtml: staré zápisy v čistom texte si po prechode na rich text udržia riadky', () => {
+  assert.equal(noteTextToHtml('prvy\ndruhy'), '<div>prvy</div><div>druhy</div>');
+  assert.equal(noteTextToHtml(''), '');
+  // už HTML sa nesmie znovu escapovať
+  const html = '<div><b>tucne</b></div>';
+  assert.equal(noteTextToHtml(html), html);
+});
 
 test('skTradePlural: nula sa skloňuje ako 5+, nie ako 2-4', () => {
   assert.equal(skTradePlural(0), 'obchodov', '"0 obchody" je nesprávne po slovensky');

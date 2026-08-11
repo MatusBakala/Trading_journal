@@ -29,6 +29,7 @@ export const state = {
   ohlcSets: [],
   dayNotes: [], // denník: {date:'YYYY-MM-DD', rating, mood, wentWell, toImprove, text, updated}
   journalSearch: '',
+  journalOpenDate: null, // deň otvorený na písanie v záložke Denník
   calDate: new Date(),
   calSelectedDay: null,
   eqChartObj: null,

@@ -237,3 +237,8 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 .jHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .jHead .jStars{color:#f5b301;letter-spacing:1px}
 .jExcerpt{font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-wrap}
+
+/* denník: hlavička otvoreného zápisu v záložke Denník */
+.jEditorHead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.dayNote .rtWrap{margin-top:6px}
+.dayNote .rtWrap [contenteditable]{min-height:220px}

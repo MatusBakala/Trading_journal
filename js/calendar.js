@@ -141,7 +141,7 @@ export function showDay(k){
       tradeTableHTML(dayTrades)
     :`<h3>${k.split('-').reverse().join('.')}</h3>`+
       `<div class="hint" style="margin-bottom:6px">${tr('V tento deň nemáš žiadne obchody. Zhrnutie si aj tak môžeš napísať.')}</div>`;
-  p.innerHTML=head+dayNoteEditorHTML(k);
+  p.innerHTML=head+dayNoteEditorHTML(k,'cal');
 }
 /* Súhrn jedného dňa ako čistý JSON - na voľné vloženie do AI chatu (claude.ai a pod.)
    bez potreby vlastného API kľúča, na rozdiel od exportAiData() v ai.js, ktorý posiela

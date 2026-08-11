@@ -242,12 +242,12 @@ window.__TJ_BOOT__=(async function(){
 
 <!-- JOURNAL (denník) -->
 <section id="tab-journal" class="tab">
-  <div class="filters">
+  <div class="filters" id="journalFilters">
     <button class="btn small" id="btnJournalToday">+ Zapísať dnešný deň</button>
     <input type="text" id="journalSearch" placeholder="Hľadať v zápisoch..." style="flex:1;min-width:180px">
     <span id="journalCount" class="hint"></span>
   </div>
-  <p class="hint">Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Píše sa v kalendári pri konkrétnom dni; klikni na zápis nižšie a otvorí sa ti na úpravu.</p>
+  <p class="hint" id="journalIntro">Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Klikni na zápis a otvorí sa ti na písanie tu, bez obchodov.</p>
   <div class="panel" style="margin-top:14px"><div id="journalList"></div></div>
 </section>
 
