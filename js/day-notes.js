@@ -129,9 +129,13 @@ export function dayNoteEditorHTML(date, scope) {
   return `<div class="dayNote" id="dnBox_${s}" data-date="${date}" data-scope="${s}">
     <h3 style="margin-bottom:10px">📓 ${esc(tr('Zhrnutie dňa'))}</h3>
     <div class="dnGrid">
-      <label class="f">${esc(tr('Hodnotenie dňa'))}
+      <!-- Zámerne to NIE je popisný element label: ten presmeruje klik na svoj prvý
+           ovládací prvok, čiže na prvú hviezdičku. Klik na text alebo do medzery medzi
+           hviezdičkami by potom vždy nastavil hodnotenie 1 namiesto toho, kam sa mierilo. -->
+      <div class="f dnField">
+        <span>${esc(tr('Hodnotenie dňa'))}</span>
         <div class="dnStars" id="dnStars_${s}">${ratingButtonsHTML(date, n.rating || 0, s)}</div>
-      </label>
+      </div>
       <label class="f">${esc(tr('Nálada / psychika'))}
         <select id="dnMood_${s}">${moodOptions(n.mood || '')}</select>
       </label>

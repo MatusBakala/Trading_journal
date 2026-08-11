@@ -10,7 +10,7 @@ const settingsSrc = fs.readFileSync(path.join(root, 'js/settings.js'), 'utf8');
 const dbSrc = fs.readFileSync(path.join(root, 'js/db.js'), 'utf8');
 
 const { emptyDayNote, isDayNoteEmpty, journalMatches, ratingStars, dayNoteForAi, skTradePlural,
-  stripHtml, noteTextToHtml } = await import('../js/day-notes.js');
+  stripHtml, noteTextToHtml, dayNoteEditorHTML } = await import('../js/day-notes.js');
 
 test('stripHtml: z rich-textu spraví čitateľný text pre výpis, hľadanie aj AI', () => {
   assert.equal(stripHtml('<div><b>Silný deň</b></div><div>druhý riadok</div>'), 'Silný deň\ndruhý riadok');
@@ -33,6 +33,17 @@ test('noteTextToHtml: staré zápisy v čistom texte si po prechode na rich text
   // už HTML sa nesmie znovu escapovať
   const html = '<div><b>tucne</b></div>';
   assert.equal(noteTextToHtml(html), html);
+});
+
+test('hviezdičky hodnotenia nesmú byť v <label> - label presmeruje klik na prvú z nich', () => {
+  // Reálna chyba: klik na popisok alebo do medzery medzi hviezdičkami nastavil vždy
+  // hodnotenie 1, lebo <label> aktivuje svoj prvý ovládací prvok (prvú hviezdičku).
+  state.dayNotes = [];
+  const html = dayNoteEditorHTML('2026-08-11', 'cal').replace(/<!--[\s\S]*?-->/g, '');
+  for (const block of html.match(/<label[\s\S]*?<\/label>/g) || []) {
+    assert.ok(!block.includes('dnStar'), 'hviezdičky sa ocitli vnútri <label>: ' + block.slice(0, 120));
+  }
+  assert.ok(html.includes('dnStars_cal'), 'hviezdičky sa vôbec nevykreslili');
 });
 
 test('skTradePlural: nula sa skloňuje ako 5+, nie ako 2-4', () => {
