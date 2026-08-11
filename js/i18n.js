@@ -342,6 +342,28 @@ Object.assign(I18N_EN,{
 'Vyhni sa obchodom v strede low-volume zóny':'Avoid trades in the middle of a low-volume zone',
 });
 
+Object.assign(I18N_EN,{
+// -- Denník / zhrnutie dňa --
+'Denník':'Journal','Zhrnutie dňa':'Day summary','Hodnotenie dňa':'Day rating',
+'Nálada / psychika':'Mood / mindset','Čo išlo dobre':'What went well','Čo zlepšiť':'What to improve',
+'Zhrnutie dňa (voľný text)':'Day summary (free text)','Uložiť zhrnutie':'Save summary',
+'Vymazať zhrnutie':'Delete summary','Zrušiť hodnotenie':'Clear rating','Uložené':'Saved',
+'Deň má zhrnutie':'This day has a summary',
+'V tento deň nemáš žiadne obchody. Zhrnutie si aj tak môžeš napísať.':'You have no trades on this day. You can still write a summary.',
+'Čo sa dnes podarilo, čo zopakovať...':'What worked today, what to repeat...',
+'Chyby, na čo si dať pozor nabudúce...':'Mistakes, what to watch out for next time...',
+'Ako vyzeral trh, ako som sa cítil, čo som robil mimo obchodov, čo ma ovplyvnilo...':'How the market looked, how I felt, what I did outside of trading, what influenced me...',
+'Zhrnutie dňa uložené':'Day summary saved','Zhrnutie dňa vymazané':'Day summary deleted',
+'Prázdne zhrnutie – zápis odstránený':'Empty summary - entry removed',
+'Vymazať zhrnutie tohto dňa?':'Delete the summary for this day?',
+'+ Zapísať dnešný deň':'+ Write today\'s entry','Hľadať v zápisoch...':'Search entries...',
+'Žiadny zápis nezodpovedá hľadaniu.':'No entry matches your search.',
+'Zatiaľ žiadne zápisy. Klikni na deň v kalendári a napíš zhrnutie – aj v deň, keď si neobchodoval.':'No entries yet. Click a day in the calendar and write a summary - even on a day you did not trade.',
+'Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Píše sa v kalendári pri konkrétnom dni; klikni na zápis nižšie a otvorí sa ti na úpravu.':'A summary of the whole day - how you felt, what influenced your decisions, what you learned. You write it in the calendar on a given day; click an entry below to open it for editing.',
+'zápis':'entry','zápisy':'entries','zápisov':'entries','Späť na zoznam':'Back to list',
+'Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Klikni na zápis a otvorí sa ti na písanie tu, bez obchodov.':'A summary of the whole day - how you felt, what influenced your decisions, what you learned. Click an entry to open it for writing right here, without the trades.',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],

@@ -117,6 +117,7 @@ window.__TJ_BOOT__=(async function(){
     <nav>
       <button data-tab="dashboard" class="active">Dashboard</button>
       <button data-tab="calendar">Kalendár</button>
+      <button data-tab="journal">Denník</button>
       <button data-tab="stats">Štatistiky</button>
       <button data-tab="trades">Obchody</button>
       <button data-tab="strategies">Stratégie</button>
@@ -237,6 +238,17 @@ window.__TJ_BOOT__=(async function(){
   </div>
   <div class="calgrid" id="calGrid"></div>
   <div class="panel" id="calDayPanel" style="display:none;margin-top:16px"></div>
+</section>
+
+<!-- JOURNAL (denník) -->
+<section id="tab-journal" class="tab">
+  <div class="filters" id="journalFilters">
+    <button class="btn small" id="btnJournalToday">+ Zapísať dnešný deň</button>
+    <input type="text" id="journalSearch" placeholder="Hľadať v zápisoch..." style="flex:1;min-width:180px">
+    <span id="journalCount" class="hint"></span>
+  </div>
+  <p class="hint" id="journalIntro">Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Klikni na zápis a otvorí sa ti na písanie tu, bez obchodov.</p>
+  <div class="panel" style="margin-top:14px"><div id="journalList"></div></div>
 </section>
 
 <!-- TRADES -->
@@ -626,8 +638,12 @@ window.__TJ_BOOT__.then(function(loadApp){
   if(loadApp) return loadApp();
 }).catch(function(e){
   console.error('App load failed', e);
+  /* Konkrétny dôvod (napr. DB zablokovaná inou kartou) je oveľa užitočnejší než
+     všeobecné "skús obnoviť" - používateľ inak nemá ako zistiť, čo sa deje. */
+  var msg=(e&&e.message)?String(e.message):'Nepodarilo sa načítať appku. Skús obnoviť stránku.';
+  var safe=msg.replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
   document.body.insertAdjacentHTML('afterbegin',
-    '<div style="padding:16px;color:#c00;font-family:sans-serif">Nepodarilo sa načítať appku. Skús obnoviť stránku.</div>');
+    '<div style="padding:16px;color:#c00;font-family:sans-serif">'+safe+'</div>');
 });
 </script>
 </body>

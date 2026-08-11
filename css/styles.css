@@ -213,3 +213,32 @@ code{background:var(--bg3);padding:1px 6px;border-radius:5px;font-size:12.5px}
 .patRow .patText{font-size:14px;line-height:1.4}
 .patRow .patStat{text-align:right;white-space:nowrap}
 .patRow .patStat .pct{font-size:19px;font-weight:800}
+
+/* ================= Denník (zhrnutie dňa) ================= */
+/* Prázdny deň je klikateľný tiež - zhrnutie sa dá napísať aj bez obchodov. */
+.day.empty{cursor:pointer}
+.day.empty:hover{filter:brightness(1.25)}
+.day .dnMark{font-size:12px;line-height:1;align-self:flex-start;margin-top:2px}
+.day.empty .dnMark{margin-top:4px}
+
+.dayNote{margin-top:18px;border-top:1px solid var(--border);padding-top:14px}
+.dnGrid{display:flex;gap:12px;flex-wrap:wrap}
+.dnGrid>.f{flex:1;min-width:220px}
+.dayNote textarea{width:100%;resize:vertical}
+.dnStars{display:flex;align-items:center;gap:2px}
+.dnStars button{background:none;border:none;padding:2px;font-size:22px;line-height:1;cursor:pointer;color:var(--border)}
+.dnStars .dnStar.on{color:#f5b301}
+.dnStars .dnStar:hover{color:#f5b301}
+.dnStars .dnStarClear{font-size:13px;color:var(--muted);margin-left:6px}
+.dnStars .dnStarClear:hover{color:var(--red)}
+
+.jEntry{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;background:var(--bg2)}
+.jEntry:hover{filter:brightness(1.2)}
+.jHead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.jHead .jStars{color:#f5b301;letter-spacing:1px}
+.jExcerpt{font-size:13px;color:var(--muted);line-height:1.5;white-space:pre-wrap}
+
+/* denník: hlavička otvoreného zápisu v záložke Denník */
+.jEditorHead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.dayNote .rtWrap{margin-top:6px}
+.dayNote .rtWrap [contenteditable]{min-height:220px}

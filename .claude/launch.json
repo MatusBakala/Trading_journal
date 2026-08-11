@@ -4,11 +4,11 @@
   "configurations": [
     {
       "name": "trading-journal",
-      "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5501"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/dev-server.mjs"],
       "port": 5501,
-      "cwd": "${workspaceFolder}",
-      "url": "http://localhost:5501"
+      "autoPort": true,
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

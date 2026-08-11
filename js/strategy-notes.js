@@ -47,6 +47,23 @@ export function defaultStrategiesFingerprint(defs){
     s.notes||''
   ].join('\x1e')).join('\x1f');
 }
+/* kv značky, ktorými si seedDefaultStrategies() pamätá, že built-in stratégie sú
+   v store `strategies` už aktuálne. Kto prepíše obsah `strategies` cudzími dátami
+   (t.j. obnova zálohy cez applyBackupPayload), MUSÍ ich zmazať - záloha totiž
+   obsahuje `strategies`, ale nie `kv`, takže inak značky prežijú a klamú:
+   seedDefaultStrategies() sa preskočí a stratégie pridané novšou verziou kódu
+   sa už nikdy nedoplnia. Presne toto nechávalo prehliadač, ktorý si stiahol
+   staršiu zálohu, natrvalo na starej sade stratégií. */
+export const DEFAULT_STRATEGY_SEED_KEYS=[
+  'defaultStrategiesSeeded',
+  'defaultStrategiesAppVersion',
+  'defaultStrategiesFingerprint',
+  'defaultStrategiesNames',
+  'defaultStrategiesRevision',
+];
+export async function clearDefaultStrategySeedState(){
+  for(const k of DEFAULT_STRATEGY_SEED_KEYS)await idbDel('kv',k);
+}
 export async function seedDefaultStrategies(){
   // DEFAULT_STRATEGIES is a 2.7MB module (embedded base64 images) - skip importing it
   // entirely once already seeded for the currently deployed app-version.json (bumped
@@ -55,12 +72,23 @@ export async function seedDefaultStrategies(){
   const storedVersion=await idbGet('kv','defaultStrategiesAppVersion');
   const prevAppVersion=storedVersion&&storedVersion.v!=null?String(storedVersion.v):'';
   const seededFlag=await idbGet('kv','defaultStrategiesSeeded');
-  if(seededFlag&&seededFlag.v&&appVersion&&appVersion===prevAppVersion)return;
+  // Verzia sama nestačí: obnova zálohy prepíše `strategies`, ale nie `kv`, takže
+  // značky môžu tvrdiť "naseedované" nad sadou, ktorá built-in stratégie nemá.
+  // Mená sú lacné (pár stringov), takže ich vieme overiť bez ťahania 4MB modulu -
+  // ak niektorá chýba, seedovanie musí prebehnúť a stav sa sám opraví.
+  const storedNames=await idbGet('kv','defaultStrategiesNames');
+  const prevNames=Array.isArray(storedNames&&storedNames.v)?storedNames.v:null;
+  const haveAllBuiltIns=prevNames!=null&&prevNames.every(n=>state.strategies.some(s=>s.name===n));
+  if(seededFlag&&seededFlag.v&&appVersion&&appVersion===prevAppVersion&&haveAllBuiltIns)return;
   const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
   const fp=defaultStrategiesFingerprint(DEFAULT_STRATEGIES);
   const stored=await idbGet('kv','defaultStrategiesFingerprint');
   const prevFp=stored&&stored.v!=null?String(stored.v):'';
-  const syncBuiltIns=prevFp!==fp;
+  // Keď značky klamali o menách, klame aj fingerprint: obsah `strategies` niekto
+  // vymenil (obnova zálohy zo staršej verzie), takže sa nesmieme spoľahnúť na to,
+  // že zhodný fingerprint znamená aktuálne poznámky. Bez tohto by sa doplnili len
+  // chýbajúce stratégie a tie zvyšné by ostali s prastarým textom zo zálohy.
+  const syncBuiltIns=prevFp!==fp||!haveAllBuiltIns;
   let changed=false;
   for(const def of DEFAULT_STRATEGIES){
     const existing=state.strategies.find(s=>s.name===def.name);
@@ -86,6 +114,7 @@ export async function seedDefaultStrategies(){
     if(typeof gdriveSetLastLocalChange==='function')gdriveSetLastLocalChange();
   }
   await idbPut('kv',{k:'defaultStrategiesAppVersion',v:appVersion});
+  await idbPut('kv',{k:'defaultStrategiesNames',v:DEFAULT_STRATEGIES.map(s=>s.name)});
 }
 export function strategyById(id){return id==null?null:state.strategies.find(s=>s.id===id)||null;}
 export function strategyNameOf(t){const s=strategyById(t.strategyId);return s?s.name:'– (bez stratégie)';}
@@ -197,14 +226,87 @@ export async function toggleStrategyNotesEdit(){
   renderStrategies();
 }
 let stNotesSavedRange=null;
+/* Rich-text editor už nie je len pre poznámky stratégií - rovnaký toolbar používa aj
+   denník. Operácie sa preto viažu na PRÁVE AKTÍVNY editor (ten, v ktorom naposledy
+   bol kurzor) a ovládače toolbaru sa hľadajú v rámci jeho obalu .rtWrap, nie podľa
+   globálnych ID - dva editory v DOM naraz by si inak prvky prepísali. */
+let rtActiveId='stNotesEditor';
+export function rtSetActive(id){if(id)rtActiveId=id;}
+export function rtEd(){return $(rtActiveId);}
+function rtWrap(){const e=rtEd();return e?e.closest('.rtWrap'):null;}
+function rtCtl(cls){const w=rtWrap();return w?w.querySelector('.'+cls):null;}
+document.addEventListener('focusin',e=>{
+  const ed=e.target&&e.target.closest?e.target.closest('[data-rt-editor]'):null;
+  if(ed&&ed.id)rtSetActive(ed.id);
+});
+/* Klik na tlačidlo toolbaru editor nefokusuje, preto aktívnu inštanciu určíme
+   už pri stlačení myši (capture, teda skôr než sa spustí samotná akcia). */
+document.addEventListener('mousedown',e=>{
+  const w=e.target&&e.target.closest?e.target.closest('.rtWrap'):null;
+  if(!w)return;
+  const ed=w.querySelector('[data-rt-editor]');
+  if(ed&&ed.id)rtSetActive(ed.id);
+},true);
+export function rtToolbarHTML(){
+  return `<div class="rtToolbar">
+          <select class="rtHeadingSel" title="${esc(tr('Nadpis'))}">
+            <option value="p">¶</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
+          <span class="rtSep"></span>
+          <select class="rtFontNameSel" title="${esc(tr('Písmo'))}">
+            <option value="">${esc(tr('Písmo'))}</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Verdana">Verdana</option>
+            <option value="'Courier New',monospace">Courier New</option>
+            <option value="'Times New Roman',serif">Times New Roman</option>
+          </select>
+          <button type="button" data-action="rtFontSizeStep" data-delta="-2">−</button>
+          <input type="number" class="rtFontSizeBox" value="16" min="8" max="96">
+          <button type="button" data-action="rtFontSizeStep" data-delta="2">+</button>
+          <span class="rtSep"></span>
+          <button type="button" data-cmd="bold" data-action="rtExec" title="Bold"><b>B</b></button>
+          <button type="button" data-cmd="italic" data-action="rtExec" title="Italic"><i>I</i></button>
+          <button type="button" data-cmd="strikeThrough" data-action="rtExec" title="Strikethrough"><s>S</s></button>
+          <button type="button" data-cmd="underline" data-action="rtExec" title="Underline"><u>U</u></button>
+          <button type="button" data-action="rtLink" title="${esc(tr('Vložiť odkaz'))}">🔗</button>
+          <button type="button" data-cmd="removeFormat" data-action="rtExec" title="${esc(tr('Vymazať formátovanie'))}">✗</button>
+          <span class="rtSep"></span>
+          <div class="rtDropWrap">
+            <button type="button" data-action="rtToggleDropdown" data-target="rtDropFg" title="${esc(tr('Farba textu'))}"><b class="rtFgIndicator" style="text-decoration:underline">A</b></button>
+            <div class="rtDropdown rtDropFg">${rtColorPanelHTML('fg')}</div>
+          </div>
+          <div class="rtDropWrap">
+            <button type="button" class="rtBgIndicatorBtn" data-action="rtToggleDropdown" data-target="rtDropBg" title="${esc(tr('Farba zvýraznenia'))}">🖍</button>
+            <div class="rtDropdown rtDropBg">${rtColorPanelHTML('bg')}</div>
+          </div>
+          <span class="rtSep"></span>
+          <div class="rtDropWrap">
+            <button type="button" data-action="rtToggleDropdown" data-target="rtDropAlign" title="${esc(tr('Zarovnanie'))}">≡ ▾</button>
+            <div class="rtDropdown rtDropAlign">${rtAlignPanelHTML()}</div>
+          </div>
+          <span class="rtSep"></span>
+          <button type="button" data-action="clickImgFile" title="${esc(tr('Vložiť obrázok'))}">+</button>
+          <input type="file" class="rtImgFile" accept="image/*" style="display:none">
+        </div>`;
+}
+/* Jedna inštancia editora aj s toolbarom. editorId musí byť v rámci stránky unikátne. */
+export function rtEditorHTML(editorId,html){
+  return `<div class="rtWrap">${rtToolbarHTML()}<div id="${editorId}" data-rt-editor contenteditable="true">${html||''}</div></div>`;
+}
+
 export function stNotesSaveRange(){
-  const ed=$('stNotesEditor');
+  const ed=rtEd();
   const sel=window.getSelection();
   if(ed&&sel.rangeCount&&ed.contains(sel.anchorNode)&&ed.contains(sel.focusNode))stNotesSavedRange=sel.getRangeAt(0).cloneRange();
 }
 document.addEventListener('selectionchange',stNotesSaveRange);
 export function stNotesRestoreRange(){
-  const ed=$('stNotesEditor');
+  const ed=rtEd();
   if(!ed)return;
   ed.focus();
   if(stNotesSavedRange){
@@ -223,7 +325,7 @@ export function rtExec(cmd,val){
     // block ancestor (e.g. a <p> inside a leftover <h1>-<h6>); formatBlock only
     // fixes the innermost one, so unwrap any heading ancestors within the
     // editor by hand to make sure their default bold styling doesn't linger.
-    const ed=$('stNotesEditor');
+    const ed=rtEd();
     const sel=window.getSelection();
     if(ed&&sel.rangeCount){
       let node=sel.getRangeAt(0).commonAncestorContainer;
@@ -254,12 +356,12 @@ export function rtLink(){
 }
 export function rtSetFontSize(px){
   px=Math.max(8,Math.min(96,parseInt(px,10)||16));
-  const box=$('rtFontSizeBox');
+  const box=rtCtl('rtFontSizeBox');
   if(box)box.value=px;
   stNotesRestoreRange();
   const sel=window.getSelection();
   if(!sel.rangeCount||sel.isCollapsed)return;
-  const ed=$('stNotesEditor');
+  const ed=rtEd();
   // execCommand handles arbitrary/complex ranges reliably; manual Range surgery
   // (surroundContents) throws or corrupts structure on multi-paragraph/partial-overlap
   // selections, so mark with a legacy size then convert that marker to a real px style.
@@ -271,11 +373,11 @@ export function rtSetFontSize(px){
   stNotesSaveRange();
 }
 export function rtFontSizeStep(delta){
-  const box=$('rtFontSizeBox');
+  const box=rtCtl('rtFontSizeBox');
   rtSetFontSize((box?parseInt(box.value,10):16||16)+delta);
 }
 export function updateToolbarState(){
-  const ed=$('stNotesEditor');
+  const ed=rtEd();
   if(!ed)return;
   const sel=window.getSelection();
   if(!sel.rangeCount||!ed.contains(sel.anchorNode))return;
@@ -284,7 +386,7 @@ export function updateToolbarState(){
     try{active=document.queryCommandState(cmd);}catch(e){}
     document.querySelectorAll('.rtToolbar button[data-cmd="'+cmd+'"]').forEach(b=>b.classList.toggle('on',active));
   });
-  const fontSel=$('rtFontNameSel');
+  const fontSel=rtCtl('rtFontNameSel');
   if(fontSel&&document.activeElement!==fontSel){
     let raw='';
     try{raw=document.queryCommandValue('fontName')||'';}catch(e){}
@@ -332,7 +434,7 @@ export function updateToolbarState(){
 document.addEventListener('selectionchange',updateToolbarState);
 export function rtInsertImageAtCursor(dataUrl){
   stNotesRestoreRange();
-  const ed=$('stNotesEditor');
+  const ed=rtEd();
   ed.focus();
   const img=document.createElement('img');
   img.src=dataUrl;
@@ -408,7 +510,7 @@ export function rtColorPanelHTML(kind){
   }).join('');
   return rows+`<div class="rtDropSep"></div><div class="rtColorRow" data-action="openCustomColor" data-kind="${kind}">
       <span class="rtSwatch" style="background:var(--bg3)">🎨</span><span>${esc(tr('Vlastná farba...'))}</span>
-    </div><input type="color" id="rtCustomColor_${kind}" data-cmd="${kind==='fg'?'foreColor':'hiliteColor'}" style="display:none">`;
+    </div><input type="color" class="rtCustomColor rtCustomColor_${kind}" data-cmd="${kind==='fg'?'foreColor':'hiliteColor'}" style="display:none">`;
 }
 export function rtApplyColor(cmd,value){
   stNotesRestoreRange();
@@ -425,7 +527,7 @@ export function rtApplyColor(cmd,value){
 }
 export function rtToggleDropdown(id,e){
   if(e)e.stopPropagation();
-  const el=$(id);
+  const el=rtCtl(id)||$(id);
   if(!el)return;
   const willOpen=el.style.display!=='block';
   rtCloseDropdowns();
@@ -605,52 +707,7 @@ export function renderStrategyDetail(box){
     }
   }else if(state.strategyDetailTab==='notes'){
     if(strategyNotesEdit){
-      body=`<div class="rtToolbar">
-          <select id="rtHeadingSel" title="${esc(tr('Nadpis'))}">
-            <option value="p">¶</option>
-            <option value="h1">H1</option>
-            <option value="h2">H2</option>
-            <option value="h3">H3</option>
-          </select>
-          <span class="rtSep"></span>
-          <select id="rtFontNameSel" title="${esc(tr('Písmo'))}">
-            <option value="">${esc(tr('Písmo'))}</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Arial">Arial</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Verdana">Verdana</option>
-            <option value="'Courier New',monospace">Courier New</option>
-            <option value="'Times New Roman',serif">Times New Roman</option>
-          </select>
-          <button type="button" data-action="rtFontSizeStep" data-delta="-2">−</button>
-          <input type="number" id="rtFontSizeBox" value="16" min="8" max="96">
-          <button type="button" data-action="rtFontSizeStep" data-delta="2">+</button>
-          <span class="rtSep"></span>
-          <button type="button" data-cmd="bold" data-action="rtExec" title="Bold"><b>B</b></button>
-          <button type="button" data-cmd="italic" data-action="rtExec" title="Italic"><i>I</i></button>
-          <button type="button" data-cmd="strikeThrough" data-action="rtExec" title="Strikethrough"><s>S</s></button>
-          <button type="button" data-cmd="underline" data-action="rtExec" title="Underline"><u>U</u></button>
-          <button type="button" data-action="rtLink" title="${esc(tr('Vložiť odkaz'))}">🔗</button>
-          <button type="button" data-cmd="removeFormat" data-action="rtExec" title="${esc(tr('Vymazať formátovanie'))}">✗</button>
-          <span class="rtSep"></span>
-          <div class="rtDropWrap">
-            <button type="button" data-action="rtToggleDropdown" data-target="rtDropFg" title="${esc(tr('Farba textu'))}"><b id="rtFgIndicator" style="text-decoration:underline">A</b></button>
-            <div class="rtDropdown" id="rtDropFg">${rtColorPanelHTML('fg')}</div>
-          </div>
-          <div class="rtDropWrap">
-            <button type="button" id="rtBgIndicatorBtn" data-action="rtToggleDropdown" data-target="rtDropBg" title="${esc(tr('Farba zvýraznenia'))}">🖍</button>
-            <div class="rtDropdown" id="rtDropBg">${rtColorPanelHTML('bg')}</div>
-          </div>
-          <span class="rtSep"></span>
-          <div class="rtDropWrap">
-            <button type="button" data-action="rtToggleDropdown" data-target="rtDropAlign" title="${esc(tr('Zarovnanie'))}">≡ ▾</button>
-            <div class="rtDropdown" id="rtDropAlign">${rtAlignPanelHTML()}</div>
-          </div>
-          <span class="rtSep"></span>
-          <button type="button" data-action="clickImgFile" title="${esc(tr('Vložiť obrázok'))}">+</button>
-          <input type="file" id="rtImgFile" accept="image/*" style="display:none">
-        </div>
-        <div id="stNotesEditor" contenteditable="true">${s.notes||''}</div>
+      body=rtEditorHTML('stNotesEditor',s.notes)+`
         <div style="margin-top:14px;display:flex;gap:8px">
           <button class="btn small" data-action="saveStrategyNotes" data-id="${s.id}">Uložiť poznámky</button>
           <button class="btn secondary small" data-action="toggleStrategyNotesEdit">${esc(tr('Zobraziť'))}</button>

@@ -6,6 +6,6 @@
   "scripts": {
     "test": "node --test 'test/**/*.mjs'",
     "manifest": "node tools/gen-manifest.mjs",
-    "serve": "python3 -m http.server 5501"
+    "serve": "node tools/dev-server.mjs"
   }
 }

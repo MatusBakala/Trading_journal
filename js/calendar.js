@@ -1,10 +1,11 @@
 import { fmtMoney, moneyCls } from './utils.js';
 import { accTrades } from './accounts.js';
+import { dayNoteEditorHTML, dayNoteForAi, hasDayNote } from './day-notes.js';
 import { state } from './state.js';
 import { tr } from './i18n.js';
 import { excursionFor, riskR, tTime } from './strategy-notes.js';
 import { tradeTableHTML } from './trades-list.js';
-import { $, computePnl, dayKey, emotionLabel, sessionOf, toast, tsToLocalInput } from './utils.js';
+import { $, computePnl, dayKey, emotionLabel, esc, sessionOf, toast, tsToLocalInput } from './utils.js';
 
 /* ================= Calendar ================= */
 export function calMove(d){state.calDate=new Date(state.calDate.getFullYear(),state.calDate.getMonth()+d,1);state.calSelectedDay=null;renderCalendar();}
@@ -35,20 +36,27 @@ function dayKeyFor(y,m,d){
   return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
 }
 
+/* 📓 značka = za daný deň existuje zápis v denníku. Deň je klikateľný VŽDY, aj bez
+   obchodov - zhrnutie sa dá napísať aj v deň, keď si zámerne neobchodoval. */
+function dayNoteMarkHtml(k){
+  return hasDayNote(k)?`<div class="dnMark" title="${esc(tr('Deň má zhrnutie'))}">📓</div>`:'';
+}
+
 function dayCellHtml(d,k,info){
   let cls='day has';
   cls+=info.pnl>0?' win':(info.pnl<0?' loss':'');
   const winPct=info.n?+(info.wins/info.n*100).toFixed(1):0;
   return `<div class="${cls}" data-day="${k}">`+
     `<div class="dn">${d}</div>`+
+    dayNoteMarkHtml(k)+
     `<div class="dp ${moneyCls(info.pnl)}">${fmtMoney(info.pnl)}</div>`+
     `<div class="dc">${trTradeCount(info.n)}</div>`+
     `<div class="dw">${winPct}%</div>`+
     `</div>`;
 }
 
-function emptyDayHtml(d){
-  return `<div class="day"><div class="dn">${d}</div></div>`;
+function emptyDayHtml(d,k){
+  return `<div class="day empty" data-day="${k}"><div class="dn">${d}</div>${dayNoteMarkHtml(k)}</div>`;
 }
 
 function weekSumHtml(weekNum,weekPnl,weekDays){
@@ -103,7 +111,7 @@ export function renderCalendar(){
         weekDays++;
         daysHtml+=dayCellHtml(c.d,c.k,c.info);
       }else if(c.type==='day'){
-        daysHtml+=emptyDayHtml(c.d);
+        daysHtml+=emptyDayHtml(c.d,c.k);
       }else{
         daysHtml+='<div class="day other"></div>';
       }
@@ -115,19 +123,25 @@ export function renderCalendar(){
   totalEl.innerHTML=`${tr('Mesiac:')} <span class="${moneyCls(monthTotal)}">${fmtMoney(monthTotal)}</span>`;
 
   const panel=$('calDayPanel');
-  if(state.calSelectedDay&&daily[state.calSelectedDay])showDay(state.calSelectedDay);
-  else{state.calSelectedDay=null;if(panel)panel.style.display='none';}
+  if(state.calSelectedDay)showDay(state.calSelectedDay);
+  else if(panel)panel.style.display='none';
 }
 
 export function showDay(k){
   const dayTrades=accTrades().filter(t=>dayKey(tTime(t))===k).sort((a,b)=>tTime(a)-tTime(b));
   const p=$('calDayPanel');
-  if(!p||!dayTrades.length){state.calSelectedDay=null;if(p)p.style.display='none';return;}
+  if(!p)return;
+  // Panel sa otvára aj pre deň BEZ obchodov - inak by sa nedalo napísať zhrnutie dňa,
+  // keď si zámerne neobchodoval (a práve to býva to najpoučnejšie).
   state.calSelectedDay=k;
   p.style.display='block';
-  p.innerHTML=`<h3>${tr('Obchody')} ${k.split('-').reverse().join('.')} `+
-    `<button type="button" class="btn secondary small" data-action="exportDay" data-day="${k}" style="margin-left:8px">📥 ${tr('Export JSON pre AI')}</button></h3>`+
-    tradeTableHTML(dayTrades);
+  const head=dayTrades.length
+    ?`<h3>${tr('Obchody')} ${k.split('-').reverse().join('.')} `+
+      `<button type="button" class="btn secondary small" data-action="exportDay" data-day="${k}" style="margin-left:8px">📥 ${tr('Export JSON pre AI')}</button></h3>`+
+      tradeTableHTML(dayTrades)
+    :`<h3>${k.split('-').reverse().join('.')}</h3>`+
+      `<div class="hint" style="margin-bottom:6px">${tr('V tento deň nemáš žiadne obchody. Zhrnutie si aj tak môžeš napísať.')}</div>`;
+  p.innerHTML=head+dayNoteEditorHTML(k,'cal');
 }
 /* Súhrn jedného dňa ako čistý JSON - na voľné vloženie do AI chatu (claude.ai a pod.)
    bez potreby vlastného API kľúča, na rozdiel od exportAiData() v ai.js, ktorý posiela
@@ -171,6 +185,8 @@ export function exportDayJson(k){
     tradeCount:dayTrades.length,
     winCount:wins,lossCount:pnls.filter(p=>p<0).length,
     winRatePct:+(wins/dayTrades.length*100).toFixed(1),
+    // zhrnutie dňa dáva AI kontext a psychiku, ktoré zo samotných čísel nevyčíta
+    dennik:dayNoteForAi(k),
     trades:dayTrades.map(dayTradeToJson),
   };
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});

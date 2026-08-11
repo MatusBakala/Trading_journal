@@ -1,12 +1,13 @@
 import { renderBreakdown } from './ai.js';
 import { renderCalendar } from './calendar.js';
-import { tr } from './i18n.js';
+import { closeJournalDay, deleteDayNote, openJournalDay, renderJournal, saveDayNoteFromForm, setDayRating } from './day-notes.js';
+import { ask, tr } from './i18n.js';
 import { renderOhlcList } from './ohlc-import.js';
 import { renderPatterns } from './patterns.js';
 import { state } from './state.js';
 import { ruleEditRowHTML } from './strategy-notes.js';
 import { reportRowHTML, tradeRowHTML } from './trades-list.js';
-import { $, debounce } from './utils.js';
+import { $, dayKey, debounce } from './utils.js';
 import { addAccRow, saveAccounts, switchAccount } from './accounts.js';
 import { closeAiChat, exportAiData, getAiInsight, openAiChat, saveAiChatModel, saveAiInsightModel, sendAiChatMessage } from './ai.js';
 import { calMove, exportDayJson, showDay } from './calendar.js';
@@ -19,10 +20,54 @@ import { delOhlc, goToOhlcCoverage, importOHLC, runOhlcCoverageCheck } from './o
 import { addMultRow, exportBackup, resetAiReviewPrompt, restoreBackup, saveAiReviewPrompt, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
 import { toggleTheme } from './state.js';
 import { renderStats } from './stats.js';
-import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
+import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtHandleDrop, rtHandlePaste, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
 import { toggleMobileNav } from './tabs.js';
 import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveAiReviewModel, saveTrade } from './trade-modal.js';
 import { delTrade, renderReports, renderTrades } from './trades-list.js';
+
+/* Rich-text toolbar sa používa na viacerých miestach (poznámky stratégie, denník).
+   Väzby sú preto v jednej funkcii, ktorá sa navesí na ľubovoľný kontajner - vnútri
+   sa vždy pracuje s inštanciou, v ktorej používateľ klikol (.rtWrap). */
+export function bindRichText(box){
+  if (!box || box.dataset.rtBound) return;
+  box.dataset.rtBound = '1';
+  box.addEventListener('mousedown', function (event) {
+    if (event.target.closest('.rtHeadingSel')) { event.stopPropagation(); return; }
+    if (event.target.closest('.rtToolbar button, .rtColorRow')) event.preventDefault();
+  });
+  box.addEventListener('click', function (event) {
+    const el = event.target.closest('[data-action]');
+    if (!el) return;
+    switch (el.dataset.action) {
+      case 'rtExec': rtExec(el.dataset.cmd); break;
+      case 'rtExecClose': rtExec(el.dataset.cmd); rtCloseDropdowns(); break;
+      case 'rtLink': rtLink(); break;
+      case 'rtFontSizeStep': rtFontSizeStep(parseInt(el.dataset.delta, 10)); break;
+      case 'rtToggleDropdown': rtToggleDropdown(el.dataset.target, event); break;
+      case 'clickImgFile': { const w = el.closest('.rtWrap'); if (w) w.querySelector('.rtImgFile').click(); break; }
+      case 'rtApplyColor': rtApplyColor(el.dataset.cmd, el.dataset.val); break;
+      case 'openCustomColor': { const w = el.closest('.rtWrap'); if (w) w.querySelector('.rtCustomColor_' + el.dataset.kind).click(); break; }
+    }
+  });
+  box.addEventListener('change', function (event) {
+    const t = event.target;
+    if (t.classList.contains('rtHeadingSel')) rtExec('formatBlock', t.value);
+    else if (t.classList.contains('rtFontNameSel')) rtExec('fontName', t.value);
+    else if (t.classList.contains('rtFontSizeBox')) rtSetFontSize(t.value);
+    else if (t.classList.contains('rtImgFile')) { rtInsertImageFile(t.files); t.value = ''; }
+    else if (t.classList.contains('rtCustomColor')) rtApplyColor(t.dataset.cmd, t.value);
+  });
+  /* paste/drop bublajú, takže stačí jeden listener na kontajner (na rozdiel od blur) */
+  box.addEventListener('paste', function (event) {
+    if (event.target.closest && event.target.closest('[data-rt-editor]')) rtHandlePaste(event);
+  });
+  box.addEventListener('drop', function (event) {
+    if (event.target.closest && event.target.closest('[data-rt-editor]')) rtHandleDrop(event);
+  });
+  box.addEventListener('dragover', function (event) {
+    if (event.target.closest && event.target.closest('[data-rt-editor]')) event.preventDefault();
+  });
+}
 
 export function bindStaticHandlers(){
 /* ================= Static event bindings (formerly inline on* attributes) ================= */
@@ -156,6 +201,36 @@ document.getElementById('calDayPanel').addEventListener('click', function(event)
   if (btn) exportDayJson(btn.dataset.day);
 });
 
+/* denník: editor zhrnutia dňa - rovnaké akcie v kalendári aj v záložke Denník,
+   scope rozlišuje, z ktorej inštancie editora sa čítajú polia. */
+function bindDayNoteActions(box){
+  box.addEventListener('click', async function(event){
+    const el = event.target.closest('[data-action]');
+    if (!el) return;
+    const date = el.dataset.date;
+    const scope = el.dataset.scope;
+    switch (el.dataset.action) {
+      case 'setDayRating': setDayRating(date, parseInt(el.dataset.rating, 10) || 0, scope); break;
+      case 'saveDayNote': await saveDayNoteFromForm(date, scope); renderCalendar(); renderJournal(); break;
+      case 'deleteDayNote':
+        if (await ask('Vymazať zhrnutie tohto dňa?')) { await deleteDayNote(date); renderCalendar(); renderJournal(); }
+        break;
+      case 'openJournalDay': openJournalDay(date); break;
+      case 'closeJournalDay': closeJournalDay(); break;
+    }
+  });
+  bindRichText(box);
+}
+bindDayNoteActions(document.getElementById('calDayPanel'));
+bindDayNoteActions(document.getElementById('journalList'));
+document.getElementById('journalSearch').addEventListener('input', debounce(function(event){
+  state.journalSearch = this.value;
+  renderJournal();
+}, 200));
+document.getElementById('btnJournalToday').addEventListener('click', function(event){
+  openJournalDay(dayKey(Math.floor(Date.now() / 1000)));
+});
+
 /* reports table rows (trades-list.js reportRowHTML) */
 document.getElementById('reportsBody').addEventListener('click', function(event){
   const row = event.target.closest('tr[data-trade-id]');
@@ -170,7 +245,7 @@ document.getElementById('reportsBody').addEventListener('click', function(event)
   const box = document.getElementById('strategyCards');
 
   box.addEventListener('mousedown', function (event) {
-    if (event.target.closest('#rtHeadingSel')) { event.stopPropagation(); return; }
+    if (event.target.closest('.rtHeadingSel')) { event.stopPropagation(); return; }
     if (event.target.closest('.rtToolbar button, .rtColorRow')) event.preventDefault();
   });
 
@@ -202,19 +277,19 @@ document.getElementById('reportsBody').addEventListener('click', function(event)
       case 'rtLink': rtLink(); break;
       case 'rtFontSizeStep': rtFontSizeStep(parseInt(el.dataset.delta, 10)); break;
       case 'rtToggleDropdown': rtToggleDropdown(el.dataset.target, event); break;
-      case 'clickImgFile': document.getElementById('rtImgFile').click(); break;
+      case 'clickImgFile': { const w = el.closest('.rtWrap'); if (w) w.querySelector('.rtImgFile').click(); break; }
       case 'rtApplyColor': rtApplyColor(el.dataset.cmd, el.dataset.val); break;
-      case 'openCustomColor': document.getElementById('rtCustomColor_' + el.dataset.kind).click(); break;
+      case 'openCustomColor': { const w = el.closest('.rtWrap'); if (w) w.querySelector('.rtCustomColor_' + el.dataset.kind).click(); break; }
     }
   });
 
   box.addEventListener('change', function (event) {
     const t = event.target;
-    if (t.id === 'rtHeadingSel') rtExec('formatBlock', t.value);
-    else if (t.id === 'rtFontNameSel') rtExec('fontName', t.value);
-    else if (t.id === 'rtFontSizeBox') rtSetFontSize(t.value);
-    else if (t.id === 'rtImgFile') { rtInsertImageFile(t.files); t.value = ''; }
-    else if (t.id === 'rtCustomColor_fg' || t.id === 'rtCustomColor_bg') rtApplyColor(t.dataset.cmd, t.value);
+    if (t.classList.contains('rtHeadingSel')) rtExec('formatBlock', t.value);
+    else if (t.classList.contains('rtFontNameSel')) rtExec('fontName', t.value);
+    else if (t.classList.contains('rtFontSizeBox')) rtSetFontSize(t.value);
+    else if (t.classList.contains('rtImgFile')) { rtInsertImageFile(t.files); t.value = ''; }
+    else if (t.classList.contains('rtCustomColor')) rtApplyColor(t.dataset.cmd, t.value);
   });
 
   /* drag & drop / touch reordering of strategy detail rule rows (ruleEditRowHTML) */

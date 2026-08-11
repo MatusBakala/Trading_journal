@@ -5,7 +5,7 @@ import { gdriveResetLastLocalChange, renderGDriveStatus, scheduleAutoSync } from
 import { ask } from './i18n.js';
 import { renderAfterTradeChange, renderAll, saveSettings } from './init.js';
 import { state } from './state.js';
-import { seedDefaultStrategies } from './strategy-notes.js';
+import { clearDefaultStrategySeedState, seedDefaultStrategies } from './strategy-notes.js';
 import { DEFAULT_TRADE_REVIEW_PROMPT } from './trade-modal.js';
 import { $, num, toast } from './utils.js';
 
@@ -90,10 +90,10 @@ export async function buildBackupPayload(){
   const settingsOut=Object.assign({},state.settings);
   delete settingsOut.gClientId; // client id sa nezálohuje (per-device/per-deployment hodnota)
   delete settingsOut.anthropicKey; // API kľúč sa nezálohuje (citlivý údaj, len pre toto zariadenie)
-  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades:state.trades,ohlc:state.ohlcSets,shots:shotsOut,strategies:state.strategies,stratShots:stratShotsOut};
+  return {version:1,updatedAt:Date.now(),exported:new Date().toISOString(),settings:settingsOut,trades:state.trades,ohlc:state.ohlcSets,shots:shotsOut,strategies:state.strategies,stratShots:stratShotsOut,dayNotes:state.dayNotes};
 }
 export async function applyBackupPayload(p){
-  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');await idbClear('strategies');await idbClear('stratShots');
+  await idbClear('trades');await idbClear('shots');await idbClear('ohlc');await idbClear('strategies');await idbClear('stratShots');await idbClear('dayNotes');
   const idMap={};
   for(const t of (p.trades||[])){
     const oldId=t.id;delete t.id;
@@ -106,6 +106,9 @@ export async function applyBackupPayload(p){
   }
   for(const d of (p.ohlc||[]))await idbPut('ohlc',d);
   for(const st of (p.strategies||[]))await idbPut('strategies',st);
+  // Obsah `strategies` je odteraz zo zálohy, nie z DEFAULT_STRATEGIES - kv značky
+  // o seedovaní by preto klamali a seedDefaultStrategies() by sa preskočilo.
+  await clearDefaultStrategySeedState();
   for(const s of (p.stratShots||[]))await idbAdd('stratShots',{strategyId:s.strategyId,blob:b64ToBlob(s.data),added:Date.now()});
   if(p.settings){
     const keepClientId=state.settings.gClientId,keepAnthropicKey=state.settings.anthropicKey;
@@ -114,9 +117,12 @@ export async function applyBackupPayload(p){
     state.settings.anthropicKey=keepAnthropicKey;
     await saveSettings();
   }
+  // dayNotes pribudli neskôr - staršia záloha ich nemá, vtedy zostane denník prázdny
+  for(const n of (p.dayNotes||[]))await idbPut('dayNotes',n);
   state.trades=p.trades||[];
   state.ohlcSets=p.ohlc||[];
   state.strategies=p.strategies||[];
+  state.dayNotes=p.dayNotes||[];
 }
 export async function exportBackup(){
   const payload=await buildBackupPayload();
@@ -133,6 +139,7 @@ export async function restoreBackup(input){
   const text=await file.text();
   let p;try{p=JSON.parse(text);}catch(e){toast('Neplatný JSON');return;}
   await applyBackupPayload(p);
+  await seedDefaultStrategies(); // built-in stratégie z kódu vyhrávajú nad starou zálohou
   renderAll();
   scheduleAutoSync();
   input.value='';
@@ -142,11 +149,9 @@ export async function wipeAll(){
   if(!await ask('Naozaj vymazať VŠETKY obchody, screenshoty a dáta?'))return;
   if(!await ask('Posledné varovanie – táto akcia sa nedá vrátiť. Vymazať?'))return;
   await idbClear('trades');await idbClear('shots');await idbClear('ohlc');
-  await idbClear('strategies');await idbClear('stratShots');
-  await idbDel('kv','defaultStrategiesSeeded');
-  await idbDel('kv','defaultStrategiesRevision');
-  await idbDel('kv','defaultStrategiesFingerprint');
-  state.trades=[];state.ohlcSets=[];state.strategies=[];
+  await idbClear('strategies');await idbClear('stratShots');await idbClear('dayNotes');
+  await clearDefaultStrategySeedState();
+  state.trades=[];state.ohlcSets=[];state.strategies=[];state.dayNotes=[];
   await gdriveResetLastLocalChange();
   await seedDefaultStrategies();
   renderAll();

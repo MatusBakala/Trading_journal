@@ -1,8 +1,11 @@
 /* ================= IndexedDB ================= */
 export const DB={db:null};
 export function idbOpen(){return new Promise((res,rej)=>{
-  const r=indexedDB.open('tjournal',3);
+  const r=indexedDB.open('tjournal',4);
   r.onupgradeneeded=e=>{const d=e.target.result;
+    // dayNotes: jeden zápis na deň, kľúč je dátum 'YYYY-MM-DD' (dayKey()), takže
+    // uloženie je prirodzene idempotentné - put() rovnaký deň prepíše, nezduplikuje.
+    if(!d.objectStoreNames.contains('dayNotes'))d.createObjectStore('dayNotes',{keyPath:'date'});
     if(!d.objectStoreNames.contains('trades'))d.createObjectStore('trades',{keyPath:'id',autoIncrement:true});
     if(!d.objectStoreNames.contains('shots')){const s=d.createObjectStore('shots',{keyPath:'id',autoIncrement:true});s.createIndex('tradeId','tradeId');}
     if(!d.objectStoreNames.contains('ohlc'))d.createObjectStore('ohlc',{keyPath:'key'});
@@ -12,6 +15,10 @@ export function idbOpen(){return new Promise((res,rej)=>{
   };
   r.onsuccess=()=>{DB.db=r.result;res();};
   r.onerror=()=>rej(r.error);
+  /* Keď je appka otvorená v inej karte so staršou verziou DB, prehliadok upgrade
+     nespustí a `open` ostane ticho visieť - appka by sa načítala ako prázdna stránka
+     bez akejkoľvek chybovej hlášky. Radšej to zrušíme a povieme, čo s tým. */
+  r.onblocked=()=>rej(new Error('Trading Journal je otvorený v inej karte alebo okne so staršou verziou databázy. Zavri ostatné karty s appkou a obnov túto stránku.'));
 });}
 export function store(n,m){return DB.db.transaction(n,m||'readonly').objectStore(n);}
 export function pReq(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
