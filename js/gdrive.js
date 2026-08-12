@@ -4,7 +4,7 @@ import { renderAll, saveSettings } from './init.js';
 import { applyBackupPayload, buildBackupPayload } from './settings.js';
 import { state } from './state.js';
 import { seedDefaultStrategies } from './strategy-notes.js';
-import { $, esc, toast } from './utils.js';
+import { $, esc, fmtDT, toast } from './utils.js';
 
 /* ================= Google Drive sync ================= */
 export const GDRIVE_FILE_NAME='trading-journal-backup.json';
@@ -102,7 +102,7 @@ export function snapshotDateKey(d){
 export async function gdriveListSnapshots(){
   // appDataFolder obsahuje len naše súbory, takže je lacnejšie a spoľahlivejšie
   // vylistovať všetko a filtrovať lokálne než sa spoliehať na Drive "contains"
-  const url='https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent('trashed=false')+'&fields=files(id,name)&pageSize=200';
+  const url='https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q='+encodeURIComponent('trashed=false')+'&fields=files(id,name,modifiedTime)&pageSize=200';
   const res=await gdriveApi(url);
   if(!res.ok)throw new Error('Zoznam záloh zlyhal ('+res.status+')');
   const data=await res.json();
@@ -133,6 +133,16 @@ export async function gdriveEnsureDailySnapshot(payload){
   return true;
 }
 export function gdriveLastSnapshotDate(){return gLastSnapshotDate;}
+/** "12.08.2026 o 19:34" - dátum zo súboru + čas uloženia z Drive (ak ho Drive dal). */
+export function snapshotLabel(date,modifiedTime){
+  const dm=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const den=dm?`${dm[3]}.${dm[2]}.${dm[1]}`:date;
+  if(!modifiedTime)return den;
+  const d=new Date(modifiedTime);
+  if(isNaN(d))return den;
+  const loc=state.settings.lang==='en'?'en-GB':'sk-SK';
+  return den+' · '+d.toLocaleTimeString(loc,{hour:'2-digit',minute:'2-digit'});
+}
 export async function gdriveShowSnapshots(){
   const box=$('gdriveSnapshotList');
   if(!box)return;
@@ -145,9 +155,12 @@ export async function gdriveShowSnapshots(){
     box.innerHTML=`<div class="hint" style="margin-bottom:6px">${esc(tr('Obnovenie prepíše aktuálne dáta v tomto prehliadači.'))}</div>`+
       files.map(f=>{
         const date=f.name.slice(GDRIVE_SNAPSHOT_PREFIX.length).replace(/\.json$/,'');
+        // Názov súboru nesie len dátum; presný čas uloženia vie povedať až Drive
+        // (modifiedTime) - bez neho sa nedá rozlíšiť, ktorá záloha z dňa je novšia.
+        const label=snapshotLabel(date,f.modifiedTime);
         return `<div style="display:flex;align-items:center;gap:10px;padding:4px 0">
-          <span>${esc(date)}</span>
-          <button type="button" class="btn secondary small" data-action="restoreSnapshot" data-id="${esc(f.id)}" data-date="${esc(date)}">${esc(tr('Obnoviť'))}</button>
+          <span>${esc(label)}</span>
+          <button type="button" class="btn secondary small" data-action="restoreSnapshot" data-id="${esc(f.id)}" data-date="${esc(label)}">${esc(tr('Obnoviť'))}</button>
         </div>`;
       }).join('');
   }catch(e){
@@ -237,7 +250,13 @@ export function scheduleAutoSync(){
   clearTimeout(gSyncTimer);
   gSyncTimer=setTimeout(()=>{gdriveSyncNow(false);},4000);
 }
-export async function gdriveSyncNow(isInitial){
+/**
+ * @param {boolean} isInitial  prvá synchronizácia v tejto session (rozhoduje smer)
+ * @param {boolean} [askBeforeOverwrite]  pri ručnom pripojení sa pred prepísaním
+ *   existujúcej zálohy na Drive spýtaj - je to jediná nezvratná operácia a práve
+ *   pri prvom pripojení býva lokálny stav neznámy (starý prehliadač, iné zariadenie).
+ */
+export async function gdriveSyncNow(isInitial,askBeforeOverwrite){
   if(!state.settings.gConnected||!state.settings.gClientId)return;
   if(gSyncing)return;
   gSyncing=true;
@@ -255,7 +274,19 @@ export async function gdriveSyncNow(isInitial){
         const {DEFAULT_STRATEGIES}=await import('./data/default-strategies.js');
         const builtInNames=new Set(DEFAULT_STRATEGIES.map(s=>s.name));
         const hasUserData=state.trades.length>0||state.strategies.some(s=>!builtInNames.has(s.name));
-        if(shouldUploadOnConnect(hasUserData,localChanged,remoteUpdated)){
+        let doUpload=shouldUploadOnConnect(hasUserData,localChanged,remoteUpdated);
+        if(doUpload&&askBeforeOverwrite){
+          const kedyRemote=remoteUpdated?fmtDT(Math.floor(remoteUpdated/1000)):'?';
+          const kedyLokal=localChanged?fmtDT(Math.floor(localChanged/1000)):'?';
+          doUpload=await ask(
+            tr('Na Google Drive už je záloha z')+' '+kedyRemote+'.\n\n'+
+            tr('V tomto prehliadači máš')+' '+state.trades.length+' '+tr('obchodov')+', '+
+            tr('naposledy zmenené')+' '+kedyLokal+'.\n\n'+
+            tr('OK = prepísať zálohu na Drive týmito dátami.')+'\n'+
+            tr('Zrušiť = stiahnuť zálohu z Drive (bezpečnejšie).')
+          );
+        }
+        if(doUpload){
           uploaded=await buildBackupPayload();
           await gdriveUpload(uploaded);
         }else{
@@ -300,7 +331,7 @@ export async function gdriveConnect(){
     await saveSettings();
     toast('Pripojené ku Google Drive');
     renderGDriveStatus();
-    await gdriveSyncNow(true);
+    await gdriveSyncNow(true,true);
   }catch(e){
     toast('Pripojenie zlyhalo: '+(e&&e.message?e.message:'neznáma chyba'));
     renderGDriveStatus(e);

@@ -364,6 +364,15 @@ Object.assign(I18N_EN,{
 'Zhrnutie celého dňa – ako si sa cítil, čo ovplyvnilo tvoje rozhodovanie, čo si sa naučil. Klikni na zápis a otvorí sa ti na písanie tu, bez obchodov.':'A summary of the whole day - how you felt, what influenced your decisions, what you learned. Click an entry to open it for writing right here, without the trades.',
 });
 
+Object.assign(I18N_EN,{
+// -- Google Drive: smer synchronizácie a čas záloh --
+'Na Google Drive už je záloha z':'Google Drive already has a backup from',
+'V tomto prehliadači máš':'In this browser you have',
+'naposledy zmenené':'last changed',
+'OK = prepísať zálohu na Drive týmito dátami.':'OK = overwrite the Drive backup with this data.',
+'Zrušiť = stiahnuť zálohu z Drive (bezpečnejšie).':'Cancel = download the backup from Drive (safer).',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],

@@ -10,6 +10,7 @@ import { renderSettings } from './settings.js';
 import { applyTheme, state } from './state.js';
 import { renderStats } from './stats.js';
 import { renderStrategies, seedDefaultStrategies } from './strategy-notes.js';
+import { applyRouteFromHash } from './tabs.js';
 import { bindGlobal } from './trade-modal.js';
 import { refreshSymbolFilter, renderReports, renderTrades } from './trades-list.js';
 import { $ } from './utils.js';
@@ -50,6 +51,8 @@ export async function init(){
   $('langSelect').value=state.settings.lang||'sk';
   document.documentElement.lang=state.settings.lang||'sk';
   if(state.settings.lang==='en')withI18nBusy(()=>translateDOM(document.body,'fwd'));
+  // až po načítaní dát - sekcia z URL si vyžiada vykreslenie (napr. Štatistiky)
+  applyRouteFromHash();
   state.gBootDone=true;
   if(state.settings.gConnected&&state.settings.gClientId){
     setTimeout(()=>{gdriveSyncNow(true).catch(e=>console.error('Initial Drive sync failed',e));},1000);
