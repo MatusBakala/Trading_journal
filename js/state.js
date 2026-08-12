@@ -59,6 +59,10 @@ export function applyTheme() {
   document.documentElement.dataset.theme = state.settings.theme === 'light' ? 'light' : 'dark';
   const btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = state.settings.theme === 'light' ? '☀️' : '🌙';
+  // Farba systémovej lišty pri spustení z plochy (PWA) musí ísť s témou appky,
+  // inak svieti tmavý pruh nad svetlým rozhraním.
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute('content', state.settings.theme === 'light' ? '#ffffff' : '#151b23');
 }
 
 export function toggleTheme() {
