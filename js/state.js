@@ -30,6 +30,7 @@ export const state = {
   dayNotes: [], // denník: {date:'YYYY-MM-DD', rating, mood, wentWell, toImprove, text, updated}
   journalSearch: '',
   journalOpenDate: null, // deň otvorený na písanie v záložke Denník
+  tradeSort: { key: 'time', dir: -1 }, // radenie tabuľky obchodov (-1 = zostupne)
   calDate: new Date(),
   calSelectedDay: null,
   eqChartObj: null,
@@ -58,6 +59,10 @@ export function applyTheme() {
   document.documentElement.dataset.theme = state.settings.theme === 'light' ? 'light' : 'dark';
   const btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = state.settings.theme === 'light' ? '☀️' : '🌙';
+  // Farba systémovej lišty pri spustení z plochy (PWA) musí ísť s témou appky,
+  // inak svieti tmavý pruh nad svetlým rozhraním.
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute('content', state.settings.theme === 'light' ? '#ffffff' : '#151b23');
 }
 
 export function toggleTheme() {

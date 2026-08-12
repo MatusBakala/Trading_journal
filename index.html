@@ -7,6 +7,17 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Trading Journal</title>
+<!-- Ikona v karte prehliadača + "Pridať na plochu". Manifest dáva appke vlastnú ikonu
+     a spustenie bez adresného riadku; žiadna cache sa tým nezavádza (to by robil až
+     service worker, ktorý zámerne nemáme - kolidoval by s verzovaním v app-version.json). -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#151b23">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Journal">
 <script>
 /* Auto-update after deploy:
    1) Read app-version.json (never cached)
@@ -283,11 +294,13 @@ window.__TJ_BOOT__=(async function(){
     <span id="fCount" class="hint"></span>
   </div>
   <div class="filters" id="tagBar" style="display:none"></div>
-  <div class="panel" style="overflow-x:auto">
+  <div class="panel">
+    <div class="tableScroll">
     <table>
-      <thead><tr><th>Dátum</th><th>Symbol</th><th>Smer</th><th>Množstvo</th><th>Vstup</th><th>Výstup</th><th>Trvanie</th><th>P&L</th><th>R</th><th>Session</th><th>Stratégia</th><th>Tagy</th><th></th></tr></thead>
+      <thead><tr><th class="sortable" data-sort="time">Dátum<span class="sortArrow">↓</span></th><th class="sortable" data-sort="symbol">Symbol<span class="sortArrow"></span></th><th>Smer</th><th class="sortable" data-sort="qty">Množstvo<span class="sortArrow"></span></th><th>Vstup</th><th>Výstup</th><th class="sortable" data-sort="dur">Trvanie<span class="sortArrow"></span></th><th class="sortable" data-sort="pnl">P&L<span class="sortArrow"></span></th><th class="sortable" data-sort="r">R<span class="sortArrow"></span></th><th>Session</th><th>Stratégia</th><th>Tagy</th><th></th></tr></thead>
       <tbody id="tradesBody"></tbody>
     </table>
+    </div>
   </div>
 </section>
 
@@ -493,7 +506,7 @@ window.__TJ_BOOT__=(async function(){
 
 <!-- TRADE MODAL -->
 <div class="overlay" id="tradeOverlay">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tmTitle">
     <h2 id="tmTitle">Obchod</h2>
     <div class="formgrid">
       <label class="f">Symbol *<input id="tSymbol" placeholder="NQ, GC..."></label>
@@ -583,7 +596,7 @@ window.__TJ_BOOT__=(async function(){
 
 <!-- STRATEGY MODAL -->
 <div class="overlay" id="strategyOverlay">
-  <div class="modal" style="max-width:640px">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="stmTitle" style="max-width:640px">
     <h2 id="stmTitle">Stratégia</h2>
     <label class="f" style="margin-bottom:12px">Názov *<input id="stName" placeholder="napr. VWAP Reversal, ORB Breakout..."></label>
     <label class="f" style="margin-bottom:14px">Popis / kontext<textarea id="stDesc" rows="3" placeholder="Kedy a prečo túto stratégiu používaš, na akých symboloch/timeframe..."></textarea></label>
@@ -602,7 +615,7 @@ window.__TJ_BOOT__=(async function(){
 <div id="toast"></div>
 
 <div class="overlay" id="confirmOverlay">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmMessage" style="max-width:420px">
     <p id="confirmMessage" style="margin:0 0 18px;white-space:pre-wrap"></p>
     <div style="display:flex;justify-content:flex-end;gap:8px">
       <button type="button" class="btn secondary" id="confirmCancelBtn">Zrušiť</button>
@@ -613,7 +626,7 @@ window.__TJ_BOOT__=(async function(){
 
 <!-- AI CHAT -->
 <div class="overlay" id="aiChatOverlay">
-  <div class="modal" style="max-width:680px">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:680px">
     <h2>💬 AI Chat</h2>
     <div class="filters">
       <label class="f">Model<select id="aiChatModel">

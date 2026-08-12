@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="512" height="512">
+  <!-- Zdroj ikon appky. Rovnaké logo ako v hlavičke, ale na celú plochu (bez zaoblenia
+       a bez priehľadného okraja): iOS aj Android si tvar zaokrúhlia sami, a plné pozadie
+       je zároveň podmienka pre "maskable" ikonu na Androide. Šípka je posunutá do stredu,
+       aby ju orezanie do kruhu nezasiahlo. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5b8def"/>
+      <stop offset="1" stop-color="#7c5bef"/>
+    </linearGradient>
+  </defs>
+  <rect width="24" height="24" fill="url(#g)"/>
+  <g transform="translate(0.5,0.75)" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M5 15.5L9.5 10.5L12.5 13.5L17.5 7.5"/>
+    <path d="M13.5 7H18V11.5"/>
+  </g>
+</svg>

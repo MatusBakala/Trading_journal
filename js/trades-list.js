@@ -80,7 +80,34 @@ export function filteredTrades(){
   return applyCommonFilters(accTrades(),'f',tagFilter).filter(t=>{
     if(q){const hay=((t.notes||'')+' '+(t.tags||[]).join(' ')+' '+(t.tagsNeg||[]).join(' ')+' '+t.symbol).toLowerCase();if(!hay.includes(q))return false;}
     return true;
-  }).sort((a,b)=>tTime(b)-tTime(a));
+  }).sort(tradeSortCmp);
+}
+/* Radenie tabuľky obchodov. Kľúče zodpovedajú data-sort v hlavičke; neznámy kľúč
+   spadne späť na čas, aby zlý stav nikdy neurobil prázdnu alebo náhodnú tabuľku. */
+export function tradeSortValue(t,key){
+  switch(key){
+    case 'symbol': return String(t.symbol||'').toUpperCase();
+    case 'qty': return t.qty??1;
+    case 'pnl': return computePnl(t);
+    case 'r': return riskR(t);
+    case 'dur': return (t.tExit&&t.tEntry)?(t.tExit-t.tEntry):null;
+    default: return tTime(t);
+  }
+}
+export function tradeSortCmp(a,b){
+  const {key,dir}=state.tradeSort||{key:'time',dir:-1};
+  const va=tradeSortValue(a,key),vb=tradeSortValue(b,key);
+  // prázdne hodnoty (napr. R bez stopky) idú vždy na koniec, nech sa radí akokoľvek
+  if(va==null&&vb==null)return tTime(b)-tTime(a);
+  if(va==null)return 1;
+  if(vb==null)return -1;
+  if(typeof va==='string')return dir*va.localeCompare(vb);
+  return dir*(va-vb);
+}
+export function setTradeSort(key){
+  const cur=state.tradeSort||{key:'time',dir:-1};
+  state.tradeSort=cur.key===key?{key,dir:-cur.dir}:{key,dir:key==='symbol'?1:-1};
+  renderTrades();
 }
 export function tradeRowHTML(t){
   const pnl=computePnl(t);
@@ -114,6 +141,13 @@ export function renderTrades(){
   const list=filteredTrades();
   $('tradesBody').innerHTML=list.length?list.map(tradeRowHTML).join(''):'<tr><td colspan="13" class="hint" style="cursor:default">Žiadne obchody. Pridaj ručne alebo importuj CSV.</td></tr>';
   $('fCount').textContent=list.length+' obchodov';
+  const {key,dir}=state.tradeSort||{key:'time',dir:-1};
+  document.querySelectorAll('#tab-trades th.sortable').forEach(th=>{
+    const on=th.dataset.sort===key;
+    th.classList.toggle('sorted',on);
+    const arrow=th.querySelector('.sortArrow');
+    if(arrow)arrow.textContent=on?(dir===1?'↑':'↓'):'';
+  });
 }
 export function commentedTrades(){
   const q=($('rSearch')?$('rSearch').value:'').toLowerCase().trim();
