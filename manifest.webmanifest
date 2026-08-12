@@ -4,7 +4,7 @@
   "description": "Denník obchodov – analýza tradov, štatistiky, stratégie a zhrnutie dňa.",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "browser",
   "orientation": "any",
   "background_color": "#0d1117",
   "theme_color": "#151b23",
