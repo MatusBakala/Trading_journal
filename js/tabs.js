@@ -13,6 +13,9 @@ export function goToTab(name){
   if(name==='dashboard')renderDashboard();
   if(name==='stats')renderStats();
   if(name==='reports')renderReports();
+  // Bez resetu sa nová sekcia otvorí v tej istej výške, v akej bola predošlá -
+  // napr. zoznam obchodov uprostred tabuľky, čo vyzerá ako že sa nič nestalo.
+  window.scrollTo(0,0);
   closeMobileNav();
 }
 document.querySelectorAll('nav button').forEach(b=>{

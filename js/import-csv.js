@@ -149,6 +149,14 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     if(cands.length)t.stopPrice=cands[0].stopPrice;
   }
   const rnd=x=>Math.round(x*1e6)/1e6;
+  /* Priemerná cena zo scale-inu legitímne padne medzi ticky, ale 4405.966667 sa
+     nedá čítať. Zaokrúhli sa na o jedno desatinné miesto viac, než majú samotné
+     fily - presnosť ostane, zápis je ľudský. */
+  const decimalsOf=v=>{const m=String(v).split('.')[1];return m?m.length:0;};
+  const avgPrice=(notional,qty,legs)=>{
+    const d=Math.min(6,Math.max(...legs.map(l=>decimalsOf(l.price)),0)+1);
+    return +(notional/qty).toFixed(d);
+  };
   // EntryLegs/ExitLegs sú interné, generované stĺpce (JSON pole {qty,price,t} na fill) -
   // nemapujú sa v UI (nie sú v IMPORT_FIELDS), doImport() ich vyzdvihne podľa presného
   // názvu hlavičky a napojí na obchod, aby excursionFor mohol počítať MAE/MFE podľa
@@ -158,8 +166,8 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     t.symbol,
     t.dir===1?'Buy':'Sell',
     String(t.entryQty),
-    String(rnd(t.entryNotional/t.entryQty)),
-    t.exitQty?String(rnd(t.exitNotional/t.exitQty)):'',
+    String(avgPrice(t.entryNotional,t.entryQty,t.entryLegs)),
+    t.exitQty?String(avgPrice(t.exitNotional,t.exitQty,t.exitLegs)):'',
     tsToLocalInput(t.tEntry),
     t.tExit?tsToLocalInput(t.tExit):'',
     String(rnd(t.fees||0)),

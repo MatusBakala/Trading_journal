@@ -30,6 +30,7 @@ export const state = {
   dayNotes: [], // denník: {date:'YYYY-MM-DD', rating, mood, wentWell, toImprove, text, updated}
   journalSearch: '',
   journalOpenDate: null, // deň otvorený na písanie v záložke Denník
+  tradeSort: { key: 'time', dir: -1 }, // radenie tabuľky obchodov (-1 = zostupne)
   calDate: new Date(),
   calSelectedDay: null,
   eqChartObj: null,

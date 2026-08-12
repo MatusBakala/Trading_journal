@@ -23,7 +23,7 @@ import { renderStats } from './stats.js';
 import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtHandleDrop, rtHandlePaste, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
 import { toggleMobileNav } from './tabs.js';
 import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveAiReviewModel, saveTrade } from './trade-modal.js';
-import { delTrade, renderReports, renderTrades } from './trades-list.js';
+import { delTrade, renderReports, renderTrades, setTradeSort } from './trades-list.js';
 
 /* Rich-text toolbar sa používa na viacerých miestach (poznámky stratégie, denník).
    Väzby sú preto v jednej funkcii, ktorá sa navesí na ľubovoľný kontajner - vnútri
@@ -93,6 +93,10 @@ document.getElementById('fFrom').addEventListener('change', function(event){ ren
 document.getElementById('fTo').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fSearch').addEventListener('input', debounce(function(event){ renderTrades(); }, 250));
 document.getElementById('btnAddStrategy').addEventListener('click', function(event){ openStrategy(null); });
+/* radenie tabuľky obchodov klikom na hlavičku stĺpca */
+document.querySelectorAll('#tab-trades th.sortable').forEach(function(th){
+  th.addEventListener('click', function(){ setTradeSort(th.dataset.sort); });
+});
 document.getElementById('rSymbol').addEventListener('change', function(event){ renderReports(); });
 document.getElementById('rDir').addEventListener('change', function(event){ renderReports(); });
 document.getElementById('rSession').addEventListener('change', function(event){ renderReports(); });
@@ -161,10 +165,29 @@ document.getElementById('eqModeBar').addEventListener('click', function(event){
   if (btn) toggleEqMode(btn.dataset.eqmode);
 });
 
+/* Zamknutie scrollu pozadia a otvorenie modálu od vrchu. Rieši sa centrálne
+   sledovaním triedy 'open', aby na to nemuselo myslieť každé miesto, ktoré modál
+   otvára (je ich osem a ľahko sa na niektoré zabudne). */
+(function(){
+  const overlays = Array.from(document.querySelectorAll('.overlay, #lightbox'));
+  const sync = () => {
+    document.body.classList.toggle('modalOpen', overlays.some(o => o.classList.contains('open')));
+  };
+  const obs = new MutationObserver(muts => {
+    for (const m of muts) if (m.target.classList.contains('open')) m.target.scrollTop = 0;
+    sync();
+  });
+  overlays.forEach(o => obs.observe(o, { attributes: true, attributeFilter: ['class'] }));
+})();
+
 /* calendar day cells (calendar.js renderCalendar) */
 document.getElementById('calGrid').addEventListener('click', function(event){
   const cell = event.target.closest('[data-day]');
-  if (cell) showDay(cell.dataset.day);
+  if (!cell) return;
+  showDay(cell.dataset.day);
+  // detail dňa sa vykresľuje pod kalendárom - bez posunu to vyzerá, že sa nič nestalo
+  const panel = document.getElementById('calDayPanel');
+  if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 /* OHLC dataset "Vymazať" buttons (ohlc-import.js renderOhlcList) */
