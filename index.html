@@ -7,16 +7,20 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Trading Journal</title>
-<!-- Ikona v karte prehliadača + "Pridať na plochu". Manifest dáva appke vlastnú ikonu
-     a spustenie bez adresného riadku; žiadna cache sa tým nezavádza (to by robil až
-     service worker, ktorý zámerne nemáme - kolidoval by s verzovaním v app-version.json). -->
+<!-- Ikona v karte prehliadača + "Pridať na plochu". Žiadna cache sa tým nezavádza
+     (to by robil až service worker, ktorý zámerne nemáme - kolidoval by s verzovaním
+     v app-version.json).
+
+     Appka sa ZÁMERNE otvára v prehliadači, nie na celú obrazovku. V samostatnom režime
+     iOS otvorí prihlásenie do Googlu v oddelenom kontexte, ktorý nemá ako vrátiť token
+     späť do appky - Drive sync odtiaľ vždy zlyhá. Samostatný režim navyše dostane vlastné
+     úložisko oddelené od Safari, takže by vznikla druhá, nesynchronizovaná kópia dát.
+     Preto tu NIE JE apple-mobile-web-app-capable (na iOS o tom rozhoduje práve on,
+     nie "display" v manifeste) - keď ho niekto pridá späť, sync z plochy prestane fungovať. -->
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#151b23">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Journal">
 <script>
 /* Auto-update after deploy:
