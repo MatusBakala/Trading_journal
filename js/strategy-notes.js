@@ -1,6 +1,6 @@
 import { activeStartBalance } from './accounts.js';
 import { shotsByTrade, idbAdd, idbAll, idbDel, idbGet, idbPut, stratShotsByStrategy } from './db.js';
-import { scheduleAutoSync, gdriveSetLastLocalChange } from './gdrive.js';
+import { scheduleAutoSync } from './gdrive.js';
 import { ask, tr, trHtml } from './i18n.js';
 import { goToTab } from './tabs.js';
 import { renderTrades, tradeTableHTML } from './trades-list.js';
@@ -111,7 +111,11 @@ export async function seedDefaultStrategies(){
     await idbPut('kv',{k:'defaultStrategiesFingerprint',v:fp});
     await idbPut('kv',{k:'defaultStrategiesSeeded',v:true});
     await idbDel('kv','defaultStrategiesRevision');
-    if(typeof gdriveSetLastLocalChange==='function')gdriveSetLastLocalChange();
+    /* ZÁMERNE sa tu neoznačuje "lokálna zmena". Built-in stratégie si každé zariadenie
+       odvodí z kódu samo, takže sa nemusia prenášať zálohou - a keby sa tu značka
+       prepísala, zastaraný prehliadač by po aktualizácii appky vyzeral ako čerstvo
+       upravený a pri prvej synchronizácii by svojimi starými dátami prepísal novšiu
+       zálohu na Drive. Presne to sa raz stalo. */
   }
   await idbPut('kv',{k:'defaultStrategiesAppVersion',v:appVersion});
   await idbPut('kv',{k:'defaultStrategiesNames',v:DEFAULT_STRATEGIES.map(s=>s.name)});
