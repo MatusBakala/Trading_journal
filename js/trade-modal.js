@@ -472,6 +472,19 @@ export async function selectTf(tf){
   await fetchTfForTrade(tf);
 }
 /* ---- indicators ---- */
+/* Stacked EMAs playbook potrebuje 5/9/13/21 (+200) naraz, preto EMA berie zoznam
+   period, nie jednu. Zoradené od najrýchlejšej, aby farby v grafe išli v poradí. */
+export const EMA_COLORS=['#7c5bef','#5b8def','#26a69a','#e0a33e','#e91e63','#9e9e9e'];
+export function parsePeriods(raw,max){
+  const out=[];
+  for(const part of String(raw||'').split(/[,;\s]+/)){
+    const n=Math.round(Number(part));
+    if(!isFinite(n)||n<2||n>500)continue;
+    if(!out.includes(n))out.push(n);
+  }
+  out.sort((a,b)=>a-b);
+  return out.slice(0,max||EMA_COLORS.length);
+}
 export function renderIndBar(hasVolume){
   const bar=$('indBar');
   if(!bar)return;
@@ -480,10 +493,24 @@ export function renderIndBar(hasVolume){
     const periodInput=periodKey?`<input type="number" class="indPeriod" data-ind="${periodKey}" value="${state.modalIndicators[periodKey]}" min="2" max="500" title="Perióda" style="width:46px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px">`:'';
     return `<span style="display:inline-flex;align-items:center;gap:3px"><button type="button" class="tfBtn${state.modalIndicators[key]?' on':''}" data-ind="${key}"${disabled?' disabled title="Dataset nemá dáta o objeme (volume)"':''}>${label}</button>${periodInput}</span>`;
   };
-  bar.innerHTML=item('sma','SMA','smaPeriod')+item('ema','EMA','emaPeriod')+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod');
+  // EMA má textové pole (zoznam period), ostatné číselné
+  const emaItem=`<span style="display:inline-flex;align-items:center;gap:3px">`+
+    `<button type="button" class="tfBtn${state.modalIndicators.ema?' on':''}" data-ind="ema">EMA</button>`+
+    `<input type="text" class="indPeriods" data-ind="emaPeriods" value="${esc(state.modalIndicators.emaPeriods)}" `+
+    `title="${esc(tr('Periódy oddelené čiarkou, napr. 5,9,13,21,200'))}" `+
+    `style="width:86px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px"></span>`;
+  bar.innerHTML=item('sma','SMA','smaPeriod')+emaItem+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod')+item('maemfe','MAE/MFE');
   bar.querySelectorAll('.tfBtn').forEach(b=>{
     if(b.disabled)return;
     b.onclick=()=>{state.modalIndicators[b.dataset.ind]=!state.modalIndicators[b.dataset.ind];renderModalChart();};
+  });
+  bar.querySelectorAll('.indPeriods').forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.onchange=()=>{
+      const list=parsePeriods(inp.value);
+      state.modalIndicators.emaPeriods=list.length?list.join(','):state.modalIndicators.emaPeriods;
+      renderModalChart();
+    };
   });
   bar.querySelectorAll('.indPeriod').forEach(inp=>{
     inp.onclick=e=>e.stopPropagation();
@@ -653,8 +680,12 @@ export function renderModalChart(){
     s.setData(calcSMA(barsAll,state.modalIndicators.smaPeriod));
   }
   if(state.modalIndicators.ema){
-    const s=state.modalChart.addLineSeries({color:'#7c5bef',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
-    s.setData(calcEMA(barsAll,state.modalIndicators.emaPeriod));
+    // farby idú od najrýchlejšej EMA po najpomalšiu, nech je poradie v grafe čitateľné
+    parsePeriods(state.modalIndicators.emaPeriods).forEach((p,i)=>{
+      const s=state.modalChart.addLineSeries({color:EMA_COLORS[i%EMA_COLORS.length],lineWidth:2,
+        priceLineVisible:false,lastValueVisible:false,title:'EMA '+p});
+      s.setData(calcEMA(barsAll,p));
+    });
   }
   if(state.modalIndicators.vwap&&hasVolume){
     const s=state.modalChart.addLineSeries({color:'#26a69a',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
@@ -664,16 +695,44 @@ export function renderModalChart(){
   const near=ts=>{let best=barsAll[0].t,bd=Infinity;for(const b of barsAll){const d=Math.abs(b.t-ts);if(d<bd){bd=d;best=b.t;}}return tzOff(best);};
   const pnl=computePnl(t);
   const hasExit=isFinite(t.exit)&&!!t.tExit;
-  if(isFinite(t.entry)){
-    markers.push({time:near(t1),position:t.dir===1?'belowBar':'aboveBar',color:t.dir===1?'#26a69a':'#ef5350',shape:t.dir===1?'arrowUp':'arrowDown',size:2,text:tr('Vstup')+' '+t.entry});
-    series.createPriceLine({price:t.entry,color:'#5b8def',lineWidth:2,lineStyle:0,title:tr('Vstup')});
+  /* Pri škálovanom obchode kreslíme KAŽDÝ fill zvlášť. Jedna šípka na priemernej cene
+     je zavádzajúca - taká cena na trhu nemusela nikdy existovať. Priemer zostáva ako
+     vodorovná čiara, označená ø, aby bolo jasné, že je to priemer a nie fill. */
+  const legsOf=(legs,fallbackT,fallbackPrice)=>
+    (legs&&legs.length?legs:(isFinite(fallbackPrice)&&fallbackT?[{qty:t.qty,price:fallbackPrice,t:fallbackT}]:[]));
+  const entryFills=legsOf(t.entryLegs,t.tEntry,t.entry);
+  const exitFills=hasExit?legsOf(t.exitLegs,t.tExit,t.exit):[];
+  const fillText=(l,label)=>(entryFills.length+exitFills.length>2?`${l.qty}@${l.price}`:`${label} ${l.price}`);
+  for(const l of entryFills){
+    markers.push({time:near(l.t),position:t.dir===1?'belowBar':'aboveBar',color:t.dir===1?'#26a69a':'#ef5350',
+      shape:t.dir===1?'arrowUp':'arrowDown',size:2,text:fillText(l,tr('Vstup'))});
   }
-  if(hasExit){
-    markers.push({time:near(t2),position:t.dir===1?'aboveBar':'belowBar',color:pnl>=0?'#26a69a':'#ef5350',shape:t.dir===1?'arrowDown':'arrowUp',size:2,text:tr('Výstup')+' '+t.exit});
-    series.createPriceLine({price:t.exit,color:pnl>=0?'#26a69a':'#ef5350',lineWidth:2,lineStyle:0,title:tr('Výstup')});
+  for(const l of exitFills){
+    markers.push({time:near(l.t),position:t.dir===1?'aboveBar':'belowBar',color:pnl>=0?'#26a69a':'#ef5350',
+      shape:t.dir===1?'arrowDown':'arrowUp',size:2,text:fillText(l,tr('Výstup'))});
   }
+  if(isFinite(t.entry))
+    series.createPriceLine({price:t.entry,color:'#5b8def',lineWidth:2,lineStyle:0,
+      title:tr('Vstup')+(entryFills.length>1?' ø':'')});
+  if(hasExit)
+    series.createPriceLine({price:t.exit,color:pnl>=0?'#26a69a':'#ef5350',lineWidth:2,lineStyle:0,
+      title:tr('Výstup')+(exitFills.length>1?' ø':'')});
   if(t.stop!=null)series.createPriceLine({price:t.stop,color:'#ef5350',lineWidth:2,lineStyle:3,title:'SL'});
   if(t.target!=null)series.createPriceLine({price:t.target,color:'#26a69a',lineWidth:2,lineStyle:3,title:'TP'});
+  /* Najhorší a najlepší bod obchodu ako cenové ÚROVNE, nie značky v čase: extrém môže
+     pochádzať z orezanej krajnej sviečky, takže presný okamih nepoznáme - značka v čase
+     by tvrdila presnosť, ktorú nemáme. Úroveň zhodná so vstupom sa nekreslí (bola by to
+     len druhá čiara na tom istom mieste). */
+  if(state.modalIndicators.maemfe&&hasExit){
+    const x=excursionFor(t);
+    if(x&&!x.mismatch){
+      const tol=Math.abs(t.entry)*1e-9+1e-9;
+      if(isFinite(x.maePrice)&&Math.abs(x.maePrice-t.entry)>tol)
+        series.createPriceLine({price:x.maePrice,color:'#ef5350',lineWidth:1,lineStyle:1,title:'MAE'});
+      if(isFinite(x.mfePrice)&&Math.abs(x.mfePrice-t.entry)>tol)
+        series.createPriceLine({price:x.mfePrice,color:'#26a69a',lineWidth:1,lineStyle:1,title:'MFE'});
+    }
+  }
   markers.sort((a,b)=>a.time-b.time);
   series.setMarkers(markers);
   if(isFinite(t.entry)&&typeof series.attachPrimitive==='function'){
