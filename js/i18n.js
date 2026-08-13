@@ -383,6 +383,15 @@ Object.assign(I18N_EN,{
 'Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
 });
 
+Object.assign(I18N_EN,{
+// -- presnosť MAE/MFE: rozsah a čo dotiahnuť --
+'neistota':'uncertainty','najhoršie':'worst',
+'Rozdiel medzi horným a dolným odhadom - presne to, čo sa z týchto sviečok nedá zistiť.':'The gap between the upper and lower estimate - exactly what these candles cannot tell you.',
+'Presnosť zlepšíš 1m sviečkami pre tieto obdobia:':'Improve accuracy with 1m candles for these periods:',
+'… a ďalšie obdobia':'… and further periods',
+'Presnú hodnotu sa z týchto sviečok zistiť nedá – krajná sviečka presahuje mimo obchodu. Prvé číslo je isté minimum, druhé horný odhad. Zúžiš to jemnejšími (1m) sviečkami.':'These candles cannot give the exact value - the edge candle extends beyond the trade. The first number is the guaranteed minimum, the second the upper estimate. Finer (1m) candles narrow it.',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],

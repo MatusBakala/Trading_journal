@@ -135,11 +135,16 @@ export function renderExcursion(t){
     ?`<div class="hint" style="margin-top:4px" title="${esc(tr('Pri postupnom predávaní je MFE najväčší papierový zisk v jedinom okamihu (tu pri držaní menšieho počtu kontraktov po prvom predaji). Realizovaný zisk je súčet viacerých predajov v rôznom čase s rôznym množstvom, takže ho môže prekročiť - to je normálne, nie chyba výpočtu.'))}">ℹ️ ${esc(tr('Pri postupnom predávaní môže byť realizovaný zisk vyšší než MFE - sčítavajú sa predaje z rôzneho času'))}</div>`:'';
   // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
   // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
-  const ge=x.exact?'':`<span class="hint" title="${esc(tr(`Dolná hranica – krajná sviečka presahuje mimo obchodu, takže sa počíta len s cenou dosiahnutou preukázateľne počas pozície. Horný odhad zo všetkých sviečok: MAE ${fmtMoney(x.maeMoneyMax)} / MFE ${fmtMoney(x.mfeMoneyMax)}.`))}">≥</span> `;
+  /* Horná hranica bola doteraz len v tooltipe, takže číslo pôsobilo presnejšie, než je.
+     Rozsah "$-24.00 … $-40.00" povie na prvý pohľad, nakoľko sa mu dá veriť. */
+  const boundTitle=esc(tr('Presnú hodnotu sa z týchto sviečok zistiť nedá – krajná sviečka presahuje mimo obchodu. Prvé číslo je isté minimum, druhé horný odhad. Zúžiš to jemnejšími (1m) sviečkami.'));
+  const rozsah=(lo,hi)=>x.exact||!isFinite(hi)||Math.abs(hi-lo)<0.005
+    ?''
+    :`<span class="hint" title="${boundTitle}"> … ${fmtMoney(hi)}</span>`;
   el.innerHTML=
-    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+ge+
-    `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
-    ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
+    `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b>${rozsah(x.maeMoney,x.maeMoneyMax)}<span class="hint">${rTxt(x.maeR)}</span></span>`+
+    ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b>${rozsah(x.mfeMoney,x.mfeMoneyMax)}<span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+

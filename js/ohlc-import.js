@@ -1,5 +1,5 @@
 import { tr } from './i18n.js';
-import { esc, fmtDT } from './utils.js';
+import { esc, fmtDT, fmtMoney } from './utils.js';
 import { parseCSV } from './csv-parser.js';
 import { idbDel } from './db.js';
 import { ask } from './i18n.js';
@@ -63,6 +63,23 @@ export async function delOhlc(key){
   state.ohlcSets=state.ohlcSets.filter(d=>d.key!==key);
   renderOhlcList();
 }
+/** Súvislé dni zlúči do rozsahov, aby sa dalo povedať "2026-07-29 → 2026-08-07"
+    namiesto výpisu každého dňa zvlášť. */
+export function daysToRanges(byDay){
+  const days=Object.keys(byDay||{}).sort();
+  const ranges=[];
+  let curStart=null,curEnd=null,curCount=0;
+  for(const d of days){
+    if(curStart&&(new Date(d+'T00:00:00')-new Date(curEnd+'T00:00:00'))===86400000){
+      curEnd=d;curCount+=byDay[d];
+    }else{
+      if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
+      curStart=d;curEnd=d;curCount=byDay[d];
+    }
+  }
+  if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
+  return ranges;
+}
 export function computeOhlcCoverage(){
   const closed=state.trades.filter(t=>t.tExit&&isFinite(t.entry)&&isFinite(t.exit));
   const bySymbolDay={};
@@ -82,34 +99,56 @@ export function computeOhlcCoverage(){
       bySymbolDay[sym][day]=(bySymbolDay[sym][day]||0)+1;
       continue;
     }
-    const q=quality[sym]=quality[sym]||{symbol:sym,covered:0,bounded:0,mismatch:0,thin:0,badTicks:0,flatQty:0,tfs:{}};
+    const q=quality[sym]=quality[sym]||{symbol:sym,covered:0,bounded:0,mismatch:0,thin:0,badTicks:0,flatQty:0,tfs:{},gaps:[],coarseDays:{}};
     q.covered++;
     const x=excursionFor(t);
     if(!x)continue;
     if(x.mismatch){q.mismatch++;continue;}
     q.tfs[x.tf]=(q.tfs[x.tf]||0)+1;
-    if(!x.exact)q.bounded++;
+    if(!x.exact){
+      q.bounded++;
+      /* Koľko to reálne stojí: rozdiel hornej a dolnej hranice je presne to, čo sa
+         zo sviečok nedá zistiť. Samotný počet "s dolnou hranicou" nepovie, či ide
+         o pár centov (netreba riešiť) alebo o desiatky dolárov (treba jemnejšie dáta). */
+      const gap=Math.max((x.maeMoneyMax||0)-x.maeMoney,(x.mfeMoneyMax||0)-x.mfeMoney);
+      if(isFinite(gap)&&gap>0){
+        q.gaps.push(gap);
+        // deň si pamätáme, aby sme vedeli povedať, ktorý úsek dotiahnuť jemnejšie
+        const day=dayKey(t.tEntry);
+        q.coarseDays[day]=(q.coarseDays[day]||0)+1;
+      }
+    }
     if(x.barCount<=2)q.thin++; // celý obchod pokrývajú 1-2 sviečky
     if(x.badTicks)q.badTicks++;
     if(x.flatQtyRisk)q.flatQty++;
   }
   const groups=Object.keys(bySymbolDay).sort().map(sym=>{
     const days=Object.keys(bySymbolDay[sym]).sort();
-    const ranges=[];
-    let curStart=null,curEnd=null,curCount=0;
-    for(const d of days){
-      if(curStart&&(new Date(d+'T00:00:00')-new Date(curEnd+'T00:00:00'))===86400000){
-        curEnd=d;curCount+=bySymbolDay[sym][d];
-      }else{
-        if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
-        curStart=d;curEnd=d;curCount=bySymbolDay[sym][d];
-      }
-    }
-    if(curStart)ranges.push({from:curStart,to:curEnd,count:curCount});
-    return {symbol:sym,totalMissing:days.reduce((a,d)=>a+bySymbolDay[sym][d],0),ranges,hasDataset:datasetsForSymbol(sym).length>0};
+    return {symbol:sym,totalMissing:days.reduce((a,d)=>a+bySymbolDay[sym][d],0),
+      ranges:daysToRanges(bySymbolDay[sym]),hasDataset:datasetsForSymbol(sym).length>0};
   });
-  return {totalClosed:closed.length,missingTotal,groups,
-    quality:Object.values(quality).sort((a,b)=>a.symbol.localeCompare(b.symbol))};
+  const qualityOut=Object.values(quality).map(q=>{
+    const g=[...q.gaps].sort((a,b)=>a-b);
+    return Object.assign(q,{
+      gapMedian:g.length?g[Math.floor(g.length/2)]:0,
+      gapWorst:g.length?g[g.length-1]:0,
+      gapTotal:g.reduce((a,b)=>a+b,0),
+      coarseRanges:daysToRanges(q.coarseDays),
+    });
+  }).sort((a,b)=>a.symbol.localeCompare(b.symbol));
+  return {totalClosed:closed.length,missingTotal,groups,quality:qualityOut};
+}
+/* Konkrétny návod čo dotiahnuť: bez dátumov by používateľ vedel, že dáta sú hrubé,
+   ale nie ktoré obdobie má z TradingView vyexportovať. */
+function todoHtml(q){
+  if(!q.coarseRanges||!q.coarseRanges.length)return '';
+  const top=[...q.coarseRanges].sort((a,b)=>b.count-a.count).slice(0,6);
+  const rows=top.map(r=>{
+    const label=r.from===r.to?r.from:`${r.from} → ${r.to}`;
+    return `<div style="margin-left:14px">• ${esc(label)} — ${r.count} ${esc(tr('obchodov'))}</div>`;
+  }).join('');
+  const viac=q.coarseRanges.length>top.length?`<div style="margin-left:14px" class="hint">${esc(tr('… a ďalšie obdobia'))}</div>`:'';
+  return `<div class="hint" style="margin-left:14px;margin-top:4px">${esc(tr('Presnosť zlepšíš 1m sviečkami pre tieto obdobia:'))}${rows}${viac}</div>`;
 }
 /* Kvalita pokrytia - odpovedá na "dá sa týmto číslam veriť", nielen "existujú sviečky". */
 function coverageQualityHTML(quality){
@@ -117,7 +156,8 @@ function coverageQualityHTML(quality){
   const rows=quality.map(q=>{
     const tfs=Object.keys(q.tfs).sort((a,b)=>q.tfs[b]-q.tfs[a]).map(tf=>`${tf}×${q.tfs[tf]}`).join(', ');
     const notes=[];
-    if(q.bounded)notes.push(`${q.bounded} ${tr('s dolnou hranicou MAE/MFE')}`);
+    if(q.bounded)notes.push(`${q.bounded} ${tr('s dolnou hranicou MAE/MFE')}`+
+      (q.gapMedian?` <span title="${esc(tr('Rozdiel medzi horným a dolným odhadom - presne to, čo sa z týchto sviečok nedá zistiť.'))}">(${esc(tr('neistota'))} ~${fmtMoney(q.gapMedian)}, ${esc(tr('najhoršie'))} ${fmtMoney(q.gapWorst)})</span>`:''));
     if(q.thin)notes.push(`<span style="color:var(--red)">${q.thin} ${esc(tr('pokrytých len 1–2 sviečkami'))}</span>`);
     if(q.badTicks)notes.push(`${q.badTicks} ${esc(tr('s ignorovaným chybným tickom'))}`);
     if(q.flatQty)notes.push(`<span style="color:var(--red)">${q.flatQty} ${esc(tr('bez rozpisu fillov (čiastočné zatvorenie sa neráta)'))}</span>`);
@@ -126,6 +166,7 @@ function coverageQualityHTML(quality){
       (tfs?` <span class="hint">(${esc(tfs)})</span>`:'')+
       (notes.length?`<div style="margin-left:14px;margin-top:2px" class="hint">• ${notes.join(' · ')}</div>`:
         `<div style="margin-left:14px;margin-top:2px;color:var(--green)" class="hint">• ${esc(tr('presné MAE/MFE'))}</div>`)+
+      todoHtml(q)+
       `</div>`;
   }).join('');
   return `<div style="margin-top:14px"><div class="lbl">${esc(tr('Kvalita pokrytia'))}</div>${rows}`+

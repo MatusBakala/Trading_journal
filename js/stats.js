@@ -180,9 +180,13 @@ export function renderExcursionChart(ts){
   const allMae=rows.map(r=>r.mae),allMfe=rows.map(r=>r.mfe);
   const worstWinMae=maeWins.length?Math.max(...maeWins):0;
   const leftTotal=wins.reduce((a,r)=>a+r.leftOnTable,0);
+  /* Priemery sa počítajú z dolných hraníc. Keď sa horný odhad líši, ukáž rozsah -
+     samotné číslo inak pôsobí presnejšie, než v skutočnosti je. */
+  const allMaeMax=rows.map(r=>r.maeMax??r.mae),allMfeMax=rows.map(r=>r.mfeMax??r.mfe);
+  const rozsah=(lo,hi)=>Math.abs(hi-lo)<0.005?'':`<span class="hint" style="font-size:14px"> … ${fmtMoney(hi)}</span>`;
   summary.innerHTML='<div class="cards">'+[
-    [tr('Priemerné MAE'),fmtMoney(-avg(allMae)),allMae.length?'neg':'',tr('priemerný najhorší bod proti tebe, naprieč všetkými obchodmi')],
-    [tr('Priemerné MFE'),fmtMoney(avg(allMfe)),allMfe.length?'pos':'',tr('priemerný najlepší bod v tvoj prospech, naprieč všetkými obchodmi')],
+    [tr('Priemerné MAE'),fmtMoney(-avg(allMae))+rozsah(-avg(allMae),-avg(allMaeMax)),allMae.length?'neg':'',tr('priemerný najhorší bod proti tebe, naprieč všetkými obchodmi')],
+    [tr('Priemerné MFE'),fmtMoney(avg(allMfe))+rozsah(avg(allMfe),avg(allMfeMax)),allMfe.length?'pos':'',tr('priemerný najlepší bod v tvoj prospech, naprieč všetkými obchodmi')],
     [tr('Priem. MAE ziskových'),fmtMoney(-avg(maeWins)),maeWins.length?'neg':'',tr('koľko museli víťazi vydržať proti sebe')],
     [tr('Najhorší MAE víťaza'),fmtMoney(-worstWinMae),worstWinMae?'neg':'',tr('pod týmto by ťa stop vyhodil zo ziskového obchodu')],
     [tr('Priem. MFE stratových'),fmtMoney(avg(mfeLosses)),mfeLosses.length?'pos':'',tr('koľko zisku stratové obchody medzitým ukázali')],
