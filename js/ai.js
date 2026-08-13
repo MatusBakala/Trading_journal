@@ -262,15 +262,23 @@ export async function sendAiChatMessage(){
     renderAiChatMessages();
   }
 }
-export function renderBreakdown(elId,ts,keyFn){
-  const g={};
-  ts.forEach(t=>{const k=keyFn(t);(g[k]=g[k]||[]).push(computePnl(t));});
+/**
+ * Rozpad obchodov podľa kľúča do tabuľky na dashboarde.
+ * @param {{id:string,valueFn:function}} [filter]  keď je zadaný, riadky sú klikateľné
+ *   a preklik nastaví filter `id` na hodnotu z `valueFn`. Zobrazený text a hodnota
+ *   filtra sa líšia (napr. "😌 Pokoj / disciplína" vs kľúč "pokoj"), preto valueFn.
+ */
+export function renderBreakdown(elId,ts,keyFn,filter){
+  const g={},sample={};
+  ts.forEach(t=>{const k=keyFn(t);(g[k]=g[k]||[]).push(computePnl(t));if(!(k in sample))sample[k]=t;});
   const keys=Object.keys(g).sort((a,b)=>{
     const sa=g[a].reduce((x,y)=>x+y,0),sb=g[b].reduce((x,y)=>x+y,0);
     return elId==='byHour'?a.localeCompare(b):sb-sa;});
   if(!keys.length){$(elId).innerHTML='<span class="hint">Žiadne dáta</span>';return;}
   $(elId).innerHTML='<table><thead><tr><th></th><th>Trades</th><th>WR</th><th>P&L</th></tr></thead><tbody>'+
     keys.map(k=>{const arr=g[k];const s=arr.reduce((x,y)=>x+y,0);const w=arr.filter(x=>x>0).length;
-      const rowAttr=elId==='byHour'?`data-hour="${k.slice(0,2)}" title="${esc(tr('Zobraziť obchody z tejto hodiny'))}"`:'style="cursor:default"';
+      const rowAttr=filter
+        ?`data-filter="${esc(filter.id)}" data-value="${esc(String(filter.valueFn(sample[k])))}" title="${esc(tr('Zobraziť tieto obchody'))}"`
+        :'style="cursor:default"';
       return `<tr ${rowAttr}><td>${esc(k)}</td><td>${arr.length}</td><td>${(w/arr.length*100).toFixed(0)}%</td><td class="${moneyCls(s)}">${fmtMoney(s)}</td></tr>`;}).join('')+'</tbody></table>';
 }

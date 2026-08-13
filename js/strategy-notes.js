@@ -3,7 +3,7 @@ import { shotsByTrade, idbAdd, idbAll, idbDel, idbGet, idbPut, stratShotsByStrat
 import { scheduleAutoSync } from './gdrive.js';
 import { ask, tr, trHtml } from './i18n.js';
 import { goToTab } from './tabs.js';
-import { renderTrades, tradeTableHTML } from './trades-list.js';
+import { renderTrades, resetTradeFilters, tradeTableHTML } from './trades-list.js';
 import { fmtDT, fmtMoney, toast } from './utils.js';
 import { blobToB64 } from './settings.js';
 import { state } from './state.js';
@@ -786,16 +786,18 @@ export async function saveStrategyNotes(id){
   scheduleAutoSync();
   toast('Poznámky uložené');
 }
-export function goToTradesForStrategy(id){
+/* Preklik z dashboardu/stratégie do Obchodov. Filtre sa najprv vyčistia, aby preklik
+   vždy znamenal "ukáž presne tieto obchody" - inak by sa dva prekliky za sebou
+   navrstvili a používateľ by videl prienik bez toho, aby vedel prečo. */
+export function goToTradesFiltered(filterId,value){
+  resetTradeFilters();
   goToTab('trades');
-  const sel=$('fStrategy');
-  if(sel){sel.value=String(id);renderTrades();}
+  const sel=$(filterId);
+  if(sel)sel.value=String(value);
+  renderTrades();
 }
-export function goToTradesForHour(hour){
-  goToTab('trades');
-  const sel=$('fHour');
-  if(sel){sel.value=hour;renderTrades();}
-}
+export function goToTradesForStrategy(id){goToTradesFiltered('fStrategy',id);}
+export function goToTradesForHour(hour){goToTradesFiltered('fHour',hour);}
 export function addStrategyRuleRow(text){
   const div=document.createElement('div');
   div.className='ruleRow';

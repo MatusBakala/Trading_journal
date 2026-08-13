@@ -50,3 +50,13 @@ test('prepnutie z URL nezapisuje späť do URL (inak by vzniklo zacyklenie)', ()
   assert.match(tabsSrc, /goToTab\(name,\s*false\)/);
   assert.match(tabsSrc, /if\s*\(updateHash\s*!==\s*false\)/);
 });
+
+test('klik na "Obchody" v menu vyčistí filter, preklik z grafu nie', () => {
+  // Filter vie nastaviť preklik z grafu (hodina vstupu). Bez tohto by prežil prepnutie
+  // sekcie aj zmenu účtu a používateľ by videl výsek bez toho, aby vedel prečo.
+  assert.match(tabsSrc, /if \(b\.dataset\.tab === 'trades'\) resetTradeFilters\(\);/);
+  // reset musí byť naviazaný na klik v menu, nie na samotné goToTab - inak by zmazal
+  // filter, ktorý si preklik z grafu práve nastavil, aj pri Späť/Vpred
+  const goToTabFn = tabsSrc.slice(tabsSrc.indexOf('export function goToTab'), tabsSrc.indexOf('/** Otvorí sekciu'));
+  assert.ok(!/resetTradeFilters/.test(goToTabFn), 'reset patrí na klik v menu, nie do goToTab');
+});

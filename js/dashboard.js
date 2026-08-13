@@ -156,12 +156,17 @@ export function renderDashboard(){
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:tickColor,maxTicksLimit:12}},y:{grid:{color:gridColor},ticks:{color:tickColor}}}}});
   }
   // breakdowns
-  renderBreakdown('bySymbol',ts,t=>String(t.symbol).toUpperCase());
+  // Každý rozpad je klikateľný - preklik prehodí do Obchodov a nastaví zodpovedajúci
+  // filter. Deň v týždni sa filtruje podľa čísla dňa (názov je len na zobrazenie)
+  // a emócia podľa kľúča; 'none' = emócia nezadaná.
+  const dowOf=t=>String(new Date(tTime(t)*1000).getDay());
+  const hourOf=t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0');
+  renderBreakdown('bySymbol',ts,t=>String(t.symbol).toUpperCase(),{id:'fSymbol',valueFn:t=>String(t.symbol).toUpperCase()});
   const dows=['Nedeľa','Pondelok','Utorok','Streda','Štvrtok','Piatok','Sobota'];
-  renderBreakdown('byDow',ts,t=>dows[new Date(tTime(t)*1000).getDay()]);
-  renderBreakdown('byHour',ts,t=>String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')+':00');
-  renderBreakdown('bySession',ts,t=>sessionOf(t));
-  renderBreakdown('byEmotionIn',ts,t=>emotionLabel(t.emotionIn));
-  renderBreakdown('byEmotionOut',ts,t=>emotionLabel(t.emotionOut));
+  renderBreakdown('byDow',ts,t=>dows[new Date(tTime(t)*1000).getDay()],{id:'fDow',valueFn:dowOf});
+  renderBreakdown('byHour',ts,t=>hourOf(t)+':00',{id:'fHour',valueFn:hourOf});
+  renderBreakdown('bySession',ts,t=>sessionOf(t),{id:'fSession',valueFn:t=>sessionOf(t)});
+  renderBreakdown('byEmotionIn',ts,t=>emotionLabel(t.emotionIn),{id:'fEmotionIn',valueFn:t=>t.emotionIn||'none'});
+  renderBreakdown('byEmotionOut',ts,t=>emotionLabel(t.emotionOut),{id:'fEmotionOut',valueFn:t=>t.emotionOut||'none'});
   renderPatterns(ts);
 }
