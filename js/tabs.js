@@ -1,7 +1,7 @@
 import { $ } from './utils.js';
 import { renderDashboard } from './dashboard.js';
 import { renderStats } from './stats.js';
-import { renderReports } from './trades-list.js';
+import { renderReports, resetTradeFilters } from './trades-list.js';
 
 /* ================= Tabs =================
    Sekcia je zapísaná v URL za mriežkou (#/trades). Vďaka tomu funguje tlačidlo Späť,
@@ -57,7 +57,13 @@ export function applyRouteFromHash() {
 window.addEventListener('hashchange', applyRouteFromHash);
 
 document.querySelectorAll('nav button').forEach(b => {
-  b.onclick = () => goToTab(b.dataset.tab);
+  b.onclick = () => {
+    // Zámerne len pri kliku v menu: preklik z grafu si filter nastavuje sám a robí to
+    // až po goToTab(), takže mu tento reset neprekáža. Späť/Vpred tiež nechávame tak -
+    // vrátiť sa má na to, čo tam bolo.
+    if (b.dataset.tab === 'trades') resetTradeFilters();
+    goToTab(b.dataset.tab);
+  };
 });
 export function toggleMobileNav() { $('headerControls').classList.toggle('open'); }
 export function closeMobileNav() { $('headerControls').classList.remove('open'); }

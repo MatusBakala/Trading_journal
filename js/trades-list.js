@@ -75,6 +75,17 @@ export function applyCommonFilters(list,prefix,filterSet){
     return true;
   });
 }
+/* Filter obchodov vie nastaviť aj preklik z grafu (hodina vstupu, stratégia). Ten
+   filter potom nenápadne prežije prepnutie sekcie aj zmenu účtu a používateľ vidí
+   výsek bez toho, aby vedel prečo. Klik na "Obchody" v menu preto zoznam vyčistí. */
+export function resetTradeFilters(){
+  ['fSymbol','fDir','fSession','fStrategy','fHour','fFrom','fTo','fSearch'].forEach(id=>{
+    const el=$(id);
+    if(el)el.value='';
+  });
+  tagFilter.clear();
+  renderTrades();
+}
 export function filteredTrades(){
   const q=$('fSearch').value.toLowerCase();
   return applyCommonFilters(accTrades(),'f',tagFilter).filter(t=>{
