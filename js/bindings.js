@@ -20,7 +20,7 @@ import { delOhlc, goToOhlcCoverage, importOHLC, runOhlcCoverageCheck } from './o
 import { addMultRow, exportBackup, resetAiReviewPrompt, restoreBackup, saveAiReviewPrompt, saveAnthropicKey, saveMults, saveRiskLimits, wipeAll } from './settings.js';
 import { toggleTheme } from './state.js';
 import { renderStats } from './stats.js';
-import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesForHour, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtHandleDrop, rtHandlePaste, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
+import { addDetailRuleRow, addDetailScenarioRow, addStrategyRuleRow, closeStrategy, closeStrategyDetail, deleteCurrentStrategy, goToTradesFiltered, openStrategy, openStrategyDetail, renderTradeRuleChecklist, rtApplyColor, rtCloseDropdowns, rtExec, rtFontSizeStep, rtHandleDrop, rtHandlePaste, rtInsertImageFile, rtLink, rtSetFontSize, rtToggleDropdown, ruleDragEnd, ruleDragOver, ruleDragStart, ruleTouchEnd, ruleTouchMove, ruleTouchStart, saveStrategy, saveStrategyNotes, saveStrategyRules, saveStrategyScenarios, showLightbox, switchStrategyDetailTab, toggleStrategyNotesEdit, toggleStrategyRulesEdit, toggleStrategyScenariosEdit } from './strategy-notes.js';
 import { toggleMobileNav } from './tabs.js';
 import { aiReviewTrade, closeTrade, deleteCurrentTrade, openTrade, saveAiReviewModel, saveTrade } from './trade-modal.js';
 import { delTrade, renderReports, renderTrades, setTradeSort } from './trades-list.js';
@@ -89,6 +89,9 @@ document.getElementById('fDir').addEventListener('change', function(event){ rend
 document.getElementById('fSession').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fStrategy').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fHour').addEventListener('change', function(event){ renderTrades(); });
+document.getElementById('fDow').addEventListener('change', function(event){ renderTrades(); });
+document.getElementById('fEmotionIn').addEventListener('change', function(event){ renderTrades(); });
+document.getElementById('fEmotionOut').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fFrom').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fTo').addEventListener('change', function(event){ renderTrades(); });
 document.getElementById('fSearch').addEventListener('input', debounce(function(event){ renderTrades(); }, 250));
@@ -153,10 +156,12 @@ document.addEventListener('click', function(event){
   if (btn) btn.closest('.multrow').remove();
 });
 
-/* dashboard "podľa hodiny vstupu" rows (ai.js renderBreakdown) */
-document.getElementById('byHour').addEventListener('click', function(event){
-  const row = event.target.closest('tr[data-hour]');
-  if (row) goToTradesForHour(row.dataset.hour);
+/* Preklik z ktorejkoľvek rozpadovej tabuľky na dashboarde (ai.js renderBreakdown).
+   Jeden delegovaný listener na celú sekciu - riadok si nesie, ktorý filter nastaviť,
+   takže pribudnutie ďalšej tabuľky si tu už nevyžiada žiadnu zmenu. */
+document.getElementById('tab-dashboard').addEventListener('click', function(event){
+  const row = event.target.closest('tr[data-filter]');
+  if (row) goToTradesFiltered(row.dataset.filter, row.dataset.value);
 });
 
 /* equity krivka $ / % toggle (dashboard.js renderEqModeBar) */

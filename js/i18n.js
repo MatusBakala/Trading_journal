@@ -373,6 +373,16 @@ Object.assign(I18N_EN,{
 'Zrušiť = stiahnuť zálohu z Drive (bezpečnejšie).':'Cancel = download the backup from Drive (safer).',
 });
 
+Object.assign(I18N_EN,{
+// -- filtre obchodov: deň v týždni a emócie --
+'Zobraziť tieto obchody':'Show these trades',
+'Všetky dni':'All days',
+'Emócia pri vstupe: všetky':'Entry emotion: all',
+'Emócia pri výstupe: všetky':'Exit emotion: all',
+'Pondelok':'Monday','Utorok':'Tuesday','Streda':'Wednesday','Štvrtok':'Thursday',
+'Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],

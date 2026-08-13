@@ -55,13 +55,22 @@ export function renderTagBar(){renderTagBarGeneric('tagBar',tagFilter,renderTrad
 export function renderReportTagBar(){renderTagBarGeneric('rTagBar',reportTagFilter,renderReports);}
 export function applyCommonFilters(list,prefix,filterSet){
   const sym=$(prefix+'Symbol').value,dir=$(prefix+'Dir').value,session=$(prefix+'Session').value,strat=$(prefix+'Strategy').value,from=$(prefix+'From').value,to=$(prefix+'To').value;
+  // Tieto filtre existujú len v sekcii Obchody, nie v Reportoch - preto null-safe.
   const hourEl=$(prefix+'Hour'),hour=hourEl?hourEl.value:'';
+  const dowEl=$(prefix+'Dow'),dow=dowEl?dowEl.value:'';
+  const emInEl=$(prefix+'EmotionIn'),emIn=emInEl?emInEl.value:'';
+  const emOutEl=$(prefix+'EmotionOut'),emOut=emOutEl?emOutEl.value:'';
+  // 'none' = emócia nezadaná; prázdna hodnota znamená "nefiltrovať"
+  const emMatch=(val,sel)=>sel==='none'?!val:String(val||'')===sel;
   return list.filter(t=>{
     if(sym&&String(t.symbol).toUpperCase()!==sym)return false;
     if(dir&&String(t.dir)!==dir)return false;
     if(session&&sessionOf(t)!==session)return false;
     if(strat&&String(t.strategyId)!==strat)return false;
     if(hour&&String(new Date((t.tEntry||tTime(t))*1000).getHours()).padStart(2,'0')!==hour)return false;
+    if(dow&&String(new Date(tTime(t)*1000).getDay())!==dow)return false;
+    if(emIn&&!emMatch(t.emotionIn,emIn))return false;
+    if(emOut&&!emMatch(t.emotionOut,emOut))return false;
     if(filterSet.size){
       const match=[...filterSet].some(k=>{
         const name=k.slice(2);
@@ -79,7 +88,7 @@ export function applyCommonFilters(list,prefix,filterSet){
    filter potom nenápadne prežije prepnutie sekcie aj zmenu účtu a používateľ vidí
    výsek bez toho, aby vedel prečo. Klik na "Obchody" v menu preto zoznam vyčistí. */
 export function resetTradeFilters(){
-  ['fSymbol','fDir','fSession','fStrategy','fHour','fFrom','fTo','fSearch'].forEach(id=>{
+  ['fSymbol','fDir','fSession','fStrategy','fHour','fDow','fEmotionIn','fEmotionOut','fFrom','fTo','fSearch'].forEach(id=>{
     const el=$(id);
     if(el)el.value='';
   });
