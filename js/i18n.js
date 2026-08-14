@@ -189,6 +189,9 @@ export const I18N_EN={
 'uzavretých obchodov má sviečkové dáta. Klikni na bod alebo riadok nižšie pre detail obchodu.':'closed trades have candle data. Click a dot or a row below for trade detail.',
 'Zadaj symbol a čas vstupu':'Enter a symbol and entry time','Zobraziť detaily chýbajúcich dát':'View missing data details','🤖 Rozobrať tento obchod':'🤖 Review this trade',
 'Perióda':'Period','Dataset nemá dáta o objeme (volume)':'Dataset has no volume data','nepodarilo sa naparsovať':'could not parse',
+'PDH/PDL = maximum a minimum predošlého obchodného dňa, ONH/ONL = extrémy nočnej časti dňa obchodu (od začiatku dňa po otvorenie RTH). Deň sa berie v tvojom lokálnom čase.':'PDH/PDL = previous trading day\'s high and low, ONH/ONL = extremes of the overnight part of the trade\'s day (from the start of the day to the RTH open). The day is taken in your local time.',
+'Otvorenie RTH v tvojom lokálnom čase (HH:MM) – hranica medzi nocou a hlavnou session':'RTH open in your local time (HH:MM) – the boundary between overnight and the main session',
+'Zadaj čas v tvare HH:MM':'Enter the time as HH:MM',
 'Nepodarilo sa načítať appku. Skús obnoviť stránku.':'Failed to load the app. Try refreshing the page.',
 'Haiku 4.5 (rýchly, lacný)':'Haiku 4.5 (fast, cheap)','Claude Haiku 4.5 (rýchly, lacný)':'Claude Haiku 4.5 (fast, cheap)',
 'Sonnet 5 (vyvážený)':'Sonnet 5 (balanced)','Opus 5 (najhlbší, drahší)':'Opus 5 (deepest, more expensive)',
@@ -381,6 +384,20 @@ Object.assign(I18N_EN,{
 'Emócia pri výstupe: všetky':'Exit emotion: all',
 'Pondelok':'Monday','Utorok':'Tuesday','Streda':'Wednesday','Štvrtok':'Thursday',
 'Piatok':'Friday','Sobota':'Saturday','Nedeľa':'Sunday',
+});
+
+Object.assign(I18N_EN,{
+// -- presnosť MAE/MFE: rozsah a čo dotiahnuť --
+'neistota':'uncertainty','najhoršie':'worst',
+'Rozdiel medzi horným a dolným odhadom - presne to, čo sa z týchto sviečok nedá zistiť.':'The gap between the upper and lower estimate - exactly what these candles cannot tell you.',
+'Presnosť zlepšíš 1m sviečkami pre tieto obdobia:':'Improve accuracy with 1m candles for these periods:',
+'… a ďalšie obdobia':'… and further periods',
+'Presnú hodnotu sa z týchto sviečok zistiť nedá – krajná sviečka presahuje mimo obchodu. Prvé číslo je isté minimum, druhé horný odhad. Zúžiš to jemnejšími (1m) sviečkami.':'These candles cannot give the exact value - the edge candle extends beyond the trade. The first number is the guaranteed minimum, the second the upper estimate. Finer (1m) candles narrow it.',
+});
+
+Object.assign(I18N_EN,{
+// -- graf v detaile obchodu --
+'Periódy oddelené čiarkou, napr. 5,9,13,21,200':'Periods separated by commas, e.g. 5,9,13,21,200',
 });
 
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};

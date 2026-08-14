@@ -135,11 +135,16 @@ export function renderExcursion(t){
     ?`<div class="hint" style="margin-top:4px" title="${esc(tr('Pri postupnom predávaní je MFE najväčší papierový zisk v jedinom okamihu (tu pri držaní menšieho počtu kontraktov po prvom predaji). Realizovaný zisk je súčet viacerých predajov v rôznom čase s rôznym množstvom, takže ho môže prekročiť - to je normálne, nie chyba výpočtu.'))}">ℹ️ ${esc(tr('Pri postupnom predávaní môže byť realizovaný zisk vyšší než MFE - sčítavajú sa predaje z rôzneho času'))}</div>`:'';
   // Keď krajná sviečka presahuje mimo okna obchodu, jej extrém sa nedá pripísať otvorenej
   // pozícii - číslo je potom dolná hranica. "≥" to povie bez toho, aby budilo dojem chyby.
-  const ge=x.exact?'':`<span class="hint" title="${esc(tr(`Dolná hranica – krajná sviečka presahuje mimo obchodu, takže sa počíta len s cenou dosiahnutou preukázateľne počas pozície. Horný odhad zo všetkých sviečok: MAE ${fmtMoney(x.maeMoneyMax)} / MFE ${fmtMoney(x.mfeMoneyMax)}.`))}">≥</span> `;
+  /* Horná hranica bola doteraz len v tooltipe, takže číslo pôsobilo presnejšie, než je.
+     Rozsah "$-24.00 … $-40.00" povie na prvý pohľad, nakoľko sa mu dá veriť. */
+  const boundTitle=esc(tr('Presnú hodnotu sa z týchto sviečok zistiť nedá – krajná sviečka presahuje mimo obchodu. Prvé číslo je isté minimum, druhé horný odhad. Zúžiš to jemnejšími (1m) sviečkami.'));
+  const rozsah=(lo,hi)=>x.exact||!isFinite(hi)||Math.abs(hi-lo)<0.005
+    ?''
+    :`<span class="hint" title="${boundTitle}"> … ${fmtMoney(hi)}</span>`;
   el.innerHTML=
-    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+ge+
-    `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b><span class="hint">${rTxt(x.maeR)}</span></span>`+
-    ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b><span class="hint">${rTxt(x.mfeR)}</span></span>`+
+    (x.approx?`<span class="hint" title="${approxTitle}">≈</span> `:'')+
+    `<span title="${esc(tr('Najhorší bod proti tebe počas obchodu'))}">MAE <b class="neg">${fmtMoney(x.maeMoney)}</b>${rozsah(x.maeMoney,x.maeMoneyMax)}<span class="hint">${rTxt(x.maeR)}</span></span>`+
+    ` &nbsp;·&nbsp; <span title="${esc(tr('Najlepší bod v tvoj prospech počas obchodu'))}">MFE <b class="pos">${fmtMoney(x.mfeMoney)}</b>${rozsah(x.mfeMoney,x.mfeMoneyMax)}<span class="hint">${rTxt(x.mfeR)}</span></span>`+
     // pri stratovom obchode by „nechané na stole" miatlo (je v tom hlavne samotná strata)
     (computePnl(t)>0&&x.leftOnTable>0?` &nbsp;·&nbsp; <span class="hint" title="${esc(tr('Rozdiel medzi najlepším bodom obchodu a tým, čo si reálne zobral'))}">${esc(tr('nechané na stole'))} ${fmtMoney(x.leftOnTable)}</span>`:'')+
     ` &nbsp; <span class="hint">(${esc(tr('zo sviečok'))} ${esc(x.tf)})</span>`+
@@ -467,6 +472,19 @@ export async function selectTf(tf){
   await fetchTfForTrade(tf);
 }
 /* ---- indicators ---- */
+/* Stacked EMAs playbook potrebuje 5/9/13/21 (+200) naraz, preto EMA berie zoznam
+   period, nie jednu. Zoradené od najrýchlejšej, aby farby v grafe išli v poradí. */
+export const EMA_COLORS=['#7c5bef','#5b8def','#26a69a','#e0a33e','#e91e63','#9e9e9e'];
+export function parsePeriods(raw,max){
+  const out=[];
+  for(const part of String(raw||'').split(/[,;\s]+/)){
+    const n=Math.round(Number(part));
+    if(!isFinite(n)||n<2||n>500)continue;
+    if(!out.includes(n))out.push(n);
+  }
+  out.sort((a,b)=>a-b);
+  return out.slice(0,max||EMA_COLORS.length);
+}
 export function renderIndBar(hasVolume){
   const bar=$('indBar');
   if(!bar)return;
@@ -475,10 +493,42 @@ export function renderIndBar(hasVolume){
     const periodInput=periodKey?`<input type="number" class="indPeriod" data-ind="${periodKey}" value="${state.modalIndicators[periodKey]}" min="2" max="500" title="Perióda" style="width:46px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px">`:'';
     return `<span style="display:inline-flex;align-items:center;gap:3px"><button type="button" class="tfBtn${state.modalIndicators[key]?' on':''}" data-ind="${key}"${disabled?' disabled title="Dataset nemá dáta o objeme (volume)"':''}>${label}</button>${periodInput}</span>`;
   };
-  bar.innerHTML=item('sma','SMA','smaPeriod')+item('ema','EMA','emaPeriod')+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod');
+  // EMA má textové pole (zoznam period), ostatné číselné
+  const emaItem=`<span style="display:inline-flex;align-items:center;gap:3px">`+
+    `<button type="button" class="tfBtn${state.modalIndicators.ema?' on':''}" data-ind="ema">EMA</button>`+
+    `<input type="text" class="indPeriods" data-ind="emaPeriods" value="${esc(state.modalIndicators.emaPeriods)}" `+
+    `title="${esc(tr('Periódy oddelené čiarkou, napr. 5,9,13,21,200'))}" `+
+    `style="width:86px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px"></span>`;
+  // PD/ON úrovne majú namiesto periódy čas otvorenia RTH (HH:MM v lokálnom čase) -
+  // určuje, kde končí noc a začína hlavná session
+  const lvlItem=`<span style="display:inline-flex;align-items:center;gap:3px">`+
+    `<button type="button" class="tfBtn${state.modalIndicators.levels?' on':''}" data-ind="levels" `+
+    `title="${esc(tr('PDH/PDL = maximum a minimum predošlého obchodného dňa, ONH/ONL = extrémy nočnej časti dňa obchodu (od začiatku dňa po otvorenie RTH). Deň sa berie v tvojom lokálnom čase.'))}">PD/ON</button>`+
+    `<input type="text" class="indTime" data-ind="rthOpen" value="${esc(state.modalIndicators.rthOpen)}" `+
+    `title="${esc(tr('Otvorenie RTH v tvojom lokálnom čase (HH:MM) – hranica medzi nocou a hlavnou session'))}" `+
+    `style="width:52px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px"></span>`;
+  bar.innerHTML=item('sma','SMA','smaPeriod')+emaItem+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod')+item('maemfe','MAE/MFE')+lvlItem;
   bar.querySelectorAll('.tfBtn').forEach(b=>{
     if(b.disabled)return;
     b.onclick=()=>{state.modalIndicators[b.dataset.ind]=!state.modalIndicators[b.dataset.ind];renderModalChart();};
+  });
+  bar.querySelectorAll('.indPeriods').forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.onchange=()=>{
+      const list=parsePeriods(inp.value);
+      state.modalIndicators.emaPeriods=list.length?list.join(','):state.modalIndicators.emaPeriods;
+      renderModalChart();
+    };
+  });
+  bar.querySelectorAll('.indTime').forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.onchange=()=>{
+      const mins=parseHhmm(inp.value);
+      if(mins==null){inp.value=state.modalIndicators.rthOpen;toast(tr('Zadaj čas v tvare HH:MM'));return;}
+      state.modalIndicators.rthOpen=fmtHhmm(mins);
+      inp.value=state.modalIndicators.rthOpen;
+      if(state.modalIndicators.levels)renderModalChart();
+    };
   });
   bar.querySelectorAll('.indPeriod').forEach(inp=>{
     inp.onclick=e=>e.stopPropagation();
@@ -538,6 +588,87 @@ export function calcRSI(bars,period){
     if(avgGain!=null){
       const rsi=avgLoss===0?100:100-100/(1+avgGain/avgLoss);
       out.push({time:bars[i]._time,value:rsi});
+    }
+  }
+  return out;
+}
+/* ---- denné referenčné úrovne (PDH/PDL/ONH/ONL) ---- */
+/* Volume Profile playbook stojí na týchto úrovniach:
+   PDH/PDL = maximum a minimum PREDCHÁDZAJÚCEHO obchodného dňa,
+   ONH/ONL = extrémy nočnej časti DŇA OBCHODU, teda od začiatku dňa po otvorenie RTH.
+
+   Deň sa počíta v LOKÁLNOM čase (rovnako ako dayKey inde v appke). Pre stredoeurópsku
+   zónu to sedí s obchodným dňom CME: polnoc lokálne = 18:00 ET, teda presne otvorenie
+   globexu (platí aj v lete, obe zóny prechádzajú na letný čas). Kto obchoduje z inej
+   zóny alebo iný trh, prepíše si čas otvorenia RTH v poli vedľa tlačidla – je to jediný
+   údaj, ktorý sa z dát odvodiť nedá.
+
+   „Predošlý deň" nie je kalendárne mínus jeden deň, ale najbližší skorší deň, v ktorom
+   sú v datasete sviečky – víkendy a sviatky sa tým vyriešia samy. */
+export const DEFAULT_RTH_OPEN='15:30';
+export function parseHhmm(raw){
+  const m=/^(\d{1,2})[:.]?(\d{2})$/.exec(String(raw==null?'':raw).trim());
+  if(!m)return null;
+  const h=+m[1],mi=+m[2];
+  if(h>23||mi>59)return null;
+  return h*60+mi;
+}
+export function fmtHhmm(mins){
+  if(mins==null||!isFinite(mins))return '';
+  const m=((Math.round(mins)%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+export function minsOfDay(ts){const d=new Date(ts*1000);return d.getHours()*60+d.getMinutes();}
+export function dailyLevels(bars,refTs,rthOpenMin){
+  if(!bars||!bars.length||!refTs)return null;
+  const today=dayKey(refTs);
+  const days=new Map(); // dayKey -> {h,l}
+  let onh=null,onl=null;
+  for(const b of bars){
+    if(!isFinite(b.h)||!isFinite(b.l))continue;
+    const k=dayKey(b.t);
+    const cur=days.get(k);
+    if(cur){if(b.h>cur.h)cur.h=b.h;if(b.l<cur.l)cur.l=b.l;}
+    else days.set(k,{h:b.h,l:b.l});
+    // Sviečky PO vstupe do noci nepatria: keď obchod padol do nočnej session, ONH/ONL
+    // je to, čo bolo vidieť pri vstupe – nie extrém, ktorý sa vytvoril až potom.
+    if(k===today&&rthOpenMin!=null&&b.t<=refTs&&minsOfDay(b.t)<rthOpenMin){
+      if(onh==null||b.h>onh)onh=b.h;
+      if(onl==null||b.l<onl)onl=b.l;
+    }
+  }
+  let prevDay=null;
+  for(const k of days.keys())if(k<today&&(prevDay==null||k>prevDay))prevDay=k;
+  const pd=prevDay?days.get(prevDay):null;
+  return {prevDay,pdh:pd?pd.h:null,pdl:pd?pd.l:null,onh,onl};
+}
+/* Rozsah sedí s obchodom? Sviečky priradené cez koreňový symbol (MGC pre MGCQ6 aj MGCZ6)
+   môžu byť z iného kontraktného mesiaca na inej cenovej hladine – rovnaká tolerancia ako
+   pri mismatch teste v excursionFor(). */
+export function levelsMatchTrade(lo,hi,entry){
+  if(lo==null||hi==null||!isFinite(lo)||!isFinite(hi))return false;
+  if(entry==null||!isFinite(entry))return true;
+  const tol=Math.max((hi-lo)*0.5,Math.abs(hi)*0.01);
+  return entry>=lo-tol&&entry<=hi+tol;
+}
+/* 1m CSV z TradingView býva nahraté len na pár hodín okolo obchodu – predošlý deň
+   (a často aj celá noc) v ňom potom nie je. Čo chýba, doplníme z iného datasetu toho
+   istého symbolu, ale len ak jeho ceny s obchodom sedia. */
+export function levelsForTrade(t,ds,rthOpenMin){
+  const out=dailyLevels(ds&&ds.bars,t.tEntry,rthOpenMin)||{prevDay:null,pdh:null,pdl:null,onh:null,onl:null};
+  if(out.pdh!=null&&out.onh!=null)return out;
+  const others=datasetsForSymbol(t.symbol)
+    .filter(d=>d!==ds&&(!ds||d.key!==ds.key))
+    .sort((a,b)=>(b.bars?b.bars.length:0)-(a.bars?a.bars.length:0));
+  for(const d of others){
+    if(out.pdh!=null&&out.onh!=null)break;
+    const alt=dailyLevels(d.bars,t.tEntry,rthOpenMin);
+    if(!alt)continue;
+    if(out.pdh==null&&levelsMatchTrade(alt.pdl,alt.pdh,t.entry)){
+      out.pdh=alt.pdh;out.pdl=alt.pdl;out.prevDay=alt.prevDay;out.pdFrom=d.tf;
+    }
+    if(out.onh==null&&levelsMatchTrade(alt.onl,alt.onh,t.entry)){
+      out.onh=alt.onh;out.onl=alt.onl;out.onFrom=d.tf;
     }
   }
   return out;
@@ -648,8 +779,12 @@ export function renderModalChart(){
     s.setData(calcSMA(barsAll,state.modalIndicators.smaPeriod));
   }
   if(state.modalIndicators.ema){
-    const s=state.modalChart.addLineSeries({color:'#7c5bef',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
-    s.setData(calcEMA(barsAll,state.modalIndicators.emaPeriod));
+    // farby idú od najrýchlejšej EMA po najpomalšiu, nech je poradie v grafe čitateľné
+    parsePeriods(state.modalIndicators.emaPeriods).forEach((p,i)=>{
+      const s=state.modalChart.addLineSeries({color:EMA_COLORS[i%EMA_COLORS.length],lineWidth:2,
+        priceLineVisible:false,lastValueVisible:false,title:'EMA '+p});
+      s.setData(calcEMA(barsAll,p));
+    });
   }
   if(state.modalIndicators.vwap&&hasVolume){
     const s=state.modalChart.addLineSeries({color:'#26a69a',lineWidth:2,priceLineVisible:false,lastValueVisible:false});
@@ -659,16 +794,57 @@ export function renderModalChart(){
   const near=ts=>{let best=barsAll[0].t,bd=Infinity;for(const b of barsAll){const d=Math.abs(b.t-ts);if(d<bd){bd=d;best=b.t;}}return tzOff(best);};
   const pnl=computePnl(t);
   const hasExit=isFinite(t.exit)&&!!t.tExit;
-  if(isFinite(t.entry)){
-    markers.push({time:near(t1),position:t.dir===1?'belowBar':'aboveBar',color:t.dir===1?'#26a69a':'#ef5350',shape:t.dir===1?'arrowUp':'arrowDown',size:2,text:tr('Vstup')+' '+t.entry});
-    series.createPriceLine({price:t.entry,color:'#5b8def',lineWidth:2,lineStyle:0,title:tr('Vstup')});
+  /* Pri škálovanom obchode kreslíme KAŽDÝ fill zvlášť. Jedna šípka na priemernej cene
+     je zavádzajúca - taká cena na trhu nemusela nikdy existovať. Priemer zostáva ako
+     vodorovná čiara, označená ø, aby bolo jasné, že je to priemer a nie fill. */
+  const legsOf=(legs,fallbackT,fallbackPrice)=>
+    (legs&&legs.length?legs:(isFinite(fallbackPrice)&&fallbackT?[{qty:t.qty,price:fallbackPrice,t:fallbackT}]:[]));
+  const entryFills=legsOf(t.entryLegs,t.tEntry,t.entry);
+  const exitFills=hasExit?legsOf(t.exitLegs,t.tExit,t.exit):[];
+  const fillText=(l,label)=>(entryFills.length+exitFills.length>2?`${l.qty}@${l.price}`:`${label} ${l.price}`);
+  for(const l of entryFills){
+    markers.push({time:near(l.t),position:t.dir===1?'belowBar':'aboveBar',color:t.dir===1?'#26a69a':'#ef5350',
+      shape:t.dir===1?'arrowUp':'arrowDown',size:2,text:fillText(l,tr('Vstup'))});
   }
-  if(hasExit){
-    markers.push({time:near(t2),position:t.dir===1?'aboveBar':'belowBar',color:pnl>=0?'#26a69a':'#ef5350',shape:t.dir===1?'arrowDown':'arrowUp',size:2,text:tr('Výstup')+' '+t.exit});
-    series.createPriceLine({price:t.exit,color:pnl>=0?'#26a69a':'#ef5350',lineWidth:2,lineStyle:0,title:tr('Výstup')});
+  for(const l of exitFills){
+    markers.push({time:near(l.t),position:t.dir===1?'aboveBar':'belowBar',color:pnl>=0?'#26a69a':'#ef5350',
+      shape:t.dir===1?'arrowDown':'arrowUp',size:2,text:fillText(l,tr('Výstup'))});
   }
+  if(isFinite(t.entry))
+    series.createPriceLine({price:t.entry,color:'#5b8def',lineWidth:2,lineStyle:0,
+      title:tr('Vstup')+(entryFills.length>1?' ø':'')});
+  if(hasExit)
+    series.createPriceLine({price:t.exit,color:pnl>=0?'#26a69a':'#ef5350',lineWidth:2,lineStyle:0,
+      title:tr('Výstup')+(exitFills.length>1?' ø':'')});
   if(t.stop!=null)series.createPriceLine({price:t.stop,color:'#ef5350',lineWidth:2,lineStyle:3,title:'SL'});
   if(t.target!=null)series.createPriceLine({price:t.target,color:'#26a69a',lineWidth:2,lineStyle:3,title:'TP'});
+  /* Najhorší a najlepší bod obchodu ako cenové ÚROVNE, nie značky v čase: extrém môže
+     pochádzať z orezanej krajnej sviečky, takže presný okamih nepoznáme - značka v čase
+     by tvrdila presnosť, ktorú nemáme. Úroveň zhodná so vstupom sa nekreslí (bola by to
+     len druhá čiara na tom istom mieste). */
+  if(state.modalIndicators.maemfe&&hasExit){
+    const x=excursionFor(t);
+    if(x&&!x.mismatch){
+      const tol=Math.abs(t.entry)*1e-9+1e-9;
+      if(isFinite(x.maePrice)&&Math.abs(x.maePrice-t.entry)>tol)
+        series.createPriceLine({price:x.maePrice,color:'#ef5350',lineWidth:1,lineStyle:1,title:'MAE'});
+      if(isFinite(x.mfePrice)&&Math.abs(x.mfePrice-t.entry)>tol)
+        series.createPriceLine({price:x.mfePrice,color:'#26a69a',lineWidth:1,lineStyle:1,title:'MFE'});
+    }
+  }
+  /* Denné referenčné úrovne. Kreslia sa len tie, ktoré dáta naozaj obsahujú - keď
+     dataset nesiaha do predošlého dňa ani do noci, radšej nič, než vymyslená čiara. */
+  if(state.modalIndicators.levels){
+    const lv=levelsForTrade(t,ds,parseHhmm(state.modalIndicators.rthOpen));
+    const lvLine=(price,title,color)=>{
+      if(price==null||!isFinite(price))return;
+      series.createPriceLine({price,color,lineWidth:1,lineStyle:2,title,axisLabelVisible:true});
+    };
+    lvLine(lv.pdh,'PDH','#e0a33e');
+    lvLine(lv.pdl,'PDL','#e0a33e');
+    lvLine(lv.onh,'ONH','#8f9bb3');
+    lvLine(lv.onl,'ONL','#8f9bb3');
+  }
   markers.sort((a,b)=>a.time-b.time);
   series.setMarkers(markers);
   if(isFinite(t.entry)&&typeof series.attachPrimitive==='function'){
