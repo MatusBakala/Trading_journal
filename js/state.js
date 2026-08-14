@@ -50,6 +50,9 @@ export const state = {
     ema: false, emaPeriods: '9,21',
     vwap: false, rsi: false, rsiPeriod: 14,
     maemfe: true, // úrovne najhoršieho/najlepšieho bodu obchodu
+    // PDH/PDL/ONH/ONL - denné referenčné úrovne pre Volume Profile playbook.
+    // rthOpen = otvorenie hlavnej session v LOKÁLNOM čase (15:30 = 9:30 ET pre US futures)
+    levels: false, rthOpen: '15:30',
   },
   gBootDone: false,
 };

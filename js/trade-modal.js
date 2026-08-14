@@ -499,7 +499,15 @@ export function renderIndBar(hasVolume){
     `<input type="text" class="indPeriods" data-ind="emaPeriods" value="${esc(state.modalIndicators.emaPeriods)}" `+
     `title="${esc(tr('Periódy oddelené čiarkou, napr. 5,9,13,21,200'))}" `+
     `style="width:86px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px"></span>`;
-  bar.innerHTML=item('sma','SMA','smaPeriod')+emaItem+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod')+item('maemfe','MAE/MFE');
+  // PD/ON úrovne majú namiesto periódy čas otvorenia RTH (HH:MM v lokálnom čase) -
+  // určuje, kde končí noc a začína hlavná session
+  const lvlItem=`<span style="display:inline-flex;align-items:center;gap:3px">`+
+    `<button type="button" class="tfBtn${state.modalIndicators.levels?' on':''}" data-ind="levels" `+
+    `title="${esc(tr('PDH/PDL = maximum a minimum predošlého obchodného dňa, ONH/ONL = extrémy nočnej časti dňa obchodu (od začiatku dňa po otvorenie RTH). Deň sa berie v tvojom lokálnom čase.'))}">PD/ON</button>`+
+    `<input type="text" class="indTime" data-ind="rthOpen" value="${esc(state.modalIndicators.rthOpen)}" `+
+    `title="${esc(tr('Otvorenie RTH v tvojom lokálnom čase (HH:MM) – hranica medzi nocou a hlavnou session'))}" `+
+    `style="width:52px;padding:4px 5px;font-size:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px"></span>`;
+  bar.innerHTML=item('sma','SMA','smaPeriod')+emaItem+item('vwap','VWAP')+item('rsi','RSI','rsiPeriod')+item('maemfe','MAE/MFE')+lvlItem;
   bar.querySelectorAll('.tfBtn').forEach(b=>{
     if(b.disabled)return;
     b.onclick=()=>{state.modalIndicators[b.dataset.ind]=!state.modalIndicators[b.dataset.ind];renderModalChart();};
@@ -510,6 +518,16 @@ export function renderIndBar(hasVolume){
       const list=parsePeriods(inp.value);
       state.modalIndicators.emaPeriods=list.length?list.join(','):state.modalIndicators.emaPeriods;
       renderModalChart();
+    };
+  });
+  bar.querySelectorAll('.indTime').forEach(inp=>{
+    inp.onclick=e=>e.stopPropagation();
+    inp.onchange=()=>{
+      const mins=parseHhmm(inp.value);
+      if(mins==null){inp.value=state.modalIndicators.rthOpen;toast(tr('Zadaj čas v tvare HH:MM'));return;}
+      state.modalIndicators.rthOpen=fmtHhmm(mins);
+      inp.value=state.modalIndicators.rthOpen;
+      if(state.modalIndicators.levels)renderModalChart();
     };
   });
   bar.querySelectorAll('.indPeriod').forEach(inp=>{
@@ -570,6 +588,87 @@ export function calcRSI(bars,period){
     if(avgGain!=null){
       const rsi=avgLoss===0?100:100-100/(1+avgGain/avgLoss);
       out.push({time:bars[i]._time,value:rsi});
+    }
+  }
+  return out;
+}
+/* ---- denné referenčné úrovne (PDH/PDL/ONH/ONL) ---- */
+/* Volume Profile playbook stojí na týchto úrovniach:
+   PDH/PDL = maximum a minimum PREDCHÁDZAJÚCEHO obchodného dňa,
+   ONH/ONL = extrémy nočnej časti DŇA OBCHODU, teda od začiatku dňa po otvorenie RTH.
+
+   Deň sa počíta v LOKÁLNOM čase (rovnako ako dayKey inde v appke). Pre stredoeurópsku
+   zónu to sedí s obchodným dňom CME: polnoc lokálne = 18:00 ET, teda presne otvorenie
+   globexu (platí aj v lete, obe zóny prechádzajú na letný čas). Kto obchoduje z inej
+   zóny alebo iný trh, prepíše si čas otvorenia RTH v poli vedľa tlačidla – je to jediný
+   údaj, ktorý sa z dát odvodiť nedá.
+
+   „Predošlý deň" nie je kalendárne mínus jeden deň, ale najbližší skorší deň, v ktorom
+   sú v datasete sviečky – víkendy a sviatky sa tým vyriešia samy. */
+export const DEFAULT_RTH_OPEN='15:30';
+export function parseHhmm(raw){
+  const m=/^(\d{1,2})[:.]?(\d{2})$/.exec(String(raw==null?'':raw).trim());
+  if(!m)return null;
+  const h=+m[1],mi=+m[2];
+  if(h>23||mi>59)return null;
+  return h*60+mi;
+}
+export function fmtHhmm(mins){
+  if(mins==null||!isFinite(mins))return '';
+  const m=((Math.round(mins)%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+}
+export function minsOfDay(ts){const d=new Date(ts*1000);return d.getHours()*60+d.getMinutes();}
+export function dailyLevels(bars,refTs,rthOpenMin){
+  if(!bars||!bars.length||!refTs)return null;
+  const today=dayKey(refTs);
+  const days=new Map(); // dayKey -> {h,l}
+  let onh=null,onl=null;
+  for(const b of bars){
+    if(!isFinite(b.h)||!isFinite(b.l))continue;
+    const k=dayKey(b.t);
+    const cur=days.get(k);
+    if(cur){if(b.h>cur.h)cur.h=b.h;if(b.l<cur.l)cur.l=b.l;}
+    else days.set(k,{h:b.h,l:b.l});
+    // Sviečky PO vstupe do noci nepatria: keď obchod padol do nočnej session, ONH/ONL
+    // je to, čo bolo vidieť pri vstupe – nie extrém, ktorý sa vytvoril až potom.
+    if(k===today&&rthOpenMin!=null&&b.t<=refTs&&minsOfDay(b.t)<rthOpenMin){
+      if(onh==null||b.h>onh)onh=b.h;
+      if(onl==null||b.l<onl)onl=b.l;
+    }
+  }
+  let prevDay=null;
+  for(const k of days.keys())if(k<today&&(prevDay==null||k>prevDay))prevDay=k;
+  const pd=prevDay?days.get(prevDay):null;
+  return {prevDay,pdh:pd?pd.h:null,pdl:pd?pd.l:null,onh,onl};
+}
+/* Rozsah sedí s obchodom? Sviečky priradené cez koreňový symbol (MGC pre MGCQ6 aj MGCZ6)
+   môžu byť z iného kontraktného mesiaca na inej cenovej hladine – rovnaká tolerancia ako
+   pri mismatch teste v excursionFor(). */
+export function levelsMatchTrade(lo,hi,entry){
+  if(lo==null||hi==null||!isFinite(lo)||!isFinite(hi))return false;
+  if(entry==null||!isFinite(entry))return true;
+  const tol=Math.max((hi-lo)*0.5,Math.abs(hi)*0.01);
+  return entry>=lo-tol&&entry<=hi+tol;
+}
+/* 1m CSV z TradingView býva nahraté len na pár hodín okolo obchodu – predošlý deň
+   (a často aj celá noc) v ňom potom nie je. Čo chýba, doplníme z iného datasetu toho
+   istého symbolu, ale len ak jeho ceny s obchodom sedia. */
+export function levelsForTrade(t,ds,rthOpenMin){
+  const out=dailyLevels(ds&&ds.bars,t.tEntry,rthOpenMin)||{prevDay:null,pdh:null,pdl:null,onh:null,onl:null};
+  if(out.pdh!=null&&out.onh!=null)return out;
+  const others=datasetsForSymbol(t.symbol)
+    .filter(d=>d!==ds&&(!ds||d.key!==ds.key))
+    .sort((a,b)=>(b.bars?b.bars.length:0)-(a.bars?a.bars.length:0));
+  for(const d of others){
+    if(out.pdh!=null&&out.onh!=null)break;
+    const alt=dailyLevels(d.bars,t.tEntry,rthOpenMin);
+    if(!alt)continue;
+    if(out.pdh==null&&levelsMatchTrade(alt.pdl,alt.pdh,t.entry)){
+      out.pdh=alt.pdh;out.pdl=alt.pdl;out.prevDay=alt.prevDay;out.pdFrom=d.tf;
+    }
+    if(out.onh==null&&levelsMatchTrade(alt.onl,alt.onh,t.entry)){
+      out.onh=alt.onh;out.onl=alt.onl;out.onFrom=d.tf;
     }
   }
   return out;
@@ -732,6 +831,19 @@ export function renderModalChart(){
       if(isFinite(x.mfePrice)&&Math.abs(x.mfePrice-t.entry)>tol)
         series.createPriceLine({price:x.mfePrice,color:'#26a69a',lineWidth:1,lineStyle:1,title:'MFE'});
     }
+  }
+  /* Denné referenčné úrovne. Kreslia sa len tie, ktoré dáta naozaj obsahujú - keď
+     dataset nesiaha do predošlého dňa ani do noci, radšej nič, než vymyslená čiara. */
+  if(state.modalIndicators.levels){
+    const lv=levelsForTrade(t,ds,parseHhmm(state.modalIndicators.rthOpen));
+    const lvLine=(price,title,color)=>{
+      if(price==null||!isFinite(price))return;
+      series.createPriceLine({price,color,lineWidth:1,lineStyle:2,title,axisLabelVisible:true});
+    };
+    lvLine(lv.pdh,'PDH','#e0a33e');
+    lvLine(lv.pdl,'PDL','#e0a33e');
+    lvLine(lv.onh,'ONH','#8f9bb3');
+    lvLine(lv.onl,'ONL','#8f9bb3');
   }
   markers.sort((a,b)=>a.time-b.time);
   series.setMarkers(markers);
