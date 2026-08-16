@@ -862,21 +862,40 @@ export function renderTradeRuleChecklist(){
   const checked=(t&&t.strategyId===s.id&&Array.isArray(t.checkedRules))?t.checkedRules:[];
   $('tRuleChecklist').innerHTML=s.rules.map((r,i)=>`<label class="checkRow"><input type="checkbox" class="tRuleCheck" value="${esc(r)}" ${checked.includes(r)?'checked':''}>${esc(r)}</label>`).join('');
 }
+/* Stop, z ktorého sa počíta RIZIKO. Broker exportuje každú verziu stop príkazu, takže
+   `stop` môže byť aj hodnota po posunutí - a stop utiahnutý do zisku dá nezmyselne malé
+   riziko a nafúknuté R (v zálohe z 2026-08-16 malo 18 % obchodov stop na ziskovej strane
+   vstupu a tie mali 96% "úspešnosť", čo je vlastnosť trailingu, nie zručnosť).
+   `stopInit` plní import z PRVÉHO stop príkazu, takže má prednosť. */
+export function riskStop(t){
+  if(t.stopInit!=null&&isFinite(t.stopInit))return t.stopInit;
+  return (t.stop!=null&&isFinite(t.stop))?t.stop:null;
+}
+/* Posunul sa stop počas obchodu? `null` = nevieme (obchod nemá históriu z importu).
+   `widened` = počet posunov ĎALEJ od vstupu, teda smerom do väčšej straty. */
+export function stopMovement(t){
+  if(t.stopMoves==null||!isFinite(t.stopMoves))return null;
+  return {moves:t.stopMoves,widened:t.stopWidened||0,from:riskStop(t),to:(t.stopFinal!=null&&isFinite(t.stopFinal))?t.stopFinal:null};
+}
+function riskAmount(t){
+  const s=riskStop(t);
+  if(s==null||!isFinite(t.entry))return null;
+  const risk=Math.abs(t.entry-s)*(t.qty||1)*multFor(t.symbol);
+  return risk>0?risk:null;
+}
 export function riskR(t){
-  const pnl=computePnl(t);
-  if(t.stop==null||!isFinite(t.stop)||!isFinite(t.entry))return null;
-  const risk=Math.abs(t.entry-t.stop)*(t.qty||1)*multFor(t.symbol);
-  if(risk<=0)return null;
-  return pnl/risk;
+  const risk=riskAmount(t);
+  if(risk==null)return null;
+  return computePnl(t)/risk;
 }
 /* Plánované riziko obchodu (vstup→stop) ako % počiat. kapitálu aktívneho účtu -
    na rozdiel od riskR() (spätný R-multiple realizovaného výsledku) toto je preventívne:
    vidno to hneď pri vypĺňaní obchodu, ešte pred uložením. */
 export function plannedRiskPct(t){
-  if(t.stop==null||!isFinite(t.stop)||!isFinite(t.entry))return null;
+  const risk=riskAmount(t);
+  if(risk==null)return null;
   const balance=activeStartBalance();
   if(!(balance>0))return null;
-  const risk=Math.abs(t.entry-t.stop)*(t.qty||1)*multFor(t.symbol);
   return risk/balance*100;
 }
 export function tTime(t){return t.tExit||t.tEntry||0;}
@@ -1044,7 +1063,10 @@ export function excursionFor(t){
   });
   const m=hasLegs?legsMoney(true):flatMoney(clipped);
   const mMax=hasLegs?legsMoney(false):flatMoney(full);
-  const risk=(t.stop!=null&&isFinite(t.stop))?Math.abs(t.entry-t.stop)*qty*mult:0;
+  /* R pre MAE/MFE musí stáť na tom istom stope ako riskR(), inak by tá istá obrazovka
+     ukazovala dve nezlučiteľné R-čka pri obchode s posunutým stopom. */
+  const rs=riskStop(t);
+  const risk=(rs!=null)?Math.abs(t.entry-rs)*qty*mult:0;
   return {
     tf:best.tf,barCount:best.bars.length,badTicks:badTickTimes.size,
     /* Bez rozpisu fillov sa počíta s plným qty cez celé okno - pri viac ako jednom kontrakte

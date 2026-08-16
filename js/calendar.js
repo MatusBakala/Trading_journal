@@ -3,7 +3,7 @@ import { accTrades } from './accounts.js';
 import { dayNoteEditorHTML, dayNoteForAi, hasDayNote } from './day-notes.js';
 import { state } from './state.js';
 import { tr } from './i18n.js';
-import { excursionFor, riskR, tTime } from './strategy-notes.js';
+import { excursionFor, riskR, riskStop, tTime } from './strategy-notes.js';
 import { tradeTableHTML } from './trades-list.js';
 import { $, computePnl, dayKey, emotionLabel, esc, sessionOf, toast, tsToLocalInput } from './utils.js';
 
@@ -158,7 +158,9 @@ export function dayTradeToJson(t){
     exit:isFinite(t.exit)?t.exit:null,
     tEntry:t.tEntry?tsToLocalInput(t.tEntry):null,
     tExit:t.tExit?tsToLocalInput(t.tExit):null,
-    stop:t.stop??null,target:t.target??null,
+    stop:riskStop(t),target:t.target??null,
+    // posun stopu je pre AI podstatný kontext - bez neho vyzerá obchod ako plánovaný
+    stopPosunuty:t.stopMoves?{pocet:t.stopMoves,doStraty:t.stopWidened||0,finalny:t.stopFinal??null}:null,
     fees:t.fees||0,
     pnl:+computePnl(t).toFixed(2),
     r:riskR(t),

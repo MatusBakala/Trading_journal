@@ -8,7 +8,7 @@ import { loadCsvForImport } from './import-csv.js';
 import { renderAfterTradeChange, saveSettings } from './init.js';
 import { autoFetchForTrade, fetchTfForTrade } from './ohlc-fetch.js';
 import { cssVar, state } from './state.js';
-import { excursionFor, plannedRiskPct, refreshStrategySelects, renderTradeRuleChecklist, riskR, strategyById } from './strategy-notes.js';
+import { excursionFor, plannedRiskPct, refreshStrategySelects, renderTradeRuleChecklist, riskR, riskStop, stopMovement, strategyById } from './strategy-notes.js';
 import { allTagsOf, delTrade } from './trades-list.js';
 import { $, computePnl, dailyTradeLimit, dayKey, dayTradeCount, emotionLabel, localInputToTs, num, sessionOf, toast, tsToLocalInput } from './utils.js';
 
@@ -106,7 +106,24 @@ export function updatePnlPreview(){
     (r!=null?` &nbsp; <span class="hint">(${r.toFixed(2)}R)</span>`:'')+
     ` &nbsp; <span class="hint">${tr('multiplikátor')} ${multFor(t.symbol)}</span>`+
     (riskPct!=null?` &nbsp; <span class="${overLimit?'neg':'hint'}" title="${esc(tr('Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu'))}">${overLimit?'⚠️ ':''}${tr(`riziko ${riskPct.toFixed(2)}%${limit>0?' / '+limit+'%':''}`)}</span>`:'');
+  renderStopMovement();
   renderExcursion(t);
+}
+/* „Stop posunutý 2× (1× do straty)" - história stop príkazov z broker importu.
+   Číta sa z uloženého obchodu, nie z formulára: formTrade() skladá obchod z polí,
+   ktoré posun stopu nezachytávajú. */
+export function renderStopMovement(){
+  const el=$('tStopMoved');
+  if(!el)return;
+  const saved=state.currentTradeId!=null?state.trades.find(x=>x.id===state.currentTradeId):null;
+  const mv=saved?stopMovement(saved):null;
+  if(!mv||!mv.moves){el.innerHTML='';return;}
+  const widened=mv.widened>0;
+  el.innerHTML=`<span class="${widened?'neg':'hint'}">${widened?'⚠️ ':''}`+
+    `${tr('Stop posunutý')} ${mv.moves}×`+
+    (widened?` (${mv.widened}× ${tr('do straty')})`:'')+
+    (mv.to!=null?` &nbsp;<span class="hint">${mv.from} → ${mv.to}</span>`:'')+
+    `</span>`;
 }
 /* Upozornenie "koľký obchod dňa to je". Počíta sa pre deň a účet TOHTO obchodu
    (nie pre aktívny účet ani dnešok), aby sedelo aj pri spätnom dopĺňaní obchodu.
@@ -265,7 +282,9 @@ export function buildTradeReviewData(t){
   return {
     obchod:{
       symbol:String(t.symbol).toUpperCase(),smer:t.dir===1?'LONG':'SHORT',mnozstvo:t.qty||1,
-      vstup:t.entry,vystup:t.exit,stopLoss:t.stop,takeProfit:t.target,
+      vstup:t.entry,vystup:t.exit,stopLoss:riskStop(t),takeProfit:t.target,
+      // bez tohto by AI hodnotila obchod, akoby stop celý čas držal tam, kde je zapísaný
+      stopPosunuty:t.stopMoves?{pocet:t.stopMoves,doStraty:t.stopWidened||0,finalny:t.stopFinal??null}:null,
       casVstupu:t.tEntry?new Date(t.tEntry*1000).toISOString():null,
       casVystupu:t.tExit?new Date(t.tExit*1000).toISOString():null,
       trvanieMinut:t.tExit&&t.tEntry?Math.round((t.tExit-t.tEntry)/60):null,

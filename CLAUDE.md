@@ -56,6 +56,33 @@ Pri každej zmene JS/CSS bumpni `v` v `app-version.json`. Boot skript v `index.h
 
 Keď pribudne alebo zmizne súbor v `js/`, spusti `npm run manifest`. Ak sa na to zabudne, `npm test` to zachytí a povie čo spustiť.
 
+## Stop loss: `stop` vs `stopInit`
+
+Broker (Tradovate) exportuje do Order History **každú verziu** stop príkazu ako vlastný
+riadok, takže posúvanie stopu je v dátach prítomné. `convertBrokerOrdersToTrades()` z tej
+sekvencie plní:
+
+- `stopInit` – **prvý** ochranný stop = pôvodné riziko. **Z neho sa počíta R.**
+- `stopFinal` – posledný stop
+- `stopMoves` – počet posunov, `stopWidened` – z toho koľkokrát ĎALEJ od vstupu (do straty)
+
+`stop` zostáva pôvodné pole (ručne zadané obchody, staré importy) a môže obsahovať už
+posunutú hodnotu. **Riziko preto nikdy nepočítaj priamo z `t.stop`** – použi `riskStop(t)`
+(`js/strategy-notes.js`), ktorá uprednostní `stopInit`. Používajú ju `riskR()`,
+`plannedRiskPct()` aj `excursionFor()`; keby niektorá z nich čítala `stop` priamo, tá istá
+obrazovka by ukazovala dve nezlučiteľné R-čka.
+
+Prečo to vzniklo: v zálohe z 2026-08-16 malo **18 % obchodov stop na ziskovej strane
+vstupu** (teda utiahnutý/trailing) a tie mali 96 % „úspešnosť" – čo je vlastnosť trailingu,
+nie zručnosť. Skresľovalo to R-štatistiky o rád: medián −0,59R vs správnych −0,83R, priemer
++0,01R vs −0,43R. Príčinou bolo okno `s.t >= t.tEntry-1`, ktoré vynechalo bracket stopy
+zadané spolu so vstupným príkazom (vznikajú skôr, než sa vstup naplní), takže za „prvý" sa
+brala až prvá úprava. Okno je teraz `tEntry - 120 s`, orezané výstupom predošlého obchodu na
+tom istom symbole.
+
+Re-import tej istej Order History **spätne doplní** `stopInit` existujúcim obchodom
+(rovnako ako sa dopĺňa rozpis fillov), takže históriu netreba mazať.
+
 ## Zmena návratovej hodnoty zdieľanej funkcie
 
 Keď zmeníš tvar/kontrakt návratovej hodnoty existujúcej zdieľanej funkcie (napr. pridáš nový možný stav ako `{mismatch:true}` do `excursionFor()`), **hneď na to `grep` VŠETKY miesta, ktoré tú funkciu volajú** (`grep -rn "menoFunkcie"` cez `js/`) – nielen to jedno, kde si zmenu potreboval. Inak zostanú "tiché" rozbité miesta, ktoré predpokladajú starý tvar (napr. `$NaN` v agregovaných štatistikách, pád pri `undefined.toFixed()` v AI exporte) – presne toto sa stalo pri MAE/MFE `mismatch` fixe, kde `excursionFor()` má 4 rôznych volajúcich (`trade-modal.js` 2×, `stats.js`, `calendar.js`) a opravený bol najprv len jeden.

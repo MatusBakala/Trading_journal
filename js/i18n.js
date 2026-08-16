@@ -212,6 +212,7 @@ export const I18N_EN={
 'Riziko vstup→stop ako % počiat. kapitálu aktívneho účtu':'Risk entry→stop as % of active account starting capital',
 'Dnešné využité riziko':'Today\'s used risk','(denný limit':'(daily limit',
 'Dnešné obchody':'Today\'s trades','obchod dňa':'trade of the day','nad limitom':'over the limit','limit':'limit',
+'Stop posunutý':'Stop moved','do straty':'further into loss',
 'Prompt pre "AI rozbor obchodu"':'Prompt for "AI trade review"',
 'Text inštrukcií, ktoré appka pošle Claude pri kliknutí na "🤖 Rozobrať tento obchod" v detaile obchodu. Dáta obchodu (JSON) a sviečky sa vždy pripoja automaticky za tento text – nie sú jeho súčasťou. Použi <code>{{JAZYK}}</code> tam, kde má appka doplniť aktuálny jazyk appky (SK/EN).':'Instruction text the app sends to Claude when you click "🤖 Review this trade" in trade detail. Trade data (JSON) and candles are always appended after this text – they are not part of it. Use <code>{{JAZYK}}</code> where the app should insert the current app language (SK/EN).',
 'Uložiť prompt':'Save prompt','Obnoviť predvolený':'Reset to default','riziko':'risk',
