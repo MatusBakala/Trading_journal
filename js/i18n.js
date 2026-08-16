@@ -400,6 +400,34 @@ Object.assign(I18N_EN,{
 'Periódy oddelené čiarkou, napr. 5,9,13,21,200':'Periods separated by commas, e.g. 5,9,13,21,200',
 });
 
+Object.assign(I18N_EN,{
+// ── Sweep likvidity / Trendový deň ──
+'Obchodovanie vybranej likvidity na vopred označenej úrovni – Asia High/Low, PDH/PDL, ONH/ONL, VAH/VAL alebo otvorenie session. Cena úroveň zoberie, ale pohyb sa neudrží. Spôsob vstupu sa líši podľa situácie (reclaim, displacement + FVG, market structure shift, položená limitka alebo vstup na dotyku), preto sa použitý trigger zaškrtáva ku každému obchodu zvlášť.':'Trading swept liquidity at a pre-marked level – Asia High/Low, PDH/PDL, ONH/ONL, VAH/VAL or the session open. Price takes the level, but the move does not hold. The way you enter varies with the situation (reclaim, displacement + FVG, market structure shift, a resting limit order, or entry on touch), so the trigger used is ticked separately on every trade.',
+'Úroveň bola označená na grafe PRED vstupom (Asia H/L, PDH/PDL, ONH/ONL, VAH/VAL, open session)':'The level was marked on the chart BEFORE entry (Asia H/L, PDH/PDL, ONH/ONL, VAH/VAL, session open)',
+'Knôt presiahol úroveň aspoň o 2 ticky – sweep naozaj prebehol':'The wick exceeded the level by at least 2 ticks – the sweep actually happened',
+'Je to prvý alebo druhý pokus o túto úroveň, nie tretí a ďalší':'This is the first or second attempt at this level, not the third or beyond',
+'Stop je vyplnený v zázname obchodu':'The stop is filled in on the trade record',
+'Cieľ je určený vopred a vyplnený v zázname obchodu':'The target is set in advance and filled in on the trade record',
+'Plánované riziko je do vopred určeného % účtu':'Planned risk is within the predefined % of the account',
+'Trigger: reclaim – sviečka zavrela späť za úrovňou':'Trigger: reclaim – a candle closed back behind the level',
+'Trigger: displacement + vstup na návrate do FVG':'Trigger: displacement + entry on the return into the FVG',
+'Trigger: market structure shift na 1m/2m (BOS/CHoCH)':'Trigger: market structure shift on 1m/2m (BOS/CHoCH)',
+'Trigger: limitka položená vopred na úrovni, stop nastavený zároveň s ňou':'Trigger: a limit order resting at the level, with the stop set at the same time',
+'Trigger: vstup na dotyku úrovne bez potvrdenia':'Trigger: entry on touch of the level without confirmation',
+'Pokračovací model pre dni, keď Ázia ráno udá jasný smer. London nejde proti nemu – najprv stiahne cenu späť na VWAP alebo na Asia VAH/VAL a odtiaľ pokračuje pôvodným smerom. Vstupuje sa na potvrdený retest tejto úrovne v smere trendu, nikdy proti nemu.':'A continuation model for days when the Asian session sets a clear direction in the morning. London does not fight it – it first pulls price back to VWAP or to the Asia VAH/VAL, then continues in the original direction. You enter on a confirmed retest of that level in the direction of the trend, never against it.',
+'Ázijská session zavrela v hornej (long) alebo dolnej (short) tretine svojho rozsahu':'The Asian session closed in the upper (long) or lower (short) third of its range',
+'Cena je nad VWAP pri longu / pod VWAP pri shorte':'Price is above VWAP for a long / below VWAP for a short',
+'Pullback dosiahol VWAP alebo Asia VAH (long) / Asia VAL (short)':'The pullback reached VWAP or the Asia VAH (long) / Asia VAL (short)',
+'Pullback nezmazal viac než 50 % ázijského pohybu':'The pullback did not erase more than 50 % of the Asian move',
+'Reakcia je potvrdená – sviečka na úrovni zavrela v smere trendu':'The reaction is confirmed – the candle at the level closed in the trend direction',
+'Vstúpil som až po zatvorení potvrdzujúcej sviečky':'I entered only after the confirming candle closed',
+'Stop je za úrovňou pullbacku a je vyplnený v zázname obchodu':'The stop is behind the pullback level and is filled in on the trade record',
+'Cieľ je určený vopred (high/low dňa alebo ďalšia likvidita) a je vyplnený v zázname':'The target is set in advance (day high/low or the next liquidity) and is filled in on the record',
+'V tento deň neobchodujem proti smeru Ázie':'On this day I do not trade against the Asian direction',
+'Sweep likvidity':'Liquidity Sweep',
+'Trendový deň – pokračovanie':'Trend day – continuation',
+});
+
 export const SK_MONTHS={'Január':'January','Február':'February','Marec':'March','Apríl':'April','Máj':'May','Jún':'June','Júl':'July','August':'August','September':'September','Október':'October','November':'November','December':'December'};
 export const I18N_RULES=[
 [/^(Január|Február|Marec|Apríl|Máj|Jún|Júl|August|September|Október|November|December) (\d{4})$/,(m,mo,y)=>SK_MONTHS[mo]+' '+y],
