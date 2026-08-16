@@ -13,6 +13,21 @@ export function fmtDT(ts){if(!ts)return'–';const d=new Date(ts*1000);const loc
 export function fmtD(ts){return new Date(ts*1000).toLocaleDateString(dateLocale());}
 export function dayKey(ts){const d=new Date(ts*1000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 export function fmtDur(sec){if(sec==null||isNaN(sec)||sec<0)return'–';if(sec<60)return Math.round(sec)+'s';if(sec<3600)return Math.round(sec/60)+'m';if(sec<86400)return(sec/3600).toFixed(1)+'h';return(sec/86400).toFixed(1)+'d';}
+/* Koľko obchodov bolo v daný deň OTVORENÝCH - zámerne podľa `tEntry`, nie podľa
+   tTime() (tá uprednostňuje tExit a slúži na priradenie P&L ku dňu uzavretia).
+   Limit je o počte vstupov, takže obchod otvorený o 23:50 a zavretý po polnoci
+   patrí do dňa, kedy si doň vstúpil. `excludeId` vynechá práve editovaný obchod,
+   aby sa pri úprave nezapočítal dvakrát. */
+export function dayTradeCount(trades,dayK,excludeId){
+  if(!Array.isArray(trades))return 0;
+  return trades.filter(t=>t&&t.tEntry&&(excludeId==null||t.id!==excludeId)&&dayKey(t.tEntry)===dayK).length;
+}
+/* Stav denného limitu počtu obchodov. Vracia `null`, keď limit nie je nastavený
+   (0 = nesledovaný), aby volajúci vedel banner/varovanie úplne vynechať. */
+export function dailyTradeLimit(count,limit){
+  if(!(limit>0))return null;
+  return {count,limit,remaining:Math.max(0,limit-count),over:count>limit,atLimit:count>=limit};
+}
 /* Ktorý oddeľovač je desatinný, prezradí ten, čo je v čísle posledný:
    "1,234.50" je americký zápis, "1.234,50" európsky. Ten druhý sa predtým
    čítal ako 1.2345, lebo európska vetva sa púšťala len pri čísle bez bodky. */

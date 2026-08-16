@@ -19,6 +19,7 @@ export function renderSettings(){
   if($('anthropicKey')&&document.activeElement!==$('anthropicKey'))$('anthropicKey').value=state.settings.anthropicKey||'';
   if($('maxRiskPerTradePct')&&document.activeElement!==$('maxRiskPerTradePct'))$('maxRiskPerTradePct').value=state.settings.maxRiskPerTradePct||'';
   if($('maxDailyLossPct')&&document.activeElement!==$('maxDailyLossPct'))$('maxDailyLossPct').value=state.settings.maxDailyLossPct||'';
+  if($('maxTradesPerDay')&&document.activeElement!==$('maxTradesPerDay'))$('maxTradesPerDay').value=state.settings.maxTradesPerDay||'';
   if($('aiReviewPromptTemplate')&&document.activeElement!==$('aiReviewPromptTemplate'))$('aiReviewPromptTemplate').value=state.settings.aiReviewPromptTemplate||DEFAULT_TRADE_REVIEW_PROMPT;
 }
 export function saveAnthropicKey(){
@@ -40,6 +41,7 @@ export function resetAiReviewPrompt(){
 export function saveRiskLimits(){
   state.settings.maxRiskPerTradePct=num($('maxRiskPerTradePct').value)||0;
   state.settings.maxDailyLossPct=num($('maxDailyLossPct').value)||0;
+  state.settings.maxTradesPerDay=Math.max(0,Math.round(num($('maxTradesPerDay').value)||0));
   saveSettings();
   renderAfterTradeChange(); // banner na dashboarde a upozornenie v modáli reagujú na nové limity hneď
   toast('Limity uložené');

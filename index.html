@@ -484,6 +484,7 @@ window.__TJ_BOOT__=(async function(){
     <div class="filters">
       <label class="f">Max. riziko na obchod (%)<input id="maxRiskPerTradePct" type="number" step="any" min="0" placeholder="napr. 1"></label>
       <label class="f">Max. denná strata (%)<input id="maxDailyLossPct" type="number" step="any" min="0" placeholder="napr. 3"></label>
+      <label class="f">Max. obchodov za deň<input id="maxTradesPerDay" type="number" step="1" min="0" placeholder="napr. 8"></label>
     </div>
     <br>
     <button class="btn small" id="btnSaveRiskLimits">Uložiť limity</button>
@@ -590,6 +591,7 @@ window.__TJ_BOOT__=(async function(){
     </div>
     <label class="f">Denník / poznámky k obchodu<textarea id="tNotes" rows="6" placeholder="Setup a dôvod vstupu, manažment pozície, emócie, chyby, čo nabudúce spraviť inak..."></textarea></label>
     <div style="margin-top:10px;font-weight:700" id="tPnlPreview"></div>
+    <div style="margin-top:4px" id="tDayLimit"></div>
     <div style="margin-top:5px;font-size:13px" id="tExcursion"></div>
 
     <hr class="sep">

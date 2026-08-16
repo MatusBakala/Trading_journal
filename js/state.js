@@ -14,6 +14,7 @@ export const state = {
     },
     maxRiskPerTradePct: 0, // 0 = limit nesledovaný
     maxDailyLossPct: 0,
+    maxTradesPerDay: 0,
     gClientId: '',
     gConnected: false,
     gLastSync: null,
