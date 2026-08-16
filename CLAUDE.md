@@ -24,6 +24,31 @@ zálohy maže `gClientId` aj `anthropicKey`.
 Preto: **nikdy necommituj nič z `test-data/`**, ani „len dočasne". Appka ten priečinok na beh
 nepotrebuje, je to výhradne testovacia vzorka.
 
+### Načítanie zálohy do bežiacej appky (dev helper)
+
+Namiesto preklikávania Nastavenia → obnova zálohy sa dá záloha nahrať priamo, z konzoly
+prehliadača na dev serveri (`npm run serve`):
+
+```js
+const dev = await import('/tools/dev-seed.mjs');
+await dev.listBackups();   // čo je v test-data/
+await dev.loadBackup();    // najnovšia podľa mena; alebo loadBackup('subor.json')
+await dev.wipe();          // zmaže IndexedDB → po reloade čistá inštalácia
+```
+
+Dve veci, na ktorých to stojí a ktoré sa ľahko pokazia:
+
+- Helper importuje appkine moduly **relatívnou** cestou (`../js/settings.js`), aby ich import
+  mapa premapovala na tú istú `?v=` URL, akú používa appka. Keby si ich natiahol napr. cez
+  `fetch('/js/settings.js')` alebo bez `?v=`, prehliadač vytvorí **druhú kópiu** modulového
+  grafu s vlastným `state` – dáta by sa nahrali do appky, ktorú stránka nerenderuje.
+- `wipe()` najprv zavrie appkine vlastné spojenie (`DB.db` v `js/db.js`), inak `deleteDatabase`
+  visí zablokovaný proti stránke, z ktorej si ho zavolal. Ak appku držíš otvorenú v **inej**
+  karte, zablokuje to tiež a helper to povie – tú kartu treba zavrieť.
+
+`tools/` nie je v import mape ani v `app-version.json`, takže zmeny v helperi **nevyžadujú bump
+verzie**. Helper beží len na localhoste (kontroluje hostname) a nič ho neimportuje automaticky.
+
 
 ## Nasadzovanie a cache
 

@@ -35,8 +35,29 @@ const MIME = {
   '.webmanifest': 'application/manifest+json; charset=utf-8',
 };
 
+/**
+ * Dev-only: list the backup exports sitting in test-data/ so tools/dev-seed.mjs can
+ * offer them without the filename being typed by hand. test-data/ is gitignored and
+ * holds real trading data, so this endpoint exists only here, never in the deployed
+ * app - GitHub Pages serves static files and never runs this file.
+ */
+function serveBackupList(res) {
+  fs.readdir(path.join(root, 'test-data'), (err, files) => {
+    const list = err ? [] : files.filter((f) => f.toLowerCase().endsWith('.json')).sort().reverse();
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    });
+    res.end(JSON.stringify(list));
+  });
+}
+
 const server = http.createServer((req, res) => {
   const urlPath = decodeURIComponent(req.url.split('?')[0]);
+  if (urlPath === '/__dev/backups') {
+    serveBackupList(res);
+    return;
+  }
   let filePath = path.join(root, urlPath.endsWith('/') ? urlPath + 'index.html' : urlPath);
   if (!filePath.startsWith(root)) {
     res.writeHead(403);
