@@ -4,14 +4,25 @@ Záloha- iCloud sync pre zatiaľ a export JSON. Neskôr možno nejaka databáza.
 
 ## Testovacie dáta
 
-`test-data/trading-journal-zaloha-2026-08-08.json` je reálna záloha (export) z bežiacej appky
-zo dňa 2026-08-08 — nie sú to syntetické/vymyslené dáta. Použi tento súbor kedykoľvek treba
-otestovať import/restore zálohy, renderovanie, štatistiky alebo inú funkcionalitu na reálne
-vyzerajúcich dátach.
+Zálohy v `test-data/` sú reálne exporty z bežiacej appky — nie syntetické dáta. Použi ich
+kedykoľvek treba otestovať import/restore zálohy, renderovanie, štatistiky alebo inú
+funkcionalitu na reálne vyzerajúcich dátach. Čítaj ich lokálne (`node`, `Read`) a do
+konverzácie púšťaj len agregovaný výstup, nie obsah súboru.
 
-Sú to reálne obchodné dáta používateľa. Repo je private, preto je bezpečné mať súbor tu — ale
-nikdy ho nekopíruj do public repa, neuploaduj do externých/3rd-party nástrojov ani ho nezdieľaj
-mimo tohto projektu.
+**`test-data/` je v `.gitignore` a musí tam zostať.** Súbory sa tam dostávajú ručne, nikdy
+cez git — na druhé PC si ich používateľ prekopíruje sám.
+
+Dôvod (zistené 2026-08-16): pôvodne tu stálo, že „repo je private, preto je bezpečné mať
+súbor tu". **To bolo nepravdivé** — repo `MatusBakala/Trading_journal` je verejné a GitHub
+Pages servíruje branch `main`, takže reálna záloha (414 obchodov, zostatky účtov, P&L,
+poznámky z denníka) bola 4,6 MB verejne stiahnuteľná na
+`https://matusbakala.github.io/Trading_journal/test-data/...json`. Súbor bol z `main`
+odstránený, ale v git histórii zostáva — repo je verejné, takže tie konkrétne dáta treba
+považovať za zverejnené. Kľúče v nebezpečenstve neboli: `buildBackupPayload()` z každej
+zálohy maže `gClientId` aj `anthropicKey`.
+
+Preto: **nikdy necommituj nič z `test-data/`**, ani „len dočasne". Appka ten priečinok na beh
+nepotrebuje, je to výhradne testovacia vzorka.
 
 
 ## Nasadzovanie a cache
