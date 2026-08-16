@@ -4,7 +4,7 @@ import { tr } from './i18n.js';
 import { renderPatterns } from './patterns.js';
 import { cssVar, state } from './state.js';
 import { tTime } from './strategy-notes.js';
-import { $, computeDrawdown, computePnl, dayKey, emotionLabel, fmtMoney, fmtPct, isClosed, moneyCls, returnPct, sessionOf } from './utils.js';
+import { $, computeDrawdown, computePnl, dailyTradeLimit, dayKey, dayTradeCount, emotionLabel, fmtMoney, fmtPct, isClosed, moneyCls, returnPct, sessionOf } from './utils.js';
 
 /* ================= Dashboard ================= */
 export const GAUGE_L=125.66; // dĺžka polkruhu r=40
@@ -45,16 +45,31 @@ export function toggleEqMode(mode){state.eqChartMode=mode;renderDashboard();}
 function renderRiskBanner(startBalance){
   const el=$('riskBanner');
   if(!el)return;
-  const limit=state.settings.maxDailyLossPct;
-  if(!(limit>0)||!(startBalance>0)){el.innerHTML='';return;}
   const todayKey=dayKey(Math.floor(Date.now()/1000));
-  const todayNet=accTrades().filter(t=>isClosed(t)&&dayKey(tTime(t))===todayKey).reduce((a,t)=>a+computePnl(t),0);
-  const lossPct=todayNet<0?Math.abs(todayNet)/startBalance*100:0;
-  const overLimit=lossPct>limit;
-  el.innerHTML=`<div class="card" style="border:1px solid ${overLimit?'var(--red)':'var(--border)'};margin-bottom:14px">
-    <div class="lbl">${overLimit?'⚠️ ':''}${tr('Dnešné využité riziko')} <span class="hint">${tr('(denný limit')} ${limit}%)</span></div>
-    <div class="val ${overLimit?'neg':''}" style="font-size:20px;font-weight:700">${lossPct.toFixed(2)}%</div>
-  </div>`;
+  const cards=[];
+
+  const limit=state.settings.maxDailyLossPct;
+  if(limit>0&&startBalance>0){
+    const todayNet=accTrades().filter(t=>isClosed(t)&&dayKey(tTime(t))===todayKey).reduce((a,t)=>a+computePnl(t),0);
+    const lossPct=todayNet<0?Math.abs(todayNet)/startBalance*100:0;
+    const overLimit=lossPct>limit;
+    cards.push(`<div class="card" style="border:1px solid ${overLimit?'var(--red)':'var(--border)'};flex:1 1 220px">
+      <div class="lbl">${overLimit?'⚠️ ':''}${tr('Dnešné využité riziko')} <span class="hint">${tr('(denný limit')} ${limit}%)</span></div>
+      <div class="val ${overLimit?'neg':''}" style="font-size:20px;font-weight:700">${lossPct.toFixed(2)}%</div>
+    </div>`);
+  }
+
+  /* Počet obchodov nezávisí od počiat. kapitálu (na rozdiel od dennej straty),
+     takže sa zobrazí aj na účte bez vyplneného zostatku. */
+  const tl=dailyTradeLimit(dayTradeCount(accTrades(),todayKey),state.settings.maxTradesPerDay);
+  if(tl){
+    cards.push(`<div class="card" style="border:1px solid ${tl.over?'var(--red)':(tl.atLimit?'var(--amber, var(--border))':'var(--border)')};flex:1 1 220px">
+      <div class="lbl">${tl.over?'⚠️ ':''}${tr('Dnešné obchody')} <span class="hint">${tr('(denný limit')} ${tl.limit})</span></div>
+      <div class="val ${tl.over?'neg':''}" style="font-size:20px;font-weight:700">${tl.count} / ${tl.limit}</div>
+    </div>`);
+  }
+
+  el.innerHTML=cards.length?`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">${cards.join('')}</div>`:'';
 }
 function renderEqModeBar(startBalance){
   const bar=$('eqModeBar');

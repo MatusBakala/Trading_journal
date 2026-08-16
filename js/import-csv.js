@@ -143,10 +143,38 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     if(cur)convertedTrades.push(cur);
   }
   convertedTrades.sort((a,b)=>a.tEntry-b.tEntry);
-  // best-effort match: first protective Stop order (opposite side, same account+symbol) placed between entry and exit
+  /* Ochranné Stop príkazy k obchodu (opačná strana, ten istý účet+symbol). Broker
+     posiela KAŽDÚ verziu stopu zvlášť, takže `cands` je celá história posúvania -
+     predtým sa z nej bral len prvý prvok a zvyšok sa zahodil.
+
+     Okno začína PRED vstupom: pri bracket príkaze vzniká stop spolu so vstupným
+     príkazom, teda skôr, než sa vstup naplní. So starým `t.tEntry-1` taký stop
+     vypadol a ako "prvý" sa chytila až jeho prvá úprava - preto sa do `stop`
+     dostávali už posunuté hodnoty (v zálohe z 2026-08-16 malo 18 % obchodov stop
+     na ziskovej strane vstupu, čo pôvodné riziko byť nemôže).
+
+     Aby okno nezasiahlo do predošlého obchodu na tom istom symbole, začiatok sa
+     oreže jeho výstupom. */
+  const STOP_LOOKBEHIND=120; // s
+  const lastExit={};
   for(const t of convertedTrades){
-    const cands=stopOrders.filter(s=>s.account===t.account&&s.symbol===t.symbol&&s.side===-t.dir&&s.t>=t.tEntry-1&&(!t.tExit||s.t<=t.tExit+1));
-    if(cands.length)t.stopPrice=cands[0].stopPrice;
+    const k=t.account+'|'+t.symbol;
+    const from=Math.max(t.tEntry-STOP_LOOKBEHIND,(lastExit[k]!=null?lastExit[k]+1:-Infinity));
+    const cands=stopOrders.filter(s=>s.account===t.account&&s.symbol===t.symbol&&s.side===-t.dir&&s.t>=from&&(!t.tExit||s.t<=t.tExit+1));
+    if(cands.length){
+      t.stopPrice=cands[0].stopPrice;      // pôvodné riziko - z neho sa počíta R
+      t.stopFinal=cands[cands.length-1].stopPrice;
+      /* Posun "do straty" = stop sa vzdialil od vstupu (pri longu nižšie, pri shorte
+         vyššie). Práve to sa ručným tagom nedalo spoľahlivo zachytiť. */
+      let widened=0;
+      for(let i=1;i<cands.length;i++){
+        const prev=cands[i-1].stopPrice,cur=cands[i].stopPrice;
+        if(t.dir===1?cur<prev:cur>prev)widened++;
+      }
+      t.stopMoves=cands.length-1;
+      t.stopWidened=widened;
+    }
+    if(t.tExit)lastExit[k]=t.tExit;
   }
   const rnd=x=>Math.round(x*1e6)/1e6;
   /* Priemerná cena zo scale-inu legitímne padne medzi ticky, ale 4405.966667 sa
@@ -161,7 +189,7 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
   // nemapujú sa v UI (nie sú v IMPORT_FIELDS), doImport() ich vyzdvihne podľa presného
   // názvu hlavičky a napojí na obchod, aby excursionFor mohol počítať MAE/MFE podľa
   // reálne držanej veľkosti pozície namiesto plošného konečného množstva.
-  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees','Stop loss','EntryLegs','ExitLegs'];
+  const outHeaders=['Symbol','Side','Quantity','Entry price','Exit price','Entry time','Exit time','Fees','Stop loss','EntryLegs','ExitLegs','StopFinal','StopMoves','StopWidened'];
   const outRows=convertedTrades.map(t=>[
     t.symbol,
     t.dir===1?'Buy':'Sell',
@@ -174,6 +202,9 @@ export function convertBrokerOrdersToTrades(headers,rows,commissionMap){
     t.stopPrice!=null?String(rnd(t.stopPrice)):'',
     JSON.stringify(t.entryLegs||[]),
     JSON.stringify(t.exitLegs||[]),
+    t.stopFinal!=null?String(rnd(t.stopFinal)):'',
+    t.stopMoves!=null?String(t.stopMoves):'',
+    t.stopWidened!=null?String(t.stopWidened):'',
   ]);
   return {headers:outHeaders,rows:outRows,openCount:convertedTrades.filter(t=>!t.tExit).length};
 }
@@ -183,8 +214,9 @@ export function buildImportMapUI(){
     const auto=csvHeaders.findIndex(h=>f[2].includes(normH(h)));
     return `<div class="maprow"><div>${f[1]}</div><select id="map_${f[0]}">${opts(auto)}</select></div>`;
   }).join('');
-  // EntryLegs/ExitLegs sú interné JSON stĺpce - v náhľade by len zapratali tabuľku surovým JSON-om
-  const previewCols=csvHeaders.map((_,i)=>i).filter(i=>csvHeaders[i]!=='EntryLegs'&&csvHeaders[i]!=='ExitLegs');
+  // Interné generované stĺpce - v náhľade by len zapratali tabuľku surovým JSON-om a číslami
+  const INTERNAL_COLS=['EntryLegs','ExitLegs','StopFinal','StopMoves','StopWidened'];
+  const previewCols=csvHeaders.map((_,i)=>i).filter(i=>!INTERNAL_COLS.includes(csvHeaders[i]));
   $('csvPreview').innerHTML='<table><thead><tr>'+previewCols.map(i=>`<th>${esc(csvHeaders[i])}</th>`).join('')+'</tr></thead><tbody>'+
     csvRows.slice(0,5).map(r=>'<tr style="cursor:default">'+previewCols.map(i=>`<td>${esc(r[i]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
   for(const id of ['map_tEntry','map_tExit']){
@@ -296,9 +328,11 @@ export async function doImport(){
   // EntryLegs/ExitLegs (ak sú prítomné - len z broker-converter, pozri convertBrokerOrdersToTrades)
   // sa nemapujú cez IMPORT_FIELDS UI, nájdu sa priamo podľa presného názvu stĺpca.
   const iEntryLegs=csvHeaders.indexOf('EntryLegs'),iExitLegs=csvHeaders.indexOf('ExitLegs');
+  const iStopFinal=csvHeaders.indexOf('StopFinal'),iStopMoves=csvHeaders.indexOf('StopMoves'),iStopWidened=csvHeaders.indexOf('StopWidened');
+  const numCol=(r,idx)=>{if(idx<0)return null;const v=num(r[idx]);return isFinite(v)?v:null;};
   const parseLegs=(r,idx)=>{if(idx<0)return null;try{const v=JSON.parse(r[idx]||'[]');return Array.isArray(v)&&v.length?v:null;}catch{return null;}};
   const account=parseInt($('importAccount').value,10)||defaultAccId();
-  let ok=0,skip=0,dup=0,backfilled=0,legsBackfilled=0;
+  let ok=0,skip=0,dup=0,backfilled=0,legsBackfilled=0,stopBackfilled=0;
   const dupIndex=buildDupIndex(state.trades);
   const newTrades=[];
   for(const r of csvRows){
@@ -322,6 +356,18 @@ export async function doImport(){
       // sa nahral zo súhrnného exportu bez fillov) - dodatočný import tej istej objednávkovej
       // histórie by inak skončil ako "duplicita" a rozpis fillov by sa nikdy nedostal do
       // existujúceho záznamu, presne to bol dôvod, prečo re-import nič neopravil.
+      /* Obchody naimportované staršou verziou majú `stop` bez informácie, či to bol
+         pôvodný alebo už posunutý stop. Re-import tej istej Order History ich doplní. */
+      if(existing.stopInit==null){
+        const si=numCol(r,csvHeaders.indexOf('Stop loss'));
+        if(si!=null){
+          existing.stopInit=si;
+          existing.stopFinal=numCol(r,iStopFinal);
+          existing.stopMoves=numCol(r,iStopMoves);
+          existing.stopWidened=numCol(r,iStopWidened);
+          changed=true;stopBackfilled++;
+        }
+      }
       if(!(existing.entryLegs&&existing.entryLegs.length)&&!(existing.exitLegs&&existing.exitLegs.length)){
         const elegs=parseLegs(r,iEntryLegs),xlegs=parseLegs(r,iExitLegs);
         if(elegs||xlegs){
@@ -341,6 +387,13 @@ export async function doImport(){
       entry:isFinite(entry)?entry:NaN,
       exit:isFinite(exit)?exit:NaN,
       stop:isFinite(num(get(r,'stop')))?num(get(r,'stop')):null,
+      /* stopInit = PRVÝ ochranný stop od brokera, teda pôvodné riziko. `stop` môže byť
+         pri ručne zadanom obchode čokoľvek (aj už posunutá hodnota), takže R sa počíta
+         z stopInit, keď je k dispozícii - pozri riskStop() v strategy-notes.js. */
+      stopInit:numCol(r,csvHeaders.indexOf('Stop loss')),
+      stopFinal:numCol(r,iStopFinal),
+      stopMoves:numCol(r,iStopMoves),
+      stopWidened:numCol(r,iStopWidened),
       target:isFinite(num(get(r,'target')))?num(get(r,'target')):null,
       tEntry,
       tExit:parseDT(get(r,'tExit'))||tEntry,
@@ -364,10 +417,12 @@ export async function doImport(){
   }
   $('importResult').textContent=`Importované: ${ok}, preskočené: ${skip}, duplicity preskočené: ${dup}`+
     (backfilled?`, doplnený stop pri ${backfilled} existujúcich`:'')+
-    (legsBackfilled?`, doplnený rozpis fillov pri ${legsBackfilled} existujúcich`:'');
+    (legsBackfilled?`, doplnený rozpis fillov pri ${legsBackfilled} existujúcich`:'')+
+    (stopBackfilled?`, doplnený pôvodný stop pri ${stopBackfilled} existujúcich`:'');
   renderAfterTradeChange();
   scheduleAutoSync();
   toast(`Importovaných ${ok} obchodov`+(dup?`, ${dup} duplicít preskočených`:'')+
     (backfilled?`, doplnený stop pri ${backfilled}`:'')+
-    (legsBackfilled?`, rozpis fillov doplnený pri ${legsBackfilled}`:''));
+    (legsBackfilled?`, rozpis fillov doplnený pri ${legsBackfilled}`:'')+
+    (stopBackfilled?`, pôvodný stop doplnený pri ${stopBackfilled}`:''));
 }

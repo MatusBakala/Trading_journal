@@ -24,12 +24,64 @@ zálohy maže `gClientId` aj `anthropicKey`.
 Preto: **nikdy necommituj nič z `test-data/`**, ani „len dočasne". Appka ten priečinok na beh
 nepotrebuje, je to výhradne testovacia vzorka.
 
+### Načítanie zálohy do bežiacej appky (dev helper)
+
+Namiesto preklikávania Nastavenia → obnova zálohy sa dá záloha nahrať priamo, z konzoly
+prehliadača na dev serveri (`npm run serve`):
+
+```js
+const dev = await import('/tools/dev-seed.mjs');
+await dev.listBackups();   // čo je v test-data/
+await dev.loadBackup();    // najnovšia podľa mena; alebo loadBackup('subor.json')
+await dev.wipe();          // zmaže IndexedDB → po reloade čistá inštalácia
+```
+
+Dve veci, na ktorých to stojí a ktoré sa ľahko pokazia:
+
+- Helper importuje appkine moduly **relatívnou** cestou (`../js/settings.js`), aby ich import
+  mapa premapovala na tú istú `?v=` URL, akú používa appka. Keby si ich natiahol napr. cez
+  `fetch('/js/settings.js')` alebo bez `?v=`, prehliadač vytvorí **druhú kópiu** modulového
+  grafu s vlastným `state` – dáta by sa nahrali do appky, ktorú stránka nerenderuje.
+- `wipe()` najprv zavrie appkine vlastné spojenie (`DB.db` v `js/db.js`), inak `deleteDatabase`
+  visí zablokovaný proti stránke, z ktorej si ho zavolal. Ak appku držíš otvorenú v **inej**
+  karte, zablokuje to tiež a helper to povie – tú kartu treba zavrieť.
+
+`tools/` nie je v import mape ani v `app-version.json`, takže zmeny v helperi **nevyžadujú bump
+verzie**. Helper beží len na localhoste (kontroluje hostname) a nič ho neimportuje automaticky.
+
 
 ## Nasadzovanie a cache
 
 Pri každej zmene JS/CSS bumpni `v` v `app-version.json`. Boot skript v `index.html` z tohto súboru zároveň číta pole `modules` a postaví z neho import mapu, ktorá pridá `?v=` **všetkým** modulom – bez nej by sa relatívne importy (`import './init.js'`) ťahali z cache a po nasadení by bežal mix nového `app.js` so starým zvyškom appky.
 
 Keď pribudne alebo zmizne súbor v `js/`, spusti `npm run manifest`. Ak sa na to zabudne, `npm test` to zachytí a povie čo spustiť.
+
+## Stop loss: `stop` vs `stopInit`
+
+Broker (Tradovate) exportuje do Order History **každú verziu** stop príkazu ako vlastný
+riadok, takže posúvanie stopu je v dátach prítomné. `convertBrokerOrdersToTrades()` z tej
+sekvencie plní:
+
+- `stopInit` – **prvý** ochranný stop = pôvodné riziko. **Z neho sa počíta R.**
+- `stopFinal` – posledný stop
+- `stopMoves` – počet posunov, `stopWidened` – z toho koľkokrát ĎALEJ od vstupu (do straty)
+
+`stop` zostáva pôvodné pole (ručne zadané obchody, staré importy) a môže obsahovať už
+posunutú hodnotu. **Riziko preto nikdy nepočítaj priamo z `t.stop`** – použi `riskStop(t)`
+(`js/strategy-notes.js`), ktorá uprednostní `stopInit`. Používajú ju `riskR()`,
+`plannedRiskPct()` aj `excursionFor()`; keby niektorá z nich čítala `stop` priamo, tá istá
+obrazovka by ukazovala dve nezlučiteľné R-čka.
+
+Prečo to vzniklo: v zálohe z 2026-08-16 malo **18 % obchodov stop na ziskovej strane
+vstupu** (teda utiahnutý/trailing) a tie mali 96 % „úspešnosť" – čo je vlastnosť trailingu,
+nie zručnosť. Skresľovalo to R-štatistiky o rád: medián −0,59R vs správnych −0,83R, priemer
++0,01R vs −0,43R. Príčinou bolo okno `s.t >= t.tEntry-1`, ktoré vynechalo bracket stopy
+zadané spolu so vstupným príkazom (vznikajú skôr, než sa vstup naplní), takže za „prvý" sa
+brala až prvá úprava. Okno je teraz `tEntry - 120 s`, orezané výstupom predošlého obchodu na
+tom istom symbole.
+
+Re-import tej istej Order History **spätne doplní** `stopInit` existujúcim obchodom
+(rovnako ako sa dopĺňa rozpis fillov), takže históriu netreba mazať.
 
 ## Zmena návratovej hodnoty zdieľanej funkcie
 
