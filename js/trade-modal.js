@@ -454,16 +454,37 @@ export function datasetsForSymbol(sym){
     return ds===s||ds===b||s.startsWith(ds)||ds.startsWith(b)&&b.length>0;
   });
 }
-export function pickDataset(sym,tEntry,tExit){
-  const cands=datasetsForSymbol(sym);
+/* Poradie je rovnaké ako v excursionFor() (js/strategy-notes.js) a musí ním zostať:
+   inak sa MAE/MFE počíta z jedného datasetu a v grafe pod ním sa kreslí iný.
+
+   1. dataset musí čas obchodu naozaj POKRÝVAŤ,
+   2. presne ten istý kontrakt (MGCQ6) má prednosť pred spoločným koreňom (MGC) - ten
+      je spojitá front-month séria, ktorá sa pri rollovaní prepne na iný mesiac s úplne
+      inou cenovou hladinou, takže sviečky by k obchodu nesedeli,
+   3. až potom jemnosť timeframu (~40 sviečok na dĺžku obchodu je pre graf čitateľné).
+
+   Keď obchod nepokrýva žiadny dataset, vráti sa najlepší z nepokrývajúcich, aby vyššie
+   mohla zaznieť hláška „dataset nepokrýva čas tohto obchodu" namiesto prázdneho grafu. */
+export function pickDataset(sym,tEntry,tExit,tf){
+  let cands=datasetsForSymbol(sym);
   if(!cands.length)return null;
-  const dur=Math.max((tExit||tEntry)-(tEntry||0),60);
-  let best=null,bestScore=Infinity;
+  /* Keď je timeframe zvolený tlačidlom, vyberá sa najlepší dataset V RÁMCI neho -
+     nie prvý, ktorý ten timeframe náhodou má. Bez toho prepnutie na „2m" skočilo na
+     iný kontrakt len preto, že bol v poli skôr. */
+  if(tf){const f=cands.filter(d=>d.tf===tf);if(f.length)cands=f;}
+  const exactSym=String(sym||'').toUpperCase().trim();
+  const a=tEntry||0,b=tExit||tEntry||0;
+  const t1=Math.min(a,b),t2=Math.max(a,b);
+  const dur=Math.max(t2-t1,60);
+  let best=null,bestKey=null;
   for(const d of cands){
     const tf=TF_SEC[d.tf]||300;
-    const bars=dur/tf;
-    const score=Math.abs(Math.log((bars||1)/40)); // ideal ~40 bars for trade duration
-    if(score<bestScore){bestScore=score;best=d;}
+    const covers=(d.bars||[]).some(x=>x.t+tf>t1&&x.t<=t2);
+    const exact=String(d.symbol||'').toUpperCase().trim()===exactSym;
+    const key=[covers?0:1,exact?0:1,Math.abs(Math.log((dur/tf||1)/40))];
+    if(!bestKey||key[0]<bestKey[0]||(key[0]===bestKey[0]&&(key[1]<bestKey[1]||(key[1]===bestKey[1]&&key[2]<bestKey[2])))){
+      bestKey=key;best=d;
+    }
   }
   return best;
 }
@@ -763,14 +784,15 @@ export function renderModalChart(){
   const cands=t.symbol?datasetsForSymbol(t.symbol):[];
   let ds=null;
   if(cands.length){
-    ds=cands.find(d=>d.key===wrap.dataset.chosen)||(state.modalChartTf&&cands.find(d=>d.tf===state.modalChartTf))||pickDataset(t.symbol,t.tEntry,t.tExit);
+    ds=cands.find(d=>d.key===wrap.dataset.chosen)||pickDataset(t.symbol,t.tEntry,t.tExit,state.modalChartTf);
   }
   if(ds&&!state.modalChartTf)state.modalChartTf=ds.tf;
   // dataset selector (only shown when several datasets share the same timeframe) + timeframe quick-buttons
   const sameTf=cands.filter(d=>d.tf===(ds?ds.tf:state.modalChartTf));
   if(sameTf.length>1){
     const selId='dsSelect';
-    const cur=wrap.dataset.chosen||'';
+    // bez `ds.key` by rozbaľovačka ukazovala prvú možnosť, kým graf kreslí inú
+    const cur=wrap.dataset.chosen||(ds?ds.key:'');
     wrap.innerHTML=' – dataset: <select id="'+selId+'" style="padding:3px 6px;font-size:12px">'+
       sameTf.map(d=>`<option value="${esc(d.key)}" ${d.key===cur?'selected':''}>${esc(d.symbol)} ${esc(d.tf)} (${d.bars.length} sviečok)</option>`).join('')+'</select>';
     $(selId).onchange=e=>{wrap.dataset.chosen=e.target.value;renderModalChart();};
