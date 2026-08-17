@@ -185,6 +185,13 @@ export function exportDayJson(k){
     date:k,
     netPnl:+net.toFixed(2),
     tradeCount:dayTrades.length,
+    /* Bez limitu sa z počtu nedá povedať, či bol deň v pláne - a práve dodržanie
+       limitu je to, čo z denného exportu inak nie je vidieť. `null` = limit nie je
+       nastavený, aby si to AI nedomýšľala. */
+    limitObchodovZaDen:state.settings.maxTradesPerDay>0?state.settings.maxTradesPerDay:null,
+    nadLimitom:state.settings.maxTradesPerDay>0?dayTrades.length>state.settings.maxTradesPerDay:null,
+    obchodovBezStopu:dayTrades.filter(t=>riskStop(t)==null).length,
+    stopPosunutyDoStraty:dayTrades.filter(t=>t.stopWidened>0).length,
     winCount:wins,lossCount:pnls.filter(p=>p<0).length,
     winRatePct:+(wins/dayTrades.length*100).toFixed(1),
     // zhrnutie dňa dáva AI kontext a psychiku, ktoré zo samotných čísel nevyčíta
