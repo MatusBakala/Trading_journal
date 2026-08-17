@@ -16,6 +16,52 @@ export function periodFiltered(p){
   return accTrades().filter(t=>tTime(t)>=from).sort((a,b)=>tTime(a)-tTime(b));
 }
 export function maxStreak(arr,pred){let m=0,c=0;for(const x of arr){if(pred(x)){c++;if(c>m)m=c;}else c=0;}return m;}
+/* Skutočný medián (pri párnom počte priemer dvoch stredných), na rozdiel od
+   `arr[Math.floor(n/2)]` v medianBarRange()/patterns.js. Tie sú interné heuristiky,
+   kde na pol prvku nezáleží; tu je medián zobrazený a porovnáva sa voči -1R, takže
+   systematický posun k vyššej z dvoch stredných hodnôt by rozširovanie stopu
+   ukazoval lepšie, než v skutočnosti je. */
+export function median(sorted){
+  if(!sorted||!sorted.length)return null;
+  const m=sorted.length>>1;
+  return sorted.length%2?sorted[m]:(sorted[m-1]+sorted[m])/2;
+}
+export const STOP_MOVE_GROUPS=['none','tightened','widened'];
+/* Rozdelenie obchodov podľa toho, čo sa počas nich stalo so stopom. Údaje pochádzajú
+   z broker importu (stopMoves/stopWidened, pozri convertBrokerOrdersToTrades) - obchody
+   bez tejto histórie sa nezaraďujú vôbec, lebo "neposunutý" a "nevieme" nie je to isté
+   a zliatím by skupina `none` tichom pohltila všetko ručne zadané.
+
+   Medián aj priemer R sú tu obidva zámerne: pri rozširovaní stopu sa rozchádzajú
+   (medián vyzerá lepšie než -1R, priemer horšie) a práve ten rozdiel je celá informácia -
+   sedí v ňom jeden extrémny obchod. Jedno číslo by ju schovalo. */
+export function groupByStopMovement(trades,pnlOf,rOf){
+  const buckets={none:[],tightened:[],widened:[]};
+  let unknown=0;
+  for(const t of trades||[]){
+    if(t.stopMoves==null||!isFinite(t.stopMoves)){unknown++;continue;}
+    if(t.stopWidened>0)buckets.widened.push(t);
+    else if(t.stopMoves>0)buckets.tightened.push(t);
+    else buckets.none.push(t);
+  }
+  const stat=(list)=>{
+    const pnls=list.map(pnlOf);
+    const rs=list.map(rOf).filter(r=>r!=null&&isFinite(r)).sort((a,b)=>a-b);
+    const sum=pnls.reduce((a,b)=>a+b,0);
+    return {
+      n:list.length,
+      pnl:sum,
+      winRate:list.length?100*pnls.filter(p=>p>0).length/list.length:null,
+      medianR:median(rs),
+      avgR:rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:null,
+      worstR:rs.length?rs[0]:null,
+      beyond2R:rs.length?100*rs.filter(r=>r<-2).length/rs.length:null,
+    };
+  };
+  const out={unknown,total:0};
+  for(const k of STOP_MOVE_GROUPS){out[k]=stat(buckets[k]);out.total+=buckets[k].length;}
+  return out;
+}
 export function avg(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;}
 export function srow(l,v,cls){return `<div class="srow"><span>${l}</span><b class="${cls||''}">${v}</b></div>`;}
 export function renderStats(){
@@ -100,7 +146,43 @@ export function renderStats(){
     srow('Priemerný realizovaný R-multiple',rs.length?avg(rs).toFixed(2)+'R':'–',rs.length?(avg(rs)>=0?'pos':'neg'):'')+
     srow('Max drawdown',fmtMoney(-dd)+(dd&&startBalance>0?` (-${ddPct.toFixed(1)}%)`:''),dd?'neg':'');
 
+  renderStopMovementPanel(ts);
   renderExcursionChart(ts);
+}
+const STOP_MOVE_LABEL={
+  none:'Stop nikdy neposunutý',
+  tightened:'Posunutý len do zisku',
+  widened:'Posunutý do straty',
+};
+export function renderStopMovementPanel(ts){
+  const panel=$('stopMovePanel'),body=$('stopMoveBody'),sub=$('stopMoveSub');
+  if(!panel||!body)return;
+  const g=groupByStopMovement(ts,computePnl,riskR);
+  if(!g.total){
+    panel.style.display='';
+    sub.textContent=tr('Žiadny obchod nemá históriu stop príkazov. Naimportuj Order History z brokera – doplní sa aj spätne k existujúcim obchodom.');
+    body.innerHTML='';
+    return;
+  }
+  panel.style.display='';
+  sub.textContent=tr('Z histórie stop príkazov v Order History. Obchodov s históriou:')+' '+g.total+
+    (g.unknown?' · '+tr('bez histórie (neurčené):')+' '+g.unknown:'');
+  const num=(v,dec,suf)=>v==null?'–':(v>=0?'':'')+v.toFixed(dec)+(suf||'');
+  body.innerHTML='<table><thead><tr>'+
+    ['','n','Win %','P&L','Medián R','Priemer R','Najhorší','Za −2R'].map(h=>`<th>${esc(tr(h))}</th>`).join('')+
+    '</tr></thead><tbody>'+
+    STOP_MOVE_GROUPS.map(k=>{
+      const s=g[k];
+      if(!s.n)return '';
+      return `<tr style="cursor:default"><td>${esc(tr(STOP_MOVE_LABEL[k]))}</td>`+
+        `<td>${s.n}</td>`+
+        `<td>${num(s.winRate,0,'%')}</td>`+
+        `<td class="${moneyCls(s.pnl)}">${fmtMoney(s.pnl)}</td>`+
+        `<td class="${s.medianR!=null?moneyCls(s.medianR):''}">${num(s.medianR,2,'R')}</td>`+
+        `<td class="${s.avgR!=null?moneyCls(s.avgR):''}"><b>${num(s.avgR,2,'R')}</b></td>`+
+        `<td class="${s.worstR!=null&&s.worstR<0?'neg':''}">${num(s.worstR,1,'R')}</td>`+
+        `<td>${num(s.beyond2R,0,'%')}</td></tr>`;
+    }).join('')+'</tbody></table>';
 }
 /* MAE = najhorší bod proti tebe počas obchodu, MFE = najlepší bod v tvoj prospech.
    Spolu odpovedajú na dve otázky: či stopy nedávaš zbytočne tesne (víťazi, ktorí
