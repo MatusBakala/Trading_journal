@@ -1,0 +1,15 @@
+# Boot skript v index.html číta app-version.json a podľa nej pridáva ?v= všetkým
+# modulom. Keby CDN cachovalo práve tieto dva súbory, appka by po nasadení ďalej
+# ťahala staré moduly pod starou verziou a sama by sa z toho nedostala – presne tá
+# trieda chýb, ktorú popisuje CLAUDE.md (sekcia „Nasadzovanie a cache").
+#
+# Zvyšok (js/, css/, icons/) sa nechá na predvolené správanie Cloudflare: tie URL
+# už verziu nesú v query parametri, takže sa pri každej zmene menia.
+/
+  Cache-Control: no-store
+
+/index.html
+  Cache-Control: no-store
+
+/app-version.json
+  Cache-Control: no-store

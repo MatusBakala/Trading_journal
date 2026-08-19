@@ -1,0 +1,24 @@
+# Čo sa NEMÁ nahrať na Cloudflare ako statický súbor (syntax ako .gitignore).
+#
+# Bez tohto wrangler nahráva celý koreň repa vrátane node_modules, ktoré si sám
+# vytvorí počas buildu (`npx wrangler deploy` doinštaluje wrangler ako devDependency).
+# V ňom je workerd – runtime Workers, 144 MiB – a deploy spadne na limite 25 MiB.
+node_modules
+
+# Vývojárske veci: appka ich na beh nepotrebuje a na webe nemajú čo robiť.
+test
+tools
+package.json
+CLAUDE.md
+NAVOD-CLOUD-SYNC.md
+.claude
+.gitignore
+wrangler.jsonc
+
+# Pracovné screenshoty k stratégiám – v playbookoch sú obrázky už zabudované
+# ako base64 v js/data/default-strategies.js, takže tieto sa nikam neťahajú.
+.tmp-*
+
+# Reálne obchodné dáta. V gite nie sú (sú v .gitignore), takže sa sem cez klon
+# nedostanú – ale keby ich tam raz niekto pridal, toto je druhá poistka.
+test-data

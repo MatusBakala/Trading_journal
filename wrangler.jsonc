@@ -1,0 +1,13 @@
+{
+  // Statická appka bez build kroku – Cloudflare len servíruje súbory z repa.
+  // Čo sa NEnahráva, je v .assetsignore (hlavne node_modules, ktoré si wrangler
+  // vytvorí sám počas buildu a je v ňom 144 MiB binárka workerd).
+  //
+  // Súbor je tu zámerne commitnutý: bez neho si wrangler nastavenia doháda sám,
+  // pri každom builde ich zapisuje nanovo a mení .gitignore.
+  "name": "trading-journal",
+  "compatibility_date": "2026-08-15",
+  "assets": {
+    "directory": "."
+  }
+}
